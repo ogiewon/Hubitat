@@ -34,7 +34,7 @@ Instructions for use
 
 ![screenshot](https://user-images.githubusercontent.com/5206084/36354113-5aac8f14-149d-11e8-85fb-578b0861d7aa.png)
 
-*Harmony Activities*
+*Turning On a Harmony Activitie*
 - In the "Your Hubs" section, you will find the URLs needed to be inserted into your new Hubitat "HTTP Momentary Switch" devices to be able to turn on an Activity.  
 - Just strip off the last "/commands" string from any of your Harmony Hub Activities that you'd like to use as a "HTTP Momentary Switch" in Hubitat.  In the image above, you can see an entry for "/hubs/family-room-harmony-hub/activities/watch-apple-tv/commands".  Just drop off the "/commands" and you'll get "/hubs/family-room-harmony-hub/activities/watch-apple-tv" which is exactly the URL needed to be added to your new Hubitat device.
   - "Device IP Address" = **192.168.1.145**            (this is the IP Address of my Raspberry Pi running the harmony-api server)
@@ -43,7 +43,7 @@ Instructions for use
   - "POST, GET, PUT" = **POST**
   - **IMPORTANT - To turn on an Activiy, you must select the "POST" method in your Hubitat "HTTP Momentary Switch" device**
 
-*Turning Off Harmony Hub Current Activity*
+*Turning Off Harmony Hub*
 - To shut down your AV system, a special "off" command must be issued to the Harmony Hub.  To do this, simply create one more Hubitat Device using the "HTTP Momentary Switch" driver.  I call mine "Harmony All Off", as it will shut down whatever the current Activity is running. Here are the settings for my system:
   - "Device IP Address" = **192.168.1.145**             (this is the IP Address of my Raspberry Pi running the harmony-api server)
   - "Device Port" = **8282**                            (this is the PORT number of my Raspberry Pi running the harmony-api server)

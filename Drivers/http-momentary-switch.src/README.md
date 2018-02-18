@@ -29,7 +29,7 @@ Instructions for use
 - Click Save
 - Test your new device by clicking on "On", "Off", or "Push" 
   - **NOTE: ALL OF THESE DO THE EXACT SAME THING!**
-  - Since this is really just a Momentary Pushbutton device, all of the commads in it currently execute the exact same code.  They all cause the HTTP request to be sent, as well as creating a "switch on" and "switch off" event.  This allows other Apps to know this device has been activated.  For example, in Rule Machine you could create a Triggered action to dim the lights when the "Watch TV Activity" is activated.  I implemented the "switch" capability to allow these devices to be discovered by the Amazon Alexa integration.  
+  - Since this is really just a Momentary Pushbutton device, all of the commads in it currently execute the exact same code.  They all cause the HTTP request to be sent, as well as creating a "switch on" and "switch off" event.  This allows other Apps to know this device has been activated.  For example, in Rule Machine you could create a Triggered action to dim the lights when the "Watch Apple TV" Activity is activated.  I implemented the "switch" capability to allow these devices to be discovered by the Amazon Alexa integration.  
 
 Here is what your device should look like:
 

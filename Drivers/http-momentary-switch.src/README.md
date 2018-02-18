@@ -61,7 +61,7 @@ A relatively simple future addition would be to create a Service Manager App tha
 The KuKuHarmony integration for SmartThings looks like a nice solution, however the developer has chosen not to implement Harmony Activity control at this time.  He recommends using the SmartThings-to-Logitech integration for Activities.  Thus, I chose to employ the KISS principle and create a very lightweight, albeit somewhat manual, solution.  I rarely add or remove an Activity from my Harmony Hub, so a one-time setup doesn't seem to merit a complicated Service Manager App for now.
 
 **FAQ**
-- Why does my Hubitat Device show "Off" even though that Activity is currently playing on my Harmony Hub?
+- Why does my Hubitat "HTTP Momentary Switch" Device show "Off" even though that Activity is currently playing on my Harmony Hub?
   - I chose to implement the "HTTP Momentary Switch" device as a true MOMENTARY Switch.  Think of it as a pushbutton that simply starts an activity.  Thus, whenever you call its "push" command, it simply toggles the "switch" attribute to "on" and then immediately to "off".  This allows other Apps and the Amazon Alexa to integrate with it.
   - Since each of your Hubitat "Harmony Activity Devices" are completely standalone, they would have no idea if your turned on a different harmony hub activity.  Thus, keeping their status up to date is a little challenging.  Thus, I chose to keep it simple for now.
   - If anyone wants to improve this behavior, I welcome the support! 

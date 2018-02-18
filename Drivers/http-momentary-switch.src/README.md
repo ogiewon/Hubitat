@@ -30,6 +30,7 @@ Instructions for use
   - Since this is really just a Momentary Pushbutton device, all of the commads in it currently execute the exact same code.  They all cause the HTTP request to be sent, as well as creating a "switch on" and "switch off" event.  This allows other Apps to know this device has been activated.  For example, in Rule Machine you could create a Triggered action to dim the lights when the "Watch TV Activity" is activated.
   
 **Tips for using this with the Harmony-API**
-- The harmony-api needs to run constantly on another system on your LAN.  I use a Raspberry Pi with a STATIC IP address for this. I did not make any customizations whatsoever to the harmony-api.  It automatically discovers your Harmony Hub(s) and exposes a very helpful website you can use to help create the URLs needed for each of your Harmony Activities.  Simply go to http://192.168.1.145:8282 (substitute your RPI's IP address of course) and you will see some very useful information.
+- The harmony-api needs to run constantly on another system on your LAN.  I use a Raspberry Pi with a STATIC IP address for this. I did not make any customizations whatsoever to the harmony-api.  It automatically discovers your Harmony Hub(s) and exposes a very helpful website you can use to help create the URLs needed for each of your Harmony Activities.  Simply go to http://192.168.1.145:8282 (substitute your RPI's IP address of course) and you will see some very useful information as shown below.
 
+![screenshot](https://user-images.githubusercontent.com/5206084/36354113-5aac8f14-149d-11e8-85fb-578b0861d7aa.png)
 

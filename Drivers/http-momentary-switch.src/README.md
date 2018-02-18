@@ -1,6 +1,8 @@
 # Hubitat HTTP Momentary Switch Driver
 
-This driver implements the "Switch" and "Momentary" capabilities.  It is used to create an HTTP POST, PUT, or GET to a user defined IP Address and Port.  The use-case that this was created for specifically is to allow Hubitat to issue commands to a Logitech Harmony Hub via the maddox/harmony-api server (see https://github.com/maddox/harmony-api for details.)
+This driver implements the "Switch" and "Momentary" capabilities.  It is used to create an HTTP POST, PUT, or GET to a user defined IP Address and Port.  (Note: It can be used to submit an HTTP request to any server, it is not specific to the Harmony Hub in any way.)
+
+The use-case, that this was created for specifically, is to allow Hubitat to issue commands to a Logitech Harmony Hub via the maddox/harmony-api server (see https://github.com/maddox/harmony-api for details.)
 
 
 Instructions for use

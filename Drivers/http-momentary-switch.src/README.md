@@ -54,7 +54,7 @@ Instructions for use
   
 **Random Thought and Future Enhancement Possibilities**
 
-Ideally, Hubitat will provide native Harmony Hub integration in the future.  Until that happens, the above approach seems to work well enough, assuming you don't have an extremenly complex Harmony Hub setup.  
+Ideally, Hubitat will provide native Harmony Hub integration in the future.  Until that happens, the above approach seems to work well enough, assuming you don't have an extremely complex Harmony Hub setup.  
 
 A relatively simple future addition would be to create a Service Manager App that could automatically create Child Devices for each Activity and the Harmony Off command.  If anyone wants to take on the challenge, please feel free to do so.  My goal was simply to be able to remove one more dependency on my old SmartThings setup.  This should provide me with enough capability to do that.
 

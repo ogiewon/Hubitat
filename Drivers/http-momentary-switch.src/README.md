@@ -28,7 +28,13 @@ Instructions for use
 - Test your new device by clicking on "On", "Off", or "Push" 
   - **NOTE: ALL OF THESE DO THE EXACT SAME THING!**
   - Since this is really just a Momentary Pushbutton device, all of the commads in it currently execute the exact same code.  They all cause the HTTP request to be sent, as well as creating a "switch on" and "switch off" event.  This allows other Apps to know this device has been activated.  For example, in Rule Machine you could create a Triggered action to dim the lights when the "Watch TV Activity" is activated.  I implemented the "switch" capability to allow these devices to be discovered by the Amazon Alexa integration.  
-  
+
+Here is what your device should look like:
+
+![screenshot](https://user-images.githubusercontent.com/5206084/36354773-598a961c-14a7-11e8-9c3e-a5a9dffe25d5.png)
+
+
+
 **Tips for using "HTTP Momentary Switch" with the Harmony-API**
 - The harmony-api needs to run constantly on another system on your LAN.  I use a Raspberry Pi with a STATIC IP address for this. I did not make any customizations whatsoever to the harmony-api.  It automatically discovers your Harmony Hub(s) and exposes a very helpful website you can use to help create the URLs needed for each of your Harmony Activities.  Simply go to http://192.168.1.145:8282 (substitute your Raspberry Pi's IP address of course) and you will see some very useful information as shown below.
 

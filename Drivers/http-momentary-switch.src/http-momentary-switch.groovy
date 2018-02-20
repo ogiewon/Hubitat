@@ -41,8 +41,13 @@ def parse(String description) {
 def push() {
     //toggle the switch to generate events for anything that is subscribed
     sendEvent(name: "switch", value: "on", isStateChange: true)
+    runIn(1, toggleOff)
+    //sendEvent(name: "switch", value: "off", isStateChange: true)
+    runCmd(devicePath, deviceMethod)
+}
+
+def toggleOff() {
     sendEvent(name: "switch", value: "off", isStateChange: true)
-	runCmd(devicePath, deviceMethod)
 }
 
 def on() {

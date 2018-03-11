@@ -63,7 +63,7 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
             	str = "watts"
                 if (source == 1){
                 	name = "washerWatts"
-                    if (value >= settings.washerRW.toInteger()){
+                    if (value.toInteger() >= settings.washerRW.toInteger()){
                     	//washer is on
                         sendEvent(name: "washerState", value: "on", displayed: true)
                         state.washerIsRunning = true
@@ -78,7 +78,7 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
                     }
                 } else {
                 	name = "dryerWatts"
-                    if (value >= settings.dryerRW.toInteger()){
+                    if (value.toInteger() >= settings.dryerRW.toInteger()){
                     	//dryer is on
                         sendEvent(name: "dryerState", value: "on", displayed: true)
                         state.dryerIsRunning = true

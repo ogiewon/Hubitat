@@ -26,6 +26,7 @@ preferences {
   input("apiKey", "text", title: "API Key:", description: "Pushover API Key")
   input("userKey", "text", title: "User Key:", description: "Pushover User Key")
   input("deviceName", "text", title: "Optional Device Name:", description: "If blank, all devices get notified")
+  input("priority", "enum", title: "Default Message Priority", defaultValue: "NORMAL", options:["LOW", "NORMAL", "HIGH"])
 }
 
 metadata {
@@ -40,15 +41,38 @@ def speak(message) {
     deviceNotification(message)
 }
 
+def getPriority(){
+    [
+    "LOW":-1,
+    "NORMAL":0,
+    "HIGH":1,
+	]
+    
+}
+
 def deviceNotification(message) {
-  log.debug "Sending Message: ${message} Priority: ${priority}"
+    if(message.startsWith("[L]")){ 
+        customPriority = "LOW"
+        message = message.minus("[L]")
+    }
+    if(message.startsWith("[N]")){ 
+        customPriority = "NORMAL"
+        message = message.minus("[N]")
+    }
+    if(message.startsWith("[H]")){
+        customPriority = "HIGH"
+        message = message.minus("[H]")
+    }
+    if(customPriority){ priority = customPriority}
+                       
+    log.debug "Sending Message: ${message} Priority: ${priority}"
 
   // Define the initial postBody keys and values for all messages
   def postBody = [
     token: "$apiKey",
     user: "$userKey",
     message: "${message}",
-    priority: 0
+    priority: getPriority()[priority]
   ]
 
   // We only have to define the device if we are sending to a single device

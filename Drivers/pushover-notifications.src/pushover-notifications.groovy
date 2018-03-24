@@ -34,7 +34,7 @@ preferences {
 }
 
 metadata {
-  	definition (name: "Pushover v1.2", namespace: "ogiewon", author: "Dan Ogorchock") {
+  	definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock") {
     	capability "Notification"
     	capability "Actuator"
     	capability "Speech Synthesis"

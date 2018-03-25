@@ -3,9 +3,9 @@
 *	File: Pushover_Driver.groovy
 *	Platform: Hubitat
 *   Modification History:
-*       Date       Who            What
-*		2018-03-11 Dan Ogorchock  Modified/Simplified for Hubitat
-*		2018-03023 @stephack      Added new preferences/features
+*       Date       Who            	What
+*		2018-03-11 Dan Ogorchock  	Modified/Simplified for Hubitat
+*		2018-03-23 Stephan Hackett	Added new preferences/features
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -22,15 +22,18 @@
 *
 *
 */
+def version() {"v1.0.20180324"}
 
 preferences {
-  	input("apiKey", "text", title: "API Key:", description: "Pushover API Key")
+    input("apiKey", "text", title: "API Key:", description: "Pushover API Key")
   	input("userKey", "text", title: "User Key:", description: "Pushover User Key")
-  	input("deviceName", "text", title: "Optional Device Name:", description: "If blank, all devices get notified")
-  	input("priority", "enum", title: "Default Message Priority:", description: "", defaultValue: "NORMAL", options:[["-1":"LOW"], ["0":"NORMAL"], ["1":"HIGH"]])
-  	input("sound", "enum", title: "Notification Sound:", description: "", options: getSoundOptions())
-  	input("url", "text", title: "Supplementary URL:", description: "")
-    input("urlTitle", "text", title: "URL Title:", description: "")
+    if(getValidated()){
+  		input("deviceName", "enum", title: "Device Name (Blank = All Devices):", description: "", multiple: true, required: false, options: getValidated("deviceList"))
+  		input("priority", "enum", title: "Default Message Priority (Blank = NORMAL):", description: "", defaultValue: "0", options:[["-1":"LOW"], ["0":"NORMAL"], ["1":"HIGH"]])
+  		input("sound", "enum", title: "Notification Sound (Blank = App Default):", description: "", options: getSoundOptions())
+  		input("url", "text", title: "Supplementary URL:", description: "")
+    	input("urlTitle", "text", title: "URL Title:", description: "")
+    }
 }
 
 metadata {
@@ -41,51 +44,104 @@ metadata {
   	}
 }
 
+def installed() {
+ 	initialize()
+}
+
+def updated() {
+ 	initialize()   
+}
+
+def initialize() {
+    state.version = version()
+}
+
+def getValidated(type){
+    if(type=="deviceList"){log.debug "Generating Device List..."}
+	else {log.debug "Validating Keys..."}
+    
+    def validated = false
+	
+    def postBody = [
+    	token: "$apiKey",
+    	user: "$userKey",
+        device: ""
+  	]
+    
+    def params = [
+    	uri: "https://api.pushover.net/1/users/validate.json",
+    	body: postBody
+  	]
+    
+    if ((apiKey =~ /[A-Za-z0-9]{30}/) && (userKey =~ /[A-Za-z0-9]{30}/)) {
+        try{
+        	httpPost(params){response ->
+      			if(response.status != 200) {
+        			sendPush("ERROR: 'Pushover Me When' received HTTP error ${response.status}. Check your keys!")
+        			log.error "Received HTTP error ${response.status}. Check your keys!"
+      			}
+      			else {
+                    if(type=="deviceList"){
+                        log.debug "Device list generated"
+                        deviceOptions = response.data.devices
+                    }
+                    else {
+                        log.debug "Keys validated"
+                        validated = true
+                    }
+      			}
+    		}
+        }
+        catch (Exception e) {
+        	log.error "An invalid key was probably entered. PushOver Server Returned: ${e}"
+		} 
+    }
+    else {
+    	// Do not sendPush() here, the user may have intentionally set up bad keys for testing.
+    	log.error "API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+  	}
+    if(type=="deviceList") return deviceOptions
+    return validated
+    
+}
+
+def getSoundOptions() {
+	log.debug "Generating Notification List..."
+	def myOptions =[]
+    httpGet(uri: "https://api.pushover.net/1/sounds.json?token=${apiKey}"){response ->
+   		if(response.status != 200) {
+       		sendPush("ERROR: 'Pushover Me When' received HTTP error ${response.status}. Check your keys!")
+       		log.error "Received HTTP error ${response.status}. Check your keys!"
+   		}
+   		else {
+       		log.debug "Notification List Generated"
+       		mySounds = response.data.sounds
+            mySounds.each {eachSound->
+	            myOptions << ["${eachSound.key}":"${eachSound.value}"]
+            }
+   		}
+   	}   
+  	return myOptions
+}
+
 def speak(message) {
     deviceNotification(message)
 }
 
-def getSoundOptions() {
-	log.debug "Getting notification sound options from Pushover API"
-	def myOptions =[]
-  	if (apiKey =~ /[A-Za-z0-9]{30}/) {
-      	httpGet(uri: "https://api.pushover.net/1/sounds.json?token=${apiKey}"){response ->
-      		if(response.status != 200) {
-        		sendPush("ERROR: 'Pushover Me When' received HTTP error ${response.status}. Check your keys!")
-        		log.error "Received HTTP error ${response.status}. Check your keys!"
-      		}
-      		else {
-        		log.debug "Sound List HTTP response received [$response.status]"
-        		mySounds = response.data.sounds
-                mySounds.each {eachSound->
-                    myOptions << ["${eachSound.key}":"${eachSound.value}"]
-                }
-      		}
-    	}
-  	}
-  	else {
-    	// Do not sendPush() here, the user may have intentionally set up bad keys for testing.
-    	log.error "API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
-  	}
-  	return myOptions
-}
-
 def deviceNotification(message) {
 	if(message.startsWith("[L]")){ 
-        customPriority = "LOW"
+        customPriority = "-1"
         message = message.minus("[L]")
     }
     if(message.startsWith("[N]")){ 
-        customPriority = "NORMAL"
+        customPriority = "0"
         message = message.minus("[N]")
     }
     if(message.startsWith("[H]")){
-        customPriority = "HIGH"
+        customPriority = "1"
         message = message.minus("[H]")
     }
     if(customPriority){ priority = customPriority}
-                       
-    log.debug "Sending Message: ${message} Priority: ${priority}"
 
   	// Define the initial postBody keys and values for all messages
   	def postBody = [
@@ -95,17 +151,12 @@ def deviceNotification(message) {
     	priority: priority,
     	sound: sound,
         url: url,
+        device: deviceName,
         url_title: urlTitle
   	]
 
-  	// We only have to define the device if we are sending to a single device
-  	if (deviceName) {
-    	log.debug "Sending Pushover to Device: $deviceName"
-    	postBody['device'] = "$deviceName"
-  	}
-  	else {
-    	log.debug "Sending Pushover to All Devices"
-  	}
+  	if (deviceName) { log.debug "Sending Message: ${message} Priority: ${priority} to Device: $deviceName"}
+  	else {log.debug "Sending Message: [${message}] Priority: [${priority}] to [All Devices]"}
 
   	// Prepare the package to be sent
   	def params = [
@@ -113,17 +164,14 @@ def deviceNotification(message) {
     	body: postBody
   	]
 
-  	log.debug postBody
-
   	if ((apiKey =~ /[A-Za-z0-9]{30}/) && (userKey =~ /[A-Za-z0-9]{30}/)) {
-    	log.debug "Sending Pushover: API key '${apiKey}' | User key '${userKey}'"
     	httpPost(params){response ->
       		if(response.status != 200) {
         		sendPush("ERROR: 'Pushover Me When' received HTTP error ${response.status}. Check your keys!")
         		log.error "Received HTTP error ${response.status}. Check your keys!"
       		}
       		else {
-        		log.debug "HTTP response received [$response.status]"
+        		log.debug "Message Received by Pushover Server"
       		}
     	}
   	}

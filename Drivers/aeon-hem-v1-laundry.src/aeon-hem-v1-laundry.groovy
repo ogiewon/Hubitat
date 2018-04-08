@@ -24,8 +24,6 @@ metadata {
         attribute "washerState", "string"
         attribute "dryerState", "string"
         
-//        command "configure"
-        
 		fingerprint deviceId: "0x2101", inClusters: " 0x70,0x31,0x72,0x86,0x32,0x80,0x85,0x60"
 	}
 
@@ -69,12 +67,13 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
                         state.washerIsRunning = true
                     } else {
                     	//washer is off
-                        if (state.washerIsRunning == true){
+                        //if (state.washerIsRunning == true){
+                        if (device.currentValue("washerState") == "on"){
                         	//button event
                             sendEvent(name: "pushed", value: "1", descriptionText: "Washer has finished.", isStateChange: true)
                         }
-                        sendEvent(name: "washerState", value: "off", displayed: true)
                         state.washerIsRunning = false
+                        sendEvent(name: "washerState", value: "off", displayed: true)
                     }
                 } else {
                 	name = "dryerWatts"
@@ -84,12 +83,13 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
                         state.dryerIsRunning = true
                     } else {
                     	//dryer is off
-                        if (state.dryerIsRunning == true){
+                        //if (state.dryerIsRunning == true){
+                        if (device.currentValue("dryerState") == "on"){
                         	//button event
                             sendEvent(name: "pushed", value: "2", descriptionText: "Dryer has finished.", isStateChange: true)
                         }
-                        sendEvent(name: "dryerState", value: "off", displayed: true)
                         state.dryerIsRunning = false
+                        sendEvent(name: "dryerState", value: "off", displayed: true)
                     }
                 }
                 if (state.washerIsRunning || state.dryerIsRunning){

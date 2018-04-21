@@ -33,6 +33,8 @@ preferences {
   		input("sound", "enum", title: "Notification Sound (Blank = App Default):", description: "", options: getSoundOptions())
   		input("url", "text", title: "Supplementary URL:", description: "")
     	input("urlTitle", "text", title: "URL Title:", description: "")
+        input("retry", "number", title: "Retry Interval in seconds:(30 minimum)", description: "Applies to Emergency Requests Only")
+        input("expire", "number", title: "Auto Expire After in seconds:(10800 max)", description: "Applies to Emergency Requests Only")
     }
 }
 
@@ -156,7 +158,9 @@ def deviceNotification(message) {
     	sound: sound,
         url: url,
         device: deviceName,
-        url_title: urlTitle
+        url_title: urlTitle,
+        retry: retry,
+        expire: expire
   	]
 
   	if (deviceName) { log.debug "Sending Message: ${message} Priority: ${priority} to Device: $deviceName"}
@@ -168,7 +172,7 @@ def deviceNotification(message) {
     	body: postBody
   	]
 
-  	if ((apiKey =~ /[A-Za-z0-9]{30}/) && (userKey =~ /[A-Za-z0-9]{30}/)) {
+    if ((apiKey =~ /[A-Za-z0-9]{30}/) && (userKey =~ /[A-Za-z0-9]{30}/)) {
     	httpPost(params){response ->
       		if(response.status != 200) {
         		sendPush("ERROR: 'Pushover Me When' received HTTP error ${response.status}. Check your keys!")

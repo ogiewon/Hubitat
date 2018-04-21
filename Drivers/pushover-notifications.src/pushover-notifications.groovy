@@ -141,6 +141,10 @@ def deviceNotification(message) {
         customPriority = "1"
         message = message.minus("[H]")
     }
+    if(message.startsWith("[E]")){
+        customPriority = "2"
+        message = message.minus("[E]")
+    }
     if(customPriority){ priority = customPriority}
 
   	// Define the initial postBody keys and values for all messages

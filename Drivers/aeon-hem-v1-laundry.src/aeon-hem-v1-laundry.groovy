@@ -5,6 +5,8 @@ Custom Laundry monitor device for Aeon HEM V1
   
   modified by Dan Ogorchock to work with Hubitat
 
+  2018-05-26  Dan Ogorchock  Added optional delay parameter to add debounce feature to prevent multiple events
+
 */
 
 metadata {
@@ -16,7 +18,7 @@ metadata {
         //capability "Energy Meter"
 		capability "Actuator"
         capability "Pushable Button"
-        capability "Holdable Button"
+        //capability "Holdable Button"
 		capability "Sensor"
 
         attribute "washerWatts", "string"
@@ -30,6 +32,7 @@ metadata {
 	preferences {
        	input name: "washerRW", type: "number", title: "Washer running watts:", description: "", required: true
         input name: "dryerRW", type: "number", title: "Dryer running watts:", description: "", required: true
+        input name: "debounceDelay", type: "number", title: "Debounce delay time (seconds):", description: "", required: true
     }
 }
 
@@ -62,34 +65,40 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
                 if (source == 1){
                 	name = "washerWatts"
                     if (value.toInteger() >= settings.washerRW.toInteger()){
+                        if (state.washerIsRunning == false){
+                            log.debug "unschedule(sendWasherDone) called"
+                            unschedule(sendWasherDone)
+                        }
+                        state.washerIsRunning = true                       
                     	//washer is on
                         sendEvent(name: "washerState", value: "on", displayed: true)
-                        state.washerIsRunning = true
+                        
                     } else {
                     	//washer is off
-                        //if (state.washerIsRunning == true){
-                        if (device.currentValue("washerState") == "on"){
-                        	//button event
-                            sendEvent(name: "pushed", value: "1", descriptionText: "Washer has finished.", isStateChange: true)
+                        if (state.washerIsRunning == true){
+                            log.debug "runIn(${debounceDelay.toInteger()}, sendWasherDone) called"
+                            runIn(debounceDelay.toInteger(), sendWasherDone)
                         }
                         state.washerIsRunning = false
-                        sendEvent(name: "washerState", value: "off", displayed: true)
                     }
                 } else {
                 	name = "dryerWatts"
                     if (value.toInteger() >= settings.dryerRW.toInteger()){
+                        if (state.dryerIsRunning == false){
+                            log.debug "unschedule(sendDryerDone) called"
+                            unschedule(sendDryerDone)
+                        }
+                        state.dryerIsRunning = true
                     	//dryer is on
                         sendEvent(name: "dryerState", value: "on", displayed: true)
-                        state.dryerIsRunning = true
+
                     } else {
                     	//dryer is off
-                        //if (state.dryerIsRunning == true){
-                        if (device.currentValue("dryerState") == "on"){
-                        	//button event
-                            sendEvent(name: "pushed", value: "2", descriptionText: "Dryer has finished.", isStateChange: true)
+                        if (state.dryerIsRunning == true){
+                            log.debug "runIn(${debounceDelay.toInteger()}, sendDryerDone) called"
+                            runIn(debounceDelay.toInteger(), sendDryerDone)
                         }
                         state.dryerIsRunning = false
-                        sendEvent(name: "dryerState", value: "off", displayed: true)
                     }
                 }
                 if (state.washerIsRunning || state.dryerIsRunning){
@@ -102,6 +111,20 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
             }
         }
     }
+}
+
+def sendWasherDone(){
+    log.debug "sendWasherDone() called"
+    sendEvent(name: "washerState", value: "off", displayed: true)
+    //button event
+    sendEvent(name: "pushed", value: "1", descriptionText: "Washer has finished.", isStateChange: true)
+}
+
+def sendDryerDone(){
+    log.debug "sendDryerDone() called"
+    sendEvent(name: "dryerState", value: "off", displayed: true)  
+    //button event
+    sendEvent(name: "pushed", value: "2", descriptionText: "Dryer has finished.", isStateChange: true)
 }
 
 def zwaveEvent(hubitat.zwave.Command cmd) {

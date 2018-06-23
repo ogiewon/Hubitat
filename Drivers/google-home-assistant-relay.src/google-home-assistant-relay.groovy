@@ -23,6 +23,7 @@
 metadata {
 	definition (name: "Google Home Assistant Relay", namespace: "ogiewon", author: "Dan Ogorchock") {
         capability "Speech Synthesis"
+    	capability "Notification"
 	}
 
 	preferences {
@@ -37,8 +38,11 @@ def parse(String description) {
 
 def speak(message) {
   def text = URLEncoder.encode(message, "UTF-8");
-  httpPostJSON("/customBroadcast?text=${text}")
-    
+  httpPostJSON("/customBroadcast?text=${text}")  
+}
+
+def deviceNotification(message) {
+    speak(message)
 }
 
 def httpPostJSON(path) {

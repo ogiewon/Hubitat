@@ -17,6 +17,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2018-06-22  Dan Ogorchock  Original Creation
+ *    2018-07-01  Dan OGorchock  Add support for Custom Commands - prefix string with [CC] to POST /custom?command= instead of /customBroadcast?text=
  *
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this very simplified version!
  */
@@ -37,8 +38,15 @@ def parse(String description) {
 }
 
 def speak(message) {
-  def text = URLEncoder.encode(message, "UTF-8");
-  httpPostJSON("/customBroadcast?text=${text}")  
+    def command = "/customBroadcast?text="
+    
+    if(message.startsWith("[CC]")){ 
+      command = "/custom?command="
+      message = message.minus("[CC]")
+    }  
+    
+    def text = URLEncoder.encode(message, "UTF-8");
+    httpPostJSON("${command}${text}")  
 }
 
 def deviceNotification(message) {

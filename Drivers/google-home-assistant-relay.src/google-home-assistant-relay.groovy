@@ -48,7 +48,7 @@ def speak(message) {
     }  
     else if(message.startsWith("[CCC]")){ 
       command = "/custom?command="
-      suffix = "&user=&converse=true"
+      suffix = "&converse=true"
       message = message.minus("[CCC]")
     } 
     

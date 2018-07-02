@@ -17,7 +17,8 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2018-06-22  Dan Ogorchock  Original Creation
- *    2018-07-01  Dan OGorchock  Add support for Custom Commands - prefix string with [CC] to POST /custom?command= instead of /customBroadcast?text=
+ *    2018-07-01  Dan Ogorchock  Add support for Custom Commands - prefix string with [CC] to POST /custom?command= instead of /customBroadcast?text=
+ *    2018-07-02  Dan Ogorchock  Add support for Confirmation - prefix sting with [CCC] to POST /custom?command=<your command>&converse=true
  *
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this very simplified version!
  */
@@ -39,14 +40,28 @@ def parse(String description) {
 
 def speak(message) {
     def command = "/customBroadcast?text="
+    def suffix = ""
     
     if(message.startsWith("[CC]")){ 
       command = "/custom?command="
       message = message.minus("[CC]")
     }  
+    else if(message.startsWith("[CCC]")){ 
+      command = "/custom?command="
+      suffix = "&converse=true"
+      message = message.minus("[CCC]")
+    } 
     
     def text = URLEncoder.encode(message, "UTF-8");
-    httpPostJSON("${command}${text}")  
+    
+    if (suffix == "") {
+        //log.debug "${command}${text}"
+        httpPostJSON("${command}${text}")  
+    }
+    else {
+        //log.debug "${command}${text}${suffix}"
+        httpPostJSON("${command}${text}${suffix}")
+    }
 }
 
 def deviceNotification(message) {

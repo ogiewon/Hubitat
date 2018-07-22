@@ -14,7 +14,7 @@ metadata {
 	{
 		capability "Configuration"
 		capability "Switch"
-        capability "Button"
+        //capability "Button"
         //capability "Energy Meter"
 		capability "Actuator"
         capability "Pushable Button"

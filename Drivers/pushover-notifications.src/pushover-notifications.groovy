@@ -6,6 +6,7 @@
 *       Date       Who            	What
 *		2018-03-11 Dan Ogorchock  	Modified/Simplified for Hubitat
 *		2018-03-23 Stephan Hackett	Added new preferences/features
+*               2018-08-02 Dan and Stephan      Add contentType/requestContentType to httpPost calls
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *

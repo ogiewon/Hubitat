@@ -72,6 +72,8 @@ def getValidated(type){
     
     def params = [
     	uri: "https://api.pushover.net/1/users/validate.json",
+	contentType: "application/json",
+	requestContentType: "application/x-www-form-urlencoded",
     	body: postBody
   	]
     
@@ -169,6 +171,8 @@ def deviceNotification(message) {
   	// Prepare the package to be sent
   	def params = [
     	uri: "https://api.pushover.net/1/messages.json",
+	contentType: "application/json",
+	requestContentType: "application/x-www-form-urlencoded",
     	body: postBody
   	]
 

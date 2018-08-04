@@ -6,7 +6,11 @@
 *       Date       Who            	What
 *		2018-03-11 Dan Ogorchock  	Modified/Simplified for Hubitat
 *		2018-03-23 Stephan Hackett	Added new preferences/features
+<<<<<<< HEAD
 *		2018-08-02 Dan and Stephan  Add contentType/requestContentType to httpPost calls (for FW v1.2.1)
+=======
+*               2018-08-02 Dan and Stephan      Add contentType/requestContentType to httpPost calls
+>>>>>>> origin/master
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -73,8 +77,13 @@ def getValidated(type){
     
     def params = [
     	uri: "https://api.pushover.net/1/users/validate.json",
+<<<<<<< HEAD
     	contentType: "application/json",
     	requestContentType: "application/x-www-form-urlencoded",
+=======
+	contentType: "application/json",
+	requestContentType: "application/x-www-form-urlencoded",
+>>>>>>> origin/master
     	body: postBody
   	]
     
@@ -172,8 +181,13 @@ def deviceNotification(message) {
   	// Prepare the package to be sent
   	def params = [
     	uri: "https://api.pushover.net/1/messages.json",
+<<<<<<< HEAD
     	contentType: "application/json",
     	requestContentType: "application/x-www-form-urlencoded",
+=======
+	contentType: "application/json",
+	requestContentType: "application/x-www-form-urlencoded",
+>>>>>>> origin/master
     	body: postBody
   	]
 

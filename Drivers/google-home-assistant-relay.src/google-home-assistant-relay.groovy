@@ -19,6 +19,7 @@
  *    2018-06-22  Dan Ogorchock  Original Creation
  *    2018-07-01  Dan Ogorchock  Add support for Custom Commands - prefix string with [CC] to POST /custom?command= instead of /customBroadcast?text=
  *    2018-07-02  Dan Ogorchock  Add support for Confirmation - prefix sting with [CCC] to POST /custom?command=<your command>&converse=true
+ *    2018-10-18  Dan Ogorchock  Reduced debug logging
  *
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this very simplified version!
  */
@@ -35,7 +36,7 @@ metadata {
 }
 
 def parse(String description) {
-    log.debug "Parsing ${description}"
+    //log.debug "Parsing ${description}"
 }
 
 def speak(message) {
@@ -70,7 +71,7 @@ def deviceNotification(message) {
 
 def httpPostJSON(path) {
     def hostUri = "${deviceIP}:${devicePort}"
-    log.debug "Sending command ${path} to ${hostUri}"
+    //log.debug "Sending command ${path} to ${hostUri}"
     def result = new hubitat.device.HubAction(
             method: "POST",
             path: path,

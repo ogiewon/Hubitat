@@ -11,7 +11,7 @@ First things first...  Credit where credit is due...  Thank you to the authors o
 Also, much thanks to Hubitat's Chuck Schwer, for his tips, tricks, nudging, and advice!
 
 
-I have been able to create a Hubitat App (Alexa TTS Manager) and Driver (Child Alexa TTS) which implement basic TTS capability directly on the Hubitat Elevation hub, with no need for another computer or hub.  The "Alexa TTS Manager" app communicates directly to the alexa.amazon.com website to list your devices.  You then select which devices you want to be able to issue TTS commands to.  The app then creates a "Child Alexa TTS" device for each selected Amazon device.  These child devices can be used by any Hubitat App that can utilize the "Speech Synthesis" Capability. 
+I have created a Hubitat App (Alexa TTS Manager) and Driver (Child Alexa TTS) which implement basic TTS capability directly on the Hubitat Elevation hub, with no need for another computer or hub.  The "Alexa TTS Manager" app communicates directly to the alexa.amazon.com website to list your devices.  You then select which devices you want to be able to issue TTS commands to.  The app then creates a "Child Alexa TTS" device for each selected Amazon device.  These child devices can be used by any Hubitat App that can utilize the "Speech Synthesis" Capability. 
 
 Now, the tricky part...  (there's always a 'gotcha', right?)
 

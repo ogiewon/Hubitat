@@ -26,19 +26,6 @@ My main browser of choice on Windows is Chrome.  Since I want this cookie to rem
 4) Open the cookie file in an editor like NotePad++
 5) You should see something that looks similar to the following example
 
-# Alternate method to get the cookie directly from Chrome.  (Thanks @krlaframboise and @ritchierich !)
-1) Open Chrome and Login to alexa.amazon.com
-2) Open the Chrome menu at the top-right of your browser window, then select Tools (More Tools) > Developer Tools
-3) On top row of developer tools you will see several tabs: Elements, Console, Sources, Network, etc. Click Network.
-4) Just below the tabs you will see a red circle, below that you will see a filter box, and below that you will see sub tabs: All, XHR, JS, etc. Click XHR
-5) Click Smart Home in the left navigation
-6) The developer tools XHR list should populate with several items, one called "featureaccess-v3", right-click on it and choose Copy, Copy Request Headers. This will place it into your clipboard.
-7) Open your favorite text editor such as Notepad and paste the contents into it.
-8) The last item should be the cookie. Remove everything including "Cookie: ", leaving the raw cookie in the text editor.
-9) Remove all double quotes. Search for double quotes and replace with an empty string.
-10) Paste the cookie into the app and add a semi-colon to the end of it
-
-
 ```
 # Netscape HTTP Cookie File
 # https://curl.haxx.se/rfc/cookie_spec.html
@@ -76,6 +63,18 @@ Note:  Be sure to replace the spaces with equals signs.  For example, "csrf 1234
 ```
 at-main=Atza|IwEBIIX59iE-dR1234567890nt-tflCFWhqH8E1234567890sbE4cHgK1_mz01QQymCzve0iFu4wq7k-t86VkmmvUm123456789069_wjxusrO3v7b-c0XzvsgzYT4PDSmEME0hn1234567890W90k4LZWgRwa541234567890RYCE1EENn_o9hkle1234567890Y8r8IbjumqaH891234567890QX67EdZ6Nrwz1234567890h0iX3iWzSno9vcHZLbQAyw12345678901DDz46_V-L48wDi1234567890AuOqENK1234567890TSh84SJ_XjM_Tiv-6gUdn_11234567890LFXvDtvnYh-J1234567890g6e1nRQa1234567890Fk8QvvRrCY1234567890Jt-mqf1234567890O0jdcn45C-Yg-nB1ZxXoG-84m1234567890Wz-Cw1234567890azXQR_gE777A; csrf=123456789; sess-at-main=1234567890Q1xRW21234567890G2k1234567890DDCEnk=; session-id=123-4567890-1234567; session-id-time=1234567890l; x-main=Uy@EPvTF@KBnko?V@12345678906QrX; session-token=5H1234567890sg5zn3qe9BE6zniSfsS6iWarF2rjHunCxErxZFoK7HYVqVLJ01234567890kAQgqHm2Z0/ce1234567890iej5IrwENPF1234567890L8mHG1234567890luCpHqoxL7fDtwQrpe7WMwW1QW+ITqsQhuQy501234567890P+XCpci5xsG1234567890HBLRND0arnZifPqndStRf8=; sid=9CumEN1F/rk4s5lagx86rw==|F8rrq1234567890HOzwLFaX12345678903fcDQ=; ubid-main=130-2711001-12345678; 
 ```
+# Alternate method to get the cookie directly from Chrome.  (Thanks @krlaframboise and @ritchierich !)
+1) Open Chrome and Login to alexa.amazon.com
+2) Open the Chrome menu at the top-right of your browser window, then select Tools (More Tools) > Developer Tools
+3) On top row of developer tools you will see several tabs: Elements, Console, Sources, Network, etc. Click Network.
+4) Just below the tabs you will see a red circle, below that you will see a filter box, and below that you will see sub tabs: All, XHR, JS, etc. Click XHR
+5) Click Smart Home in the left navigation
+6) The developer tools XHR list should populate with several items, one called "featureaccess-v3", right-click on it and choose Copy, Copy Request Headers. This will place it into your clipboard.
+7) Open your favorite text editor such as Notepad and paste the contents into it.
+8) The last item should be the cookie. Remove everything including "Cookie: ", leaving the raw cookie in the text editor.
+9) Remove all double quotes. Search for double quotes and replace with an empty string.
+10) Paste the cookie into the app and add a semi-colon to the end of it
+
 
 If someone wants to write a standalone app to parse the cookies.txt file and create the above semicolon delimited string, that would be a great help to users.
 

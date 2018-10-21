@@ -19,12 +19,25 @@ In order for your Hubitat hub to communicate to https://alexa.amazon.com, it nee
 
 My main browser of choice on Windows is Chrome.  Since I want this cookie to remain valid for a very long time, I decided that it was safest to download FireFox and install the "Cookies.txt" extension.  This way, I won't accidentally invalidate my cookie for alexa.amazon.com.  The goal is to be able to keep this cookie valid for a very long time.  There may be better solutions for this that I am not aware of, so please feel free to provide some feedback!  Always looking for some help!
 
-Steps:
+#Original method (see below for alternate)
 1) Fire up a browser, like FireFox, and install the Cookies.txt Extension by lennonhill (source available at https://github.com/lennonhill/cookies-txt)
 2) Sign into https://alexa.amazon.com using your browser
 3) Click on the 'Cookies.txt' extension and save the resulting cookie file to you computer
 4) Open the cookie file in an editor like NotePad++
 5) You should see something that looks similar to the following example
+
+#Alternate method to get the cookie directly from Chrome.  (Thanks @krlaframboise and @ritchierich !)
+1) Open Chrome and Login to alexa.amazon.com
+2) Open the Chrome menu at the top-right of your browser window, then select Tools (More Tools) > Developer Tools
+3) On top row of developer tools you will see several tabs: Elements, Console, Sources, Network, etc. Click Network.
+4) Just below the tabs you will see a red circle, below that you will see a filter box, and below that you will see sub tabs: All, XHR, JS, etc. Click XHR
+5) Click Smart Home in the left navigation
+6) The developer tools XHR list should populate with several items, one called "featureaccess-v3", right-click on it and choose Copy, Copy Request Headers. This will place it into your clipboard.
+7) Open your favorite text editor such as Notepad and paste the contents into it.
+8) The last item should be the cookie. Remove everything including "Cookie: ", leaving the raw cookie in the text editor.
+9) Remove all double quotes. Search for double quotes and replace with an empty string.
+10) Paste the cookie into the app and add a semi-colon to the end of it
+
 
 ```
 # Netscape HTTP Cookie File

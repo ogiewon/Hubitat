@@ -65,8 +65,8 @@ at-main=Atza|IwEBIIX59iE-dR1234567890nt-tflCFWhqH8E1234567890sbE4cHgK1_mz01QQymC
 If someone wants to write a standalone app to parse the cookies.txt file and create the above semicolon delimited string, that would be a great help to users.
 
 6) Okay, so you've got your cookie string.  Congratulations as I know that was a bit of manual work!  Now for the easy part!
-7) Add the "Alexa TTS Manager" source code to your Hubitat 'Apps Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Apps/alexa-tts-manager.src/alexa-tts-manager.groovy
-8) Add the "Child Alexa TTS" source code to your Hubitat 'Drivers Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
+7) Add the "Alexa TTS Manager" source code to your Hubitat 'Apps Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Apps/alexa-tts-manager.src/alexa-tts-manager.groovy
+8) Add the "Child Alexa TTS" source code to your Hubitat 'Drivers Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
 9) Go to your 'Apps', and click 'Load New App' and select the "Alexa TTS Manager"
 10) Now copy and paste that huge cookie string you created earlier and paste it into the text box.  Click Done
 11) If everything went well with your cookie, you should be able to select one or more of your Alexa devices on the page that comes up.

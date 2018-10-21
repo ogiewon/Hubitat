@@ -1,5 +1,5 @@
 /**
- *  Alexa TTS Manager
+ *  Alexa TTS Manager v0.2
  *
  *  Copyright 2018 Daniel Ogorchock - Special thanks to Chuck Schwer for his tips and prodding me
  *                                    to not let this idea fall through the cracks!  
@@ -19,6 +19,7 @@
  *    ----        ---            ----
  *    2018-10-20  Dan Ogorchock  Original Creation - with help from Chuck Schwer!
  *    2018-10-21  Dan Ogorchock  Trapped an error when invalid data returned from Amazon due to cookie issue.
+ *    2018-10-21  Stephan Hackett Modified to include more Alexa Devices for selection
  *	
  */
  
@@ -121,8 +122,11 @@ def getDevices() {
                 atomicState.alexaJSON = resp.data
                 //log.debug state.alexaJSON.devices.accountName
                 atomicState.alexaJSON.devices.each {it->
-        			if (it.deviceFamily in ["ECHO", "ROOK", "KNIGHT"]) {
+        	    if (it.deviceFamily in ["ECHO", "ROOK", "KNIGHT", "THIRD_PARTY_AVS_SONOS_BOOTLEG", "TABLET"]) {
                         //log.debug "${it.accountName} is valid"
+                        validDevices << it.accountName
+                    }
+                    if (it.deviceFamily == "THIRD_PARTY_AVS_MEDIA_DISPLAY" && it.capabilities.contains("AUDIBLE")) {
                         validDevices << it.accountName
                     }
                 }
@@ -142,7 +146,7 @@ def getDevices() {
 
 private void createChildDevice(String deviceName) {
     
-	log.debug "'createChildDevice()': Creating Child Device '${deviceName}'"
+    log.debug "'createChildDevice()': Creating Child Device '${deviceName}'"
         
     try {
         def child = addChildDevice("ogiewon", "Child Alexa TTS", "${app.label}-${deviceName}", null, [name: "AlexaTTS-${deviceName}", label: "AlexaTTS ${deviceName}", completedSetup: true]) 
@@ -155,8 +159,7 @@ def installed() {
     log.debug "'installed()' called"
 	log.debug "'Installed' with settings: ${settings}"
     updated()
-	//subscribe()
-
+    //subscribe()
 }
 
 def uninstalled() {
@@ -166,7 +169,7 @@ def uninstalled() {
 
 def updated() {
     log.debug "'updated()' called"
-	//log.debug "'Updated' with settings: ${settings}"
+    //log.debug "'Updated' with settings: ${settings}"
     //log.debug "AlexaJSON = ${atomicState.alexaJSON}"
     //log.debug "Alexa Devices = ${atomicState.alexaJSON.devices.accountName}"
     
@@ -179,20 +182,19 @@ def updated() {
                         childDevice = child
                         //log.debug "Child ${app.label}-${alexaName} already exists"
                     }
-        		}
+        	}
             }
             if (childDevice == null) {
                 createChildDevice(alexaName)
- 				log.debug "Child ${app.label}-${alexaName} has been created"
+                log.debug "Child ${app.label}-${alexaName} has been created"
             }
         }
     }
     catch (e) {
         log.error "Error in updated() routine, error = ${e}"
     }   
-
-	//unsubscribe()
-	//subscribe()
+    //unsubscribe()
+    //subscribe()
 }
 
 def subscribe() {

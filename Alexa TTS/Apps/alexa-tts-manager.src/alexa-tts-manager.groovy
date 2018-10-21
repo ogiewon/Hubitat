@@ -18,6 +18,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2018-10-20  Dan Ogorchock  Original Creation - with help from Chuck Schwer!
+ *    2018-10-21  Dan Ogorchock  Trapped an error when invalid data returned from Amazon due to cookie issue.
  *	
  */
  
@@ -114,8 +115,8 @@ def getDevices() {
 		httpGet(params) { resp ->
         	//log.debug resp.contentType
         	//log.debug resp.status
-    		//log.debug resp.data.devices.accountName
-        	if (resp.status == 200) {
+    		//log.debug resp.data
+        	if ((resp.status == 200) && (resp.contentType == "application/json")) {
                 def validDevices = []
                 atomicState.alexaJSON = resp.data
                 //log.debug state.alexaJSON.devices.accountName
@@ -128,7 +129,7 @@ def getDevices() {
             	return validDevices
         	}
         	else {
-            	log.error "Received HTTP error ${resp.status}. Check your cookie data!"
+            	log.error "Encountered an error. http resp.status = '${resp.status}'. http resp.contentType = '${resp.contentType}'. Should be '200' and 'application/json'. Check your cookie string!"
             	return "error"
         	}
         }

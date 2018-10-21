@@ -1,4 +1,4 @@
-# Hubitat Amazon Alexa Text To Speech  v0.1
+# Hubitat Amazon Alexa Text To Speech  v0.1 (USA only currently)
 
 Have you ever wanted to be able to issue Text to Speech (TTS) calls to your individual Amazon Echo, Dot, Spot, or Show devices from your Hubitat Elevation Hub?  If yes, read on!  If not, why wouldn't you want to do this?  Read on!
 

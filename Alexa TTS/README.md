@@ -2,10 +2,10 @@
 
 History
 -------
-v0.1.0  Initial Release
-v0.1.1  Error handling
-v0.2.0  Added support for additonal device types
-v0.3.0  Added support for country selection (USA, Canada, & UK) + ability to rename the app
+- v0.1.0  Initial Release
+- v0.1.1  Error handling
+- v0.2.0  Added support for additonal device types
+- v0.3.0  Added support for country selection (USA, Canada, & UK) + ability to rename the app
 
 WARNING: v0.3.0 will create NEW child devices in addition to your existing ones.  This was necessary to support the ability to rename the App.  I had to modify the Device Network ID for the children to not depend on the app name.  You will need to modify any automations that use the old child devices to use the new ones.  Then delete the original child devices.  Sorry for the inconveniece!
 

@@ -87,6 +87,14 @@ Alternate method to get the cookie directly from Chrome.  (Thanks @krlaframboise
 9) Remove all double quotes. Search for double quotes and replace with an empty string.
 10) Paste the cookie into the app and add a semi-colon to the end of it
 
+Another way to get the cookie from Firefox without doing all the edits or needing the cookies extension (Thanks @NoWon)
+-------------------------------------------------------------------------------------------------------
+1) In FireFox goto to https://alexa.amazon.com/ then right click on the web page
+2) select "inspect element (Q)"
+3) select network and then XHR
+4) right click on the "post" that has "alexa.amazon.com" and select "copy request headers"
+5) then paste that into a notepad and your cookie will be clearly labeled there.
+6) ignore the first "Cookie: " part and just add a semi-colon to the end
 
 If someone wants to write a standalone app to parse the cookies.txt file and create the above semicolon delimited string, that would be a great help to users.
 

@@ -1,4 +1,13 @@
-# Hubitat Amazon Alexa Text To Speech  v0.1 (USA only currently)
+# Hubitat Amazon Alexa Text To Speech  v0.3.0 (USA only currently)
+
+History
+-------
+v0.1.0  Initial Release
+v0.1.1  Error handling
+v0.2.0  Added support for additonal device types
+v0.3.0  Added support for country selection (USA, Canada, & UK) + ability to rename the app
+
+WARNING: v0.3.0 will create NEW child devices in addition to your existing ones.  This was necessary to support the ability to rename the App.  I had to modify the Device Network ID for the children to not depend on the app name.  You will need to modify any automations that use the old child devices to use the new ones.  Then delete the original child devices.  Sorry for the inconveniece!
 
 Have you ever wanted to be able to issue Text to Speech (TTS) calls to your individual Amazon Echo, Dot, Spot, or Show devices from your Hubitat Elevation Hub?  If yes, read on!  If not, why wouldn't you want to do this?  Read on!
 
@@ -82,14 +91,18 @@ If someone wants to write a standalone app to parse the cookies.txt file and cre
 7) Add the "Alexa TTS Manager" source code to your Hubitat 'Apps Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Apps/alexa-tts-manager.src/alexa-tts-manager.groovy
 8) Add the "Child Alexa TTS" source code to your Hubitat 'Drivers Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
 9) Go to your 'Apps', and click 'Load New App' and select the "Alexa TTS Manager"
-10) Now copy and paste that huge cookie string you created earlier and paste it into the text box.  Click Done
-11) If everything went well with your cookie, you should be able to select one or more of your Alexa devices on the page that comes up.
-12) Click Done and you should be ready to give it a try!
-13) Go to your 'Devices', and select the 'AlexaTTS yourdevicename' device from the list.  
-14) On the device's detail page, type in any string your want and click 'Speak'
+10) Now copy and paste that huge cookie string you created earlier and paste it into the text box.  
+11) Select your country from the drop down list.
+12) Optionally, rename the App as you see fit.
+13) Click Next.
+14) If everything went well with your cookie, you should be able to select one or more of your Alexa devices on the page that comes up.
+15) Click Done and you should be ready to give it a try!
+16) Go to your 'Devices', and select the 'AlexaTTS yourdevicename' device from the list.  
+17) On the device's detail page, type in any string your want and click 'Speak'
+18) Optionally, change the Label of the device to whatever you'd like.  Do NOT change the Device Network ID!
 
 If everything went well, you should be up and running!
 
-Remember, this will only continue to work as long as the cookie from your browser session is valid.  
+Remember, this will only continue to work as long as the cookie from your browser session is valid.  Also, Amazon could change things behind the scenes at any time which could break this integration.  Enjoy it while it lasts!
 
 If anyone wants to help improve this, or add additonal feature, please feel free to submit pull requests or reach out to me directly via the Hubitat Community Forums (@ogiewon).

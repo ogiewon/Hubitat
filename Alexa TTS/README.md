@@ -28,7 +28,8 @@ In order for your Hubitat hub to communicate to https://alexa.amazon.com, it nee
 
 My main browser of choice on Windows is Chrome.  Since I want this cookie to remain valid for a very long time, I decided that it was safest to download FireFox and install the "Cookies.txt" extension.  This way, I won't accidentally invalidate my cookie for alexa.amazon.com.  The goal is to be able to keep this cookie valid for a very long time.  There may be better solutions for this that I am not aware of, so please feel free to provide some feedback!  Always looking for some help!
 
-# Original method (see below for alternate)
+Original method (see below for alternate, considered easier by most)
+-----------------------------------------------------------------------------------------------------
 1) Fire up a browser, like FireFox, and install the Cookies.txt Extension by lennonhill (source available at https://github.com/lennonhill/cookies-txt)
 2) Sign into https://alexa.amazon.com using your browser
 3) Click on the 'Cookies.txt' extension and save the resulting cookie file to you computer
@@ -72,7 +73,8 @@ Note:  Be sure to replace the spaces with equals signs and end section with a se
 ```
 at-main=Atza|IwEBIIX59iE-dR1234567890nt-tflCFWhqH8E1234567890sbE4cHgK1_mz01QQymCzve0iFu4wq7k-t86VkmmvUm123456789069_wjxusrO3v7b-c0XzvsgzYT4PDSmEME0hn1234567890W90k4LZWgRwa541234567890RYCE1EENn_o9hkle1234567890Y8r8IbjumqaH891234567890QX67EdZ6Nrwz1234567890h0iX3iWzSno9vcHZLbQAyw12345678901DDz46_V-L48wDi1234567890AuOqENK1234567890TSh84SJ_XjM_Tiv-6gUdn_11234567890LFXvDtvnYh-J1234567890g6e1nRQa1234567890Fk8QvvRrCY1234567890Jt-mqf1234567890O0jdcn45C-Yg-nB1ZxXoG-84m1234567890Wz-Cw1234567890azXQR_gE777A; csrf=123456789; sess-at-main=1234567890Q1xRW21234567890G2k1234567890DDCEnk=; session-id=123-4567890-1234567; session-id-time=1234567890l; x-main=Uy@EPvTF@KBnko?V@12345678906QrX; session-token=5H1234567890sg5zn3qe9BE6zniSfsS6iWarF2rjHunCxErxZFoK7HYVqVLJ01234567890kAQgqHm2Z0/ce1234567890iej5IrwENPF1234567890L8mHG1234567890luCpHqoxL7fDtwQrpe7WMwW1QW+ITqsQhuQy501234567890P+XCpci5xsG1234567890HBLRND0arnZifPqndStRf8=; sid=9CumEN1F/rk4s5lagx86rw==|F8rrq1234567890HOzwLFaX12345678903fcDQ=; ubid-main=130-2711001-12345678;
 ```
-# Alternate method to get the cookie directly from Chrome.  (Thanks @krlaframboise and @ritchierich !)
+Alternate method to get the cookie directly from Chrome.  (Thanks @krlaframboise and @ritchierich !)
+-----------------------------------------------------------------------------------------------------
 1) Open Chrome and Login to alexa.amazon.com
 2) Open the Chrome menu at the top-right of your browser window, then select Tools (More Tools) > Developer Tools
 3) On top row of developer tools you will see several tabs: Elements, Console, Sources, Network, etc. Click Network.
@@ -88,6 +90,7 @@ at-main=Atza|IwEBIIX59iE-dR1234567890nt-tflCFWhqH8E1234567890sbE4cHgK1_mz01QQymC
 If someone wants to write a standalone app to parse the cookies.txt file and create the above semicolon delimited string, that would be a great help to users.
 
 Okay, so you've got your cookie string.  Congratulations as I know that was a bit of manual work!  Now for the easy part!
+-----------------------------------------------------------------------------------------------------
 1) Add the "Alexa TTS Manager" source code to your Hubitat 'Apps Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Apps/alexa-tts-manager.src/alexa-tts-manager.groovy
 2) Add the "Child Alexa TTS" source code to your Hubitat 'Drivers Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
 3) Go to your 'Apps', and click 'Load New App' and select the "Alexa TTS Manager"

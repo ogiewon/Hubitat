@@ -1,4 +1,5 @@
-# Hubitat Amazon Alexa Text To Speech  v0.3.0 (USA only currently)
+# Hubitat Amazon Alexa Text To Speech  v0.3.0 
+(USA, Canada, and UK currently supported)
 
 History
 -------

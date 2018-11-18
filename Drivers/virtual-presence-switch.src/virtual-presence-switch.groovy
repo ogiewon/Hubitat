@@ -1,9 +1,9 @@
-/**
- *  Virtual Presence with Switch
+/*
+ * Virtual Presence with Switch
  *
  *  Copyright 2018 Daniel Ogorchock
  *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  Licensed Virtual the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -17,15 +17,27 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2018-08-04  Dan Ogorchock  Original Creation
+ *    2018-11-18  Dan Ogorchock  Added arrived() and departed() custom commands
  * 
  */
 
 metadata {
-	definition (name: "Virtual Presence with Switch", namespace: "ogiewon", author: "Daniel Ogorchock") {
-		capability "Sensor"
-		capability "Presence Sensor"
+    definition (name: "Virtual Presence with Switch", namespace: "ogiewon", author: "Daniel Ogorchock") {
+        capability "Sensor"
+        capability "Presence Sensor"
         capability "Switch"
-	}   
+		
+        command "arrived"
+        command "departed"
+    }   
+}
+
+def arrived() {
+	on()
+}
+
+def departed() {
+	off()
 }
 
 def on() {

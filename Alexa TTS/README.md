@@ -1,4 +1,4 @@
-# Hubitat Amazon Alexa Text To Speech  v0.3.0 
+# Hubitat Amazon Alexa Text To Speech  v0.4.1 
 (USA, Canada, and UK currently supported)
 
 History
@@ -7,8 +7,11 @@ History
 - v0.1.1  Error handling
 - v0.2.0  Added support for additonal device types
 - v0.3.0  Added support for country selection (USA, Canada, & UK) + ability to rename the app
+- v0.4.0  Added Virtual Container Support - Thanks @stephack!
+- v0.4.1  Added notification support for errors (like cookie expiration) and some code clean-up
 
-WARNING: v0.3.0 will create NEW child devices in addition to your existing ones.  This was necessary to support the ability to rename the App.  I had to modify the Device Network ID for the children to not depend on the app name.  You will need to modify any automations that use the old child devices to use the new ones.  Then delete the original child devices.  Sorry for the inconveniece!
+WARNING: v0.4.x will delete and create new child devices if you choose to enable the virtual container support feature.  To use the Virtual COntainer featurem you will need @stephack's Virtual Container Driver from his repo at https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy.
+
 
 Have you ever wanted to be able to issue Text to Speech (TTS) calls to your individual Amazon Echo, Dot, Spot, or Show devices from your Hubitat Elevation Hub?  If yes, read on!  If not, why wouldn't you want to do this?  Read on!
 

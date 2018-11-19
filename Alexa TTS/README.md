@@ -10,7 +10,7 @@ History
 - v0.4.0  Added Virtual Container Support - Thanks @stephack!
 - v0.4.1  Added notification support for errors (like cookie expiration) and some code clean-up
 
-WARNING: v0.4.x will delete and create new child devices if you choose to enable the virtual container support feature.  To use the Virtual COntainer featurem you will need @stephack's Virtual Container Driver from his repo at https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy.
+WARNING: v0.4.x will delete and create new child devices if you choose to enable the virtual container support feature.  To use the Virtual Container feature, you will need @stephack's Virtual Container Driver from his repo at https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy.
 
 
 Have you ever wanted to be able to issue Text to Speech (TTS) calls to your individual Amazon Echo, Dot, Spot, or Show devices from your Hubitat Elevation Hub?  If yes, read on!  If not, why wouldn't you want to do this?  Read on!

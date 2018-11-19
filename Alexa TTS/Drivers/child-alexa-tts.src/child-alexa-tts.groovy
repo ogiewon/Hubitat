@@ -14,10 +14,10 @@
  *
  *  Change History:
  *
- *    Date        Who            What
- *    ----        ---            ----
- *    2018-10-20  Dan Ogorchock  Original Creation
- *
+ *    Date        Who             	What
+ *    ----        ---             	----
+ *    2018-10-20  Dan Ogorchock   	Original Creation
+ *    2018-11-18  Stephan Hackett	Added support for Virtual Containers
  * 
  */
 
@@ -34,7 +34,10 @@ preferences {
 def speak(message) {
     log.debug "Speaking message = '${message}'"
     def name = device.deviceNetworkId.split("-")[-1]
-    parent.speakMessage(message, name)
+	def vId = device.data.vcId
+	if(vId) parent.childComm("speakMessage", message, vId)
+	else parent.speakMessage(message, name)
+    
 }
 
 def installed() {

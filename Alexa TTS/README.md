@@ -80,7 +80,7 @@ at-main=Atza|IwEBIIX59iE-dR1234567890nt-tflCFWhqH8E1234567890sbE4cHgK1_mz01QQymC
 Alternate method to get the cookie directly from Chrome.  (Thanks @krlaframboise and @ritchierich !)
 -----------------------------------------------------------------------------------------------------
 1) Open Chrome and Login to alexa.amazon.com
-2) Open the Chrome menu at the top-right of your browser window, then select Tools (More Tools) > Developer Tools
+2) Open the Chrome menu at the top-right of your browser window, then select Tools (More Tools) > Developer Tools (or click F12)
 3) On top row of developer tools you will see several tabs: Elements, Console, Sources, Network, etc. Click Network.
 4) Just below the tabs you will see a red circle, below that you will see a filter box, and below that you will see sub tabs: All, XHR, JS, etc. Click XHR
 5) Click Smart Home in the left navigation

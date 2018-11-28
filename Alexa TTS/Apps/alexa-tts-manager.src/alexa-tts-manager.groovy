@@ -23,6 +23,7 @@
  *     v0.3.0   2018-10-22  Dan Ogorchock   Added support for Canada and United Kingdom, and ability to rename the app
  *     v0.4.0   2018-11-18  Stephan Hackett Added support for Virtual Container
  *     v0.4.1   2018-11-18  Dan Ogorchock   Optimized multi-country support code and added Notification support for errors
+ *     v0.4.2   2018-11-27  Dan Ogorchock   Improved error handling for notificagtions when cookie expires (via live logging and optoinally, via push notification)
  *
  */
  
@@ -100,7 +101,13 @@ def speakMessage(String message, String device) {
                 httpPost(params) { resp ->
                     //log.debug resp.contentType
                     //log.debug resp.status
-                    //log.debug resp.data    
+                    //log.debug resp.data   
+					if (resp.status != 200) {
+                        log.error "'speakMessage()':  httpPost() resp.status = ${resp.status}"
+					    if (notificationDevice) {
+                            notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
+                        }
+					}
                 }
             }
             catch (groovyx.net.http.HttpResponseException hre) {

@@ -23,7 +23,8 @@
  *     v0.3.0   2018-10-22  Dan Ogorchock   Added support for Canada and United Kingdom, and ability to rename the app
  *     v0.4.0   2018-11-18  Stephan Hackett Added support for Virtual Container
  *     v0.4.1   2018-11-18  Dan Ogorchock   Optimized multi-country support code and added Notification support for errors
- *     v0.4.2   2018-11-27  Dan Ogorchock   Improved error handling for notificagtions when cookie expires (via live logging and optoinally, via push notification)
+ *     v0.4.2   2018-11-27  Dan Ogorchock   Improved error handling for notifications when cookie expires (via live logging and optoinally, via push notification)
+ *     v0.4.3   2018-12-07  Dan Ogorchock   Prevent sending empty string TTS messages to Amazon.
  *
  */
  
@@ -69,64 +70,68 @@ preferences {
 
 def speakMessage(String message, String device) {
     log.debug "Sending '${message}' to '${device}"
-    
-    atomicState.alexaJSON.devices.each {it->
-        if (it.accountName == device) {
-            //log.debug "${it.accountName}"
-            //log.debug "${it.deviceType}"
-            //log.debug "${it.serialNumber}"
-            //log.debug "${it.deviceOwnerCustomerId}"
+	if (message == '' || message.length() == 0) {
+		log.warn "Message is empty. Skipping sending request to Amazon"
+	}
+    else {
+        atomicState.alexaJSON.devices.each {it->
+            if (it.accountName == device) {
+                //log.debug "${it.accountName}"
+                //log.debug "${it.deviceType}"
+                //log.debug "${it.serialNumber}"
+                //log.debug "${it.deviceOwnerCustomerId}"
 
-            def SEQUENCECMD = "Alexa.Speak"
-            def DEVICETYPE = "${it.deviceType}"
-            def DEVICESERIALNUMBER = "${it.serialNumber}"
-            def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
-            def LANGUAGE = getURLs()."${alexaCountry}".Language
-            def TTS= ",\\\"textToSpeak\\\":\\\"${message}\\\""
-            def command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"type\\\":\\\"${SEQUENCECMD}\\\",\\\"operationPayload\\\":{\\\"deviceType\\\":\\\"${DEVICETYPE}\\\",\\\"deviceSerialNumber\\\":\\\"${DEVICESERIALNUMBER}\\\",\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"${TTS}}}}\",\"status\":\"ENABLED\"}"
-        	def csrf = (alexaCookie =~ "csrf=(.*?);")[0][1]
-            
-            def params = [uri: "https://" + getURLs()."${alexaCountry}".Alexa + "/api/behaviors/preview",
-                          headers: ["Cookie":"""${alexaCookie}""",
-                                    "Referer": "https://" + getURLs()."${alexaCountry}".Amazon + "/spa/index.html",
-                                    "Origin": "https://" + getURLs()."${alexaCountry}".Amazon,
-                                    "csrf": "${csrf}",
-                                    "Connection": "keep-alive",
-                                    "DNT":"1"],
-                                  //requestContentType: "application/json",
-                                  //contentType: "application/json; charset=UTF-8",
-                                    body: command
-                        ]
-            try{    
-                httpPost(params) { resp ->
-                    //log.debug resp.contentType
-                    //log.debug resp.status
-                    //log.debug resp.data   
-					if (resp.status != 200) {
-                        log.error "'speakMessage()':  httpPost() resp.status = ${resp.status}"
-					    if (notificationDevice) {
-                            notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
+                def SEQUENCECMD = "Alexa.Speak"
+                def DEVICETYPE = "${it.deviceType}"
+                def DEVICESERIALNUMBER = "${it.serialNumber}"
+                def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
+                def LANGUAGE = getURLs()."${alexaCountry}".Language
+                def TTS= ",\\\"textToSpeak\\\":\\\"${message}\\\""
+                def command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"type\\\":\\\"${SEQUENCECMD}\\\",\\\"operationPayload\\\":{\\\"deviceType\\\":\\\"${DEVICETYPE}\\\",\\\"deviceSerialNumber\\\":\\\"${DEVICESERIALNUMBER}\\\",\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"${TTS}}}}\",\"status\":\"ENABLED\"}"
+                def csrf = (alexaCookie =~ "csrf=(.*?);")[0][1]
+
+                def params = [uri: "https://" + getURLs()."${alexaCountry}".Alexa + "/api/behaviors/preview",
+                              headers: ["Cookie":"""${alexaCookie}""",
+                                        "Referer": "https://" + getURLs()."${alexaCountry}".Amazon + "/spa/index.html",
+                                        "Origin": "https://" + getURLs()."${alexaCountry}".Amazon,
+                                        "csrf": "${csrf}",
+                                        "Connection": "keep-alive",
+                                        "DNT":"1"],
+                                      //requestContentType: "application/json",
+                                      //contentType: "application/json; charset=UTF-8",
+                                        body: command
+                            ]
+                try{    
+                    httpPost(params) { resp ->
+                        //log.debug resp.contentType
+                        //log.debug resp.status
+                        //log.debug resp.data   
+                        if (resp.status != 200) {
+                            log.error "'speakMessage()':  httpPost() resp.status = ${resp.status}"
+                            if (notificationDevice) {
+                                notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
+                            }
                         }
-					}
-                }
-            }
-            catch (groovyx.net.http.HttpResponseException hre) {
-                //Noticed an error in parsing the http response.  For now, catch it to prevent errors from being logged
-                if (hre.getResponse().getStatus() != 200) {
-                    log.error "'speakMessage()': Error making Call (Data): ${hre.getResponse().getData()}"
-                    log.error "'speakMessage()': Error making Call (Status): ${hre.getResponse().getStatus()}"
-                    log.error "'speakMessage()': Error making Call (getMessage): ${hre.getMessage()}"
-                    if (notificationDevice) {
-                        notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
                     }
                 }
+                catch (groovyx.net.http.HttpResponseException hre) {
+                    //Noticed an error in parsing the http response.  For now, catch it to prevent errors from being logged
+                    if (hre.getResponse().getStatus() != 200) {
+                        log.error "'speakMessage()': Error making Call (Data): ${hre.getResponse().getData()}"
+                        log.error "'speakMessage()': Error making Call (Status): ${hre.getResponse().getStatus()}"
+                        log.error "'speakMessage()': Error making Call (getMessage): ${hre.getMessage()}"
+                        if (notificationDevice) {
+                            notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
+                        }
+                    }
+                }
+                catch (e) {
+                    log.error "'speakMessage()':  httpPost() error = ${e}"
+                    log.error "'speakMessage()':  httpPost() resp.contentType = ${e.response.contentType}"
+                }        
             }
-            catch (e) {
-                log.error "'speakMessage()':  httpPost() error = ${e}"
-                log.error "'speakMessage()':  httpPost() resp.contentType = ${e.response.contentType}"
-            }        
         }
-    }
+	}
 }
 
 def getDevices() {

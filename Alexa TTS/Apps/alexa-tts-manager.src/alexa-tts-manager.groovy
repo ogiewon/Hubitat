@@ -25,7 +25,7 @@
  *     v0.4.1   2018-11-18  Dan Ogorchock   Optimized multi-country support code and added Notification support for errors
  *     v0.4.2   2018-11-27  Dan Ogorchock   Improved error handling for notifications when cookie expires (via live logging and optoinally, via push notification)
  *     v0.4.3   2018-12-07  Dan Ogorchock   Prevent sending empty string TTS messages to Amazon.
- *     v0.4.4   2018-12-10  Dan Ogorchock   Detect and notify via logging and notification, message rate exceeded errors to avoid confusion with cookie expration errors.
+ *     v0.4.4   2018-12-10  Dan Ogorchock   Detect and notify via logging and notification, message rate exceeded errors to avoid confusion with cookie expiration errors.
  *
  */
  

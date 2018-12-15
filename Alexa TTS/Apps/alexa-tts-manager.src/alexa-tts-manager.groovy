@@ -26,6 +26,7 @@
  *     v0.4.2   2018-11-27  Dan Ogorchock   Improved error handling for notifications when cookie expires (via live logging and optoinally, via push notification)
  *     v0.4.3   2018-12-07  Dan Ogorchock   Prevent sending empty string TTS messages to Amazon.
  *     v0.4.4   2018-12-10  Dan Ogorchock   Detect and notify via logging and notification, message rate exceeded errors to avoid confusion with cookie expiration errors.
+ *     v0.4.5   2018-12-14  Stephan Hackett Added ability to paste in the entire Raw Cookie.  No manual editing required.  Improved setup page flow.
  *
  */
  

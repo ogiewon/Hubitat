@@ -38,10 +38,23 @@ definition(
     iconX2Url: "")
 
 preferences {
-    page(name: "pageOne", title: "Alexa Cookie and Country selections", nextPage: "pageTwo", uninstall: true) {
+	page(name: "pageOne")
+	page(name: "pageTwo")
+}
+
+def pageOne(){
+    dynamicPage(name: "pageOne", title: "Alexa Cookie and Country selections", nextPage: "pageTwo", uninstall: true) {
         section("Please Enter your alexa.amazon.com 'cookie' file string here (end with a semicolon)") {
-            input("alexaCookie", "text", required: true)
+            input("rawCookie", "bool", title: "Raw Header?", submitOnChange: true)
+			if(rawCookie) input("fullCookie", "text", title: "Unedited Cookie", submitOnChange: true, required: true)
+			else input("alexaCookie", "text", title: "Edited Cookie", required: true)
         }
+		if(rawCookie && fullCookie){
+			def finalForm
+			def preForm = fullCookie.split("Cookie: ")
+			if(preForm.size() > 1) finalForm = preForm[1]?.replace("\"", "") + ";"
+			app.updateSetting("alexaCookie",[type:"text", value: finalForm])
+		}
         section("Please choose your country") {
 			input "alexaCountry", "enum", multiple: false, required: true, options: getURLs().keySet().collect()
         }
@@ -54,7 +67,10 @@ preferences {
             label title: "Optionally assign a custom name for this app", required: false
         }
     }
-    page(name: "pageTwo", title: "Amazon Alexa Device Selection", install: true, uninstall: true) {  
+}
+
+def pageTwo(){
+    dynamicPage(name: "pageTwo", title: "Amazon Alexa Device Selection", install: true, uninstall: true) {  
         section("Please select devices to create Alexa TTS child devices for") {
 			input "alexaDevices", "enum", multiple: true, required: false, options: getDevices()
         }

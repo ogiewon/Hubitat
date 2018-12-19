@@ -50,15 +50,15 @@ def speak(message) {
     
     if(message.startsWith("[CC]")){ 
         message = message.minus("[CC]")
-		if (user) {
-        	myJSON = "{ \"command\": \"${message}\",\"user\": \"${user}\" }"
+    if (user) {
+            myJSON = "{ \"command\": \"${message}\",\"user\": \"${user}\" }"
         } else {
             myJSON = "{ \"command\": \"${message}\" }"
         }
     }  
     else if(message.startsWith("[CCC]")){ 
         message = message.minus("[CCC]")
-		if (user) {
+    	if (user) {
             myJSON = "{ \"command\": \"${message}\",\"user\": \"${user}\",\"converse\": \"true\" }"
         } else {
             myJSON = "{ \"command\": \"${message}\",\"converse\": \"true\" }"
@@ -66,14 +66,14 @@ def speak(message) {
     } 
     else if(message.startsWith("[P]")){ 
         message = message.minus("[P]")
-		if (user) {
+        if (user) {
             myJSON = "{ \"preset\": \"${message}\",\"user\": \"${user}\" }"
         } else {
             myJSON = "{ \"preset\": \"${message}\" }"
         }
     } 
      else {
-		if (user) {
+        if (user) {
             myJSON = "{ \"command\": \"${message}\",\"user\": \"${user}\",\"broadcast\": \"true\" }"
         } else {
             myJSON = "{ \"command\": \"${message}\",\"broadcast\": \"true\" }"

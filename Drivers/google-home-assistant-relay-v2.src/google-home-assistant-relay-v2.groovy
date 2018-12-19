@@ -16,7 +16,8 @@
  *
  *    Date        Who            What
  *    ----        ---            ----
- *    2018-12-16  Dan Ogorchock  Original Creation of Hubitat Driver to work with Greg Hesp's Assistant Relay v2
+ *    2018-12-16  Dan Ogorchock  Original Creation of HUbitat Driver to work with Greg Hesp's Assistant Relay v2
+ *    2018-12-18  Dan Ogorchock  Added support for Assistant Relay's PRESETs.  Just add a [P] before the preset you want to use
  *
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this very simplified version!
  */
@@ -53,7 +54,11 @@ def speak(message) {
         message = message.minus("[CCC]")
         myJSON = "{ \"command\": \"${message}\",\"converse\": \"true\" }"
     } 
-    else {
+    else if(message.startsWith("[P]")){ 
+        message = message.minus("[P]")
+        myJSON = "{ \"preset\": \"${message}\" }"
+    } 
+     else {
         myJSON = "{ \"command\": \"${message}\",\"broadcast\": \"true\" }"
     }
 

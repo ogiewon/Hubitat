@@ -23,17 +23,17 @@
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this very simplified version!
  */
 metadata {
-	definition (name: "Google Home Assistant Relay v2", namespace: "ogiewon", author: "Dan Ogorchock") {
+    definition (name: "Google Home Assistant Relay v2", namespace: "ogiewon", author: "Dan Ogorchock") {
         capability "Speech Synthesis"
-    	capability "Notification"
-	}
+        capability "Notification"
+    }
 
-	preferences {
-		input(name: "deviceIP", type: "string", title:"Device IP Address", description: "Enter IP Address of your Assistant Relay Server", required: true, displayDuringSetup: true)
-		input(name: "devicePort", type: "string", title:"Device Port", description: "Enter Port of your Assistant Relay Server (defaults to 3000)", defaultValue: "3000", required: true, displayDuringSetup: true)
-		input(name: "user", type: "string", title:"Assistant Relay Username", description: "Enter the username for this device", defaultValue: "", required: false, displayDuringSetup: true)
+    preferences {
+        input(name: "deviceIP", type: "string", title:"Device IP Address", description: "Enter IP Address of your Assistant Relay Server", required: true, displayDuringSetup: true)
+        input(name: "devicePort", type: "string", title:"Device Port", description: "Enter Port of your Assistant Relay Server (defaults to 3000)", defaultValue: "3000", required: true, displayDuringSetup: true)
+        input(name: "user", type: "string", title:"Assistant Relay Username", description: "Enter the username for this device", defaultValue: "", required: false, displayDuringSetup: true)
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
-	}
+    }
 }
 
 def logsOff(){
@@ -50,7 +50,7 @@ def speak(message) {
     
     if(message.startsWith("[CC]")){ 
         message = message.minus("[CC]")
-    if (user) {
+        if (user) {
             myJSON = "{ \"command\": \"${message}\",\"user\": \"${user}\" }"
         } else {
             myJSON = "{ \"command\": \"${message}\" }"
@@ -58,7 +58,7 @@ def speak(message) {
     }  
     else if(message.startsWith("[CCC]")){ 
         message = message.minus("[CCC]")
-    	if (user) {
+        if (user) {
             myJSON = "{ \"command\": \"${message}\",\"user\": \"${user}\",\"converse\": \"true\" }"
         } else {
             myJSON = "{ \"command\": \"${message}\",\"converse\": \"true\" }"
@@ -72,7 +72,7 @@ def speak(message) {
             myJSON = "{ \"preset\": \"${message}\" }"
         }
     } 
-     else {
+    else {
         if (user) {
             myJSON = "{ \"command\": \"${message}\",\"user\": \"${user}\",\"broadcast\": \"true\" }"
         } else {
@@ -90,7 +90,7 @@ def deviceNotification(message) {
 
 def httpPostJSON(myJSON) {
     
-	try {
+    try {
         if (logEnable) log.debug "Sending ${myJSON} to ${deviceIP}:${devicePort}"
 
         def headers = [:]
@@ -106,15 +106,15 @@ def httpPostJSON(myJSON) {
         )
         return result
 
-	} catch (Exception e) {
-		log.error "Error = ${e}"
-	} 
+    } catch (Exception e) {
+        log.error "Error = ${e}"
+    } 
 }
 
 def installed() {
-	updated()
+    updated()
 }
 
 def updated() {
-        if (logEnable) runIn(1800,logsOff)
+    if (logEnable) runIn(1800,logsOff)
 }

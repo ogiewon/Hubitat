@@ -27,6 +27,7 @@
  *     v0.4.3   2018-12-07  Dan Ogorchock   Prevent sending empty string TTS messages to Amazon.
  *     v0.4.4   2018-12-10  Dan Ogorchock   Detect and notify via logging and notification, message rate exceeded errors to avoid confusion with cookie expiration errors.
  *     v0.4.5   2018-12-14  Stephan Hackett Added ability to paste in the entire Raw Cookie.  No manual editing required.  Improved setup page flow.
+ *     v0.4.6   2018-12-23  Dan Ogorchock   Added support for Italy.  Thank you @gabriele!
  *
  */
  
@@ -39,25 +40,25 @@ definition(
     iconX2Url: "")
 
 preferences {
-	page(name: "pageOne")
-	page(name: "pageTwo")
+    page(name: "pageOne")
+    page(name: "pageTwo")
 }
 
 def pageOne(){
     dynamicPage(name: "pageOne", title: "Alexa Cookie and Country selections", nextPage: "pageTwo", uninstall: true) {
         section("Please Enter your alexa.amazon.com 'cookie' file string here (end with a semicolon)") {
             input("rawCookie", "bool", title: "Raw Header?", submitOnChange: true)
-			if(rawCookie) input("fullCookie", "text", title: "Unedited Cookie", submitOnChange: true, required: true)
-			else input("alexaCookie", "text", title: "Edited Cookie", required: true)
+            if(rawCookie) input("fullCookie", "text", title: "Unedited Cookie", submitOnChange: true, required: true)
+            else input("alexaCookie", "text", title: "Edited Cookie", required: true)
         }
-		if(rawCookie && fullCookie){
-			def finalForm
-			def preForm = fullCookie.split("Cookie: ")
-			if(preForm.size() > 1) finalForm = preForm[1]?.replace("\"", "") + ";"
-			app.updateSetting("alexaCookie",[type:"text", value: finalForm])
-		}
+        if(rawCookie && fullCookie){
+            def finalForm
+            def preForm = fullCookie.split("Cookie: ")
+            if(preForm.size() > 1) finalForm = preForm[1]?.replace("\"", "") + ";"
+            app.updateSetting("alexaCookie",[type:"text", value: finalForm])
+        }
         section("Please choose your country") {
-			input "alexaCountry", "enum", multiple: false, required: true, options: getURLs().keySet().collect()
+            input "alexaCountry", "enum", multiple: false, required: true, options: getURLs().keySet().collect()
         }
         section("Notification Device") {
             paragraph "Optionally assign a device for error notifications (like when the cookie is invalid)"
@@ -73,24 +74,24 @@ def pageOne(){
 def pageTwo(){
     dynamicPage(name: "pageTwo", title: "Amazon Alexa Device Selection", install: true, uninstall: true) {  
         section("Please select devices to create Alexa TTS child devices for") {
-			input "alexaDevices", "enum", multiple: true, required: false, options: getDevices()
+            input "alexaDevices", "enum", multiple: true, required: false, options: getDevices()
         }
-		section("") {
-			paragraph 	"<span style='color:red'>Warning!!\nChanging the option below will delete any previously created child devices!!\n"+
-						"Virtual Container driver v1.1.20181118 or higher must be installed on your hub!!</span>"+
-						"<a href='https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy' target='_blank'> [driver] </a>"+
-						"<a href='https://community.hubitat.com/t/release-virtual-container-driver/4440' target='_blank'> [notes] </a>"
-			input "alexaVC", "bool", title: "Add Alexa TTS child devices to a Virtual Container?"
-		}
+        section("") {
+            paragraph   "<span style='color:red'>Warning!!\nChanging the option below will delete any previously created child devices!!\n"+
+                        "Virtual Container driver v1.1.20181118 or higher must be installed on your hub!!</span>"+
+                        "<a href='https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy' target='_blank'> [driver] </a>"+
+                        "<a href='https://community.hubitat.com/t/release-virtual-container-driver/4440' target='_blank'> [notes] </a>"
+            input "alexaVC", "bool", title: "Add Alexa TTS child devices to a Virtual Container?"
+        }
     }
 }
 
 
 def speakMessage(String message, String device) {
     log.debug "Sending '${message}' to '${device}"
-	if (message == '' || message.length() == 0) {
-		log.warn "Message is empty. Skipping sending request to Amazon"
-	}
+    if (message == '' || message.length() == 0) {
+        log.warn "Message is empty. Skipping sending request to Amazon"
+    }
     else {
         atomicState.alexaJSON.devices.each {it->
             if (it.accountName == device) {
@@ -139,14 +140,14 @@ def speakMessage(String message, String device) {
                         log.error "'speakMessage()': Error making Call (Data): ${hre.getResponse().getData()}"
                         log.error "'speakMessage()': Error making Call (Status): ${hre.getResponse().getStatus()}"
                         log.error "'speakMessage()': Error making Call (getMessage): ${hre.getMessage()}"
-						if (notificationDevice) {
-                        	if (hre.getResponse().getStatus() == 400) {
+                        if (notificationDevice) {
+                            if (hre.getResponse().getStatus() == 400) {
                                 notificationDevice.deviceNotification("Alexa TTS: ${hre.getResponse().getData()}")
-							}
-                        	else {
+                            }
+                            else {
                                 notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
-                        	}
-                	    }                    }
+                            }
+                        }                    }
                 }
                 catch (e) {
                     if (notificationDevice) {
@@ -158,7 +159,7 @@ def speakMessage(String message, String device) {
                 }        
             }
         }
-	}
+    }
 }
 
 def getDevices() {
@@ -220,13 +221,13 @@ private void createChildDevice(String deviceName) {
     try {
         def child = addChildDevice("ogiewon", "Child Alexa TTS", "AlexaTTS${app.id}-${deviceName}", null, [name: "AlexaTTS-${deviceName}", label: "AlexaTTS ${deviceName}", completedSetup: true]) 
     } catch (e) {
-       	log.error "Child device creation failed with error = ${e}"
+        log.error "Child device creation failed with error = ${e}"
     }
 }
 
 def installed() {
     log.debug "'installed()' called"
-	log.debug "'Installed' with settings: ${settings}"
+    log.debug "'Installed' with settings: ${settings}"
     updated()
 }
 
@@ -237,9 +238,10 @@ def uninstalled() {
 
 
 def getURLs() {
-	def URLs = ["United States": [Alexa: "pitangui.amazon.com", Amazon: "alexa.amazon.com", Language: "en-US"], 
+    def URLs = ["United States": [Alexa: "pitangui.amazon.com", Amazon: "alexa.amazon.com", Language: "en-US"], 
                 "Canada": [Alexa: "alexa.amazon.ca", Amazon: "alexa.amazon.ca", Language: "en-US"], 
-                "United Kingdom": [Alexa: "layla.amazon.co.uk", Amazon: "amazon.co.uk", Language: "en-GB"]]
+                "United Kingdom": [Alexa: "layla.amazon.co.uk", Amazon: "amazon.co.uk", Language: "en-GB"],
+                "Italy": [Alexa: "alexa.amazon.it", Amazon: "alexa.amazon.it", Language: "it-IT"]]
     return URLs
 }
 
@@ -248,75 +250,75 @@ def updated() {
     //log.debug "'Updated' with settings: ${settings}"
     //log.debug "AlexaJSON = ${atomicState.alexaJSON}"
     //log.debug "Alexa Devices = ${atomicState.alexaJSON.devices.accountName}"
-	
-	def devicesToRemove
-	if(alexaVC) {
-		devicesToRemove = getChildDevices().findAll{it.typeName == "Child Alexa TTS"}
-		if(devicesToRemove) purgeNow(devicesToRemove)
-		settings.alexaDevices.each {alexaName->
-				createContainer(alexaName)
-		}
-	}
-	else {
-		devicesToRemove = getChildDevices().findAll{it.typeName == "Virtual Container"}
-		if(devicesToRemove) purgeNow(devicesToRemove)
-		
-		try {
-			settings.alexaDevices.each {alexaName->
-				def childDevice = null
-				if(childDevices) {
-					childDevices.each {child->
-						if (child.deviceNetworkId == "AlexaTTS${app.id}-${alexaName}") {
-							childDevice = child
-							//log.debug "Child ${app.label}-${alexaName} already exists"
-						}
-					}
-				}
-				if (childDevice == null) {
-					createChildDevice(alexaName)
-					log.debug "Child ${app.label}-${alexaName} has been created"
-				}
-			}
-		}
-		catch (e) {
-			log.error "Error in updated() routine, error = ${e}"
-		}
-	}
+    
+    def devicesToRemove
+    if(alexaVC) {
+        devicesToRemove = getChildDevices().findAll{it.typeName == "Child Alexa TTS"}
+        if(devicesToRemove) purgeNow(devicesToRemove)
+        settings.alexaDevices.each {alexaName->
+                createContainer(alexaName)
+        }
+    }
+    else {
+        devicesToRemove = getChildDevices().findAll{it.typeName == "Virtual Container"}
+        if(devicesToRemove) purgeNow(devicesToRemove)
+        
+        try {
+            settings.alexaDevices.each {alexaName->
+                def childDevice = null
+                if(childDevices) {
+                    childDevices.each {child->
+                        if (child.deviceNetworkId == "AlexaTTS${app.id}-${alexaName}") {
+                            childDevice = child
+                            //log.debug "Child ${app.label}-${alexaName} already exists"
+                        }
+                    }
+                }
+                if (childDevice == null) {
+                    createChildDevice(alexaName)
+                    log.debug "Child ${app.label}-${alexaName} has been created"
+                }
+            }
+        }
+        catch (e) {
+            log.error "Error in updated() routine, error = ${e}"
+        }
+    }
 }
 
 def purgeNow(devices){
-	log.debug "Purging: ${devices}"
+    log.debug "Purging: ${devices}"
     devices.each { deleteChildDevice(it.deviceNetworkId) }
 }
 
 def createContainer(alexaName){
-	def container = getChildDevices().find{it.typeName == "Virtual Container"}
-	if(!container){
-		log.info "Creating Alexa TTS Virtual Container"
-		try {
-			container = addChildDevice("stephack", "Virtual Container", "AlexaTTS${app.id}", null, [name: "AlexaTTS-Container", label: "AlexaTTS Container", completedSetup: true]) 
-		} catch (e) {
-			log.error "Container device creation failed with error = ${e}"
-		}
-		createVchild(container, alexaName)
-	}
-	else {createVchild(container, alexaName)}
+    def container = getChildDevices().find{it.typeName == "Virtual Container"}
+    if(!container){
+        log.info "Creating Alexa TTS Virtual Container"
+        try {
+            container = addChildDevice("stephack", "Virtual Container", "AlexaTTS${app.id}", null, [name: "AlexaTTS-Container", label: "AlexaTTS Container", completedSetup: true]) 
+        } catch (e) {
+            log.error "Container device creation failed with error = ${e}"
+        }
+        createVchild(container, alexaName)
+    }
+    else {createVchild(container, alexaName)}
 }
 
 def createVchild(container, alexaName){
-	def vChildren = container.childList()
-	if(vChildren.find{it.data.vcId == "${alexaName}"}){
-		log.info alexaName + " already exists...skipping"
-	}
-	else {
-		log.info "Creating TTS Device: " + alexaName
-		try{
-			container.appCreateDevice("AlexaTTS ${alexaName}", "Child Alexa TTS", "ogiewon", "${alexaName}")
-		}
-		catch (e) {
-			log.error "Child device creation failed with error = ${e}"
-		}
-	}
+    def vChildren = container.childList()
+    if(vChildren.find{it.data.vcId == "${alexaName}"}){
+        log.info alexaName + " already exists...skipping"
+    }
+    else {
+        log.info "Creating TTS Device: " + alexaName
+        try{
+            container.appCreateDevice("AlexaTTS ${alexaName}", "Child Alexa TTS", "ogiewon", "${alexaName}")
+        }
+        catch (e) {
+            log.error "Child device creation failed with error = ${e}"
+        }
+    }
 }
 
 def initialize() {

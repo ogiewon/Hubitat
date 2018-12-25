@@ -6,6 +6,8 @@ v0.1.20181225 - Initial beta release
 
 Instructions for use
 
+NOTE: You must be running Hubitat Elevation firem ware version v2.0.3.109 or newer! 
+
 **Create Hubitat Driver**
 - Open up the "logitech-harmony-hub-parent.groovy" driver from this repository.  Make sure you hit the "RAW" button, then select/highlight all of the source code, and COPY everything (Ctrl-C on Windows, or right click->Copy). 
 - In your Hubitat Elevation Hub's admin web page, select the "Drivers Code" section and then click the "+ New Driver" button in the top right corner.  This will open a editor window for manipulating source code.

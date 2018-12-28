@@ -3,6 +3,8 @@
  *  File: Logitech-Harmony-Hub-Parent.groovy
  *  Platform: Hubitat
  *
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/logitech-harmony-hub-parent.src/logitech-harmony-hub-parent.groovy
+ *
  *  Requirements:
  *     1) Logitech Harmony Home Hub connected to same LAN as your Hubitat Hub.  Use router
  *        DHCP Reservation to prevent IP address from changing.

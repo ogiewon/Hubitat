@@ -25,17 +25,18 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2018-12-25  Dan Ogorchock  Original Creation
+ *    2018-12-27  Dan Ogorchock  Fixes to correct hub reboot issue
  *
  *
  */
 
-def version() {"v0.1.20181225"}
+def version() {"v0.1.20181227"}
 
 import hubitat.helper.InterfaceUtils
 
 metadata {
     definition (name: "Logitech Harmony Hub Parent", namespace: "ogiewon", author: "Dan Ogorchock") {
-        //capability "Initialize"
+        capability "Initialize"
         capability "Refresh"
 
         //command "sendMsg", ["String"]
@@ -304,7 +305,7 @@ def updated() {
     unschedule()
     
     //Create a 30 minute timer for debug logging
-//    if (logEnable) runIn(1800,logsOff)
+    if (logEnable) runIn(1800,logsOff)
     
     //Connect the webSocket
     initialize()
@@ -314,9 +315,6 @@ def updated() {
     
     //Get the current activity to make sure the child devices are synched with the harmony hub
     getCurrentActivity()
-    
-    //Schedule a periodic refresh to keep the webSocket connection active
-    //runEvery5Minutes(getCurrentActivity)
 }
 
 def initialize() {

@@ -3,10 +3,11 @@
 It is used to communicate via webSockets to a Logitech Harmony Hub and it creates child devices for each Harmony Activity.  Instant status updates are included as well!  No polling necessary to keep Hubitat updated when a user changes the Activity via a Harmony Remote Control or the Harmony Mobile Phone App.
 
 v0.1.20181225 - Initial beta release
+v0.1.20181227 - Fixed Hub Restart Issue
 
 Instructions for use
 
-NOTE: You must be running Hubitat Elevation firmware version v2.0.3.109 or newer! 
+NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer! 
 
 **Create Hubitat Driver**
 - Open up the "logitech-harmony-hub-parent.groovy" driver from this repository.  Make sure you hit the "RAW" button, then select/highlight all of the source code, and COPY everything (Ctrl-C on Windows, or right click->Copy). 

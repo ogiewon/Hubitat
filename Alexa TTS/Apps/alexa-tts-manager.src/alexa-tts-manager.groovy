@@ -3,6 +3,7 @@
  *
  *  Copyright 2018 Daniel Ogorchock - Special thanks to Chuck Schwer for his tips and prodding me
  *                                    to not let this idea fall through the cracks!  
+ *  Copyright 2018 Gabriele         - Automatic cookie refresh with Apollon77/Alexa-Cookie
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -28,9 +29,10 @@
  *     v0.4.4   2018-12-10  Dan Ogorchock   Detect and notify via logging and notification, message rate exceeded errors to avoid confusion with cookie expiration errors.
  *     v0.4.5   2018-12-14  Stephan Hackett Added ability to paste in the entire Raw Cookie.  No manual editing required.  Improved setup page flow.
  *     v0.4.6   2018-12-23  Dan Ogorchock   Added support for Italy.  Thank you @gabriele!
+ *     v0.5.0   2019-01-02  Gabriele        Add support for automatic cookie refresh with external webserver
  *
  */
- 
+
 definition(
     name: "Alexa TTS Manager",
     namespace: "ogiewon",
@@ -47,23 +49,43 @@ preferences {
 def pageOne(){
     dynamicPage(name: "pageOne", title: "Alexa Cookie and Country selections", nextPage: "pageTwo", uninstall: true) {
         section("Please Enter your alexa.amazon.com 'cookie' file string here (end with a semicolon)") {
-            input("rawCookie", "bool", title: "Raw Header?", submitOnChange: true)
-            if(rawCookie) input("fullCookie", "text", title: "Unedited Cookie", submitOnChange: true, required: true)
-            else input("alexaCookie", "text", title: "Edited Cookie", required: true)
+            input("alexaCookie", "text", title: "Raw or edited Cookie", submitOnChange: true, required: true)
         }
-        if(rawCookie && fullCookie){
+        if(alexaCookie != null && alexaCookie.contains("Cookie: ")){
             def finalForm
-            def preForm = fullCookie.split("Cookie: ")
+            def preForm = alexaCookie.split("Cookie: ")
             if(preForm.size() > 1) finalForm = preForm[1]?.replace("\"", "") + ";"
             app.updateSetting("alexaCookie",[type:"text", value: finalForm])
+        }
+        section("Please enter settings for automatic cookie refresh with NodeJS") {
+            input("alexaRefreshURL", "text", title: "NodeJS service URL", required: false)
+            input("alexaRefreshUsername", "text", title: "NodeJS service Username (not Amazon one)", required: false)
+            input("alexaRefreshPassword", "password", title: "NodeJS service Password (not Amazon one)", required: false)
+            input("alexaRefreshOptions", "text", title: "Alexa cookie refresh options", required: false, submitOnChange: true)
+            input("alexaRefresh", "bool", title: "Force refresh now? (Procedure will require 5 minutes)", submitOnChange: true)
+        }
+        if(alexaRefreshOptions == null) {
+            unschedule()
+        }
+        else {
+            // Schedule automatic update
+            unschedule()
+            schedule("0 0 2 1/6 * ? *", refreshCookie) //  Check for updates every 6 days at 2:00 AM
+            //Extract cookie from options if cookie is empty
+            if(alexaCookie == null){
+                app.updateSetting("alexaCookie",[type:"text", value: getCookieFromOptions(alexaRefreshOptions)])
+            }
+        }
+        if(alexaRefresh) {
+            refreshCookie()
+            app.updateSetting("alexaRefresh",[type:"bool", value: false])
         }
         section("Please choose your country") {
             input "alexaCountry", "enum", multiple: false, required: true, options: getURLs().keySet().collect()
         }
         section("Notification Device") {
-            paragraph "Optionally assign a device for error notifications (like when the cookie is invalid)"
+            paragraph "Optionally assign a device for error notifications (like when the cookie is invalid or refresh fails)"
             input "notificationDevice", "capability.notification", multiple: false, required: false
-
         }
         section("App Name") {
             label title: "Optionally assign a custom name for this app", required: false
@@ -77,7 +99,7 @@ def pageTwo(){
             input "alexaDevices", "enum", multiple: true, required: false, options: getDevices()
         }
         section("") {
-            paragraph   "<span style='color:red'>Warning!!\nChanging the option below will delete any previously created child devices!!\n"+
+            paragraph     "<span style='color:red'>Warning!!\nChanging the option below will delete any previously created child devices!!\n"+
                         "Virtual Container driver v1.1.20181118 or higher must be installed on your hub!!</span>"+
                         "<a href='https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy' target='_blank'> [driver] </a>"+
                         "<a href='https://community.hubitat.com/t/release-virtual-container-driver/4440' target='_blank'> [notes] </a>"
@@ -128,9 +150,7 @@ def speakMessage(String message, String device) {
                         //log.debug resp.data   
                         if (resp.status != 200) {
                             log.error "'speakMessage()':  httpPost() resp.status = ${resp.status}"
-                            if (notificationDevice) {
-                                notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
-                            }
+                            notifyIfEnabled("Alexa TTS: Please check your cookie!")
                         }
                     }
                 }
@@ -140,22 +160,18 @@ def speakMessage(String message, String device) {
                         log.error "'speakMessage()': Error making Call (Data): ${hre.getResponse().getData()}"
                         log.error "'speakMessage()': Error making Call (Status): ${hre.getResponse().getStatus()}"
                         log.error "'speakMessage()': Error making Call (getMessage): ${hre.getMessage()}"
-                        if (notificationDevice) {
-                            if (hre.getResponse().getStatus() == 400) {
-                                notificationDevice.deviceNotification("Alexa TTS: ${hre.getResponse().getData()}")
-                            }
-                            else {
-                                notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
-                            }
-                        }                    }
+                        if (hre.getResponse().getStatus() == 400) {
+                            notifyIfEnabled("Alexa TTS: ${hre.getResponse().getData()}")
+                        }
+                        else {
+                            notifyIfEnabled("Alexa TTS: Please check your cookie!")
+                        }
+                    }
                 }
                 catch (e) {
-                    if (notificationDevice) {
-                        notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
-                    }
                     log.error "'speakMessage()': error = ${e}"
                     //log.error "'speakMessage()':  httpPost() resp.contentType = ${e.response.contentType}"
-
+                    notifyIfEnabled("Alexa TTS: Please check your cookie!")
                 }        
             }
         }
@@ -198,19 +214,14 @@ def getDevices() {
             }
             else {
                 log.error "Encountered an error. http resp.status = '${resp.status}'. http resp.contentType = '${resp.contentType}'. Should be '200' and 'application/json'. Check your cookie string!"
-                if (notificationDevice) {
-                    notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
-                }
-                
+                notifyIfEnabled("Alexa TTS: Please check your cookie!")
                 return "error"
             }
         }
     }
     catch (e) {
         log.error "getDevices: error = ${e}"
-        if (notificationDevice) {
-            notificationDevice.deviceNotification("Alexa TTS: Please check your cookie!")
-        }
+        notifyIfEnabled("Alexa TTS: Please check your cookie!")
     }
 }
 
@@ -221,7 +232,7 @@ private void createChildDevice(String deviceName) {
     try {
         def child = addChildDevice("ogiewon", "Child Alexa TTS", "AlexaTTS${app.id}-${deviceName}", null, [name: "AlexaTTS-${deviceName}", label: "AlexaTTS ${deviceName}", completedSetup: true]) 
     } catch (e) {
-        log.error "Child device creation failed with error = ${e}"
+           log.error "Child device creation failed with error = ${e}"
     }
 }
 
@@ -236,11 +247,10 @@ def uninstalled() {
     childDevices.each { deleteChildDevice(it.deviceNetworkId) }
 }
 
-
 def getURLs() {
     def URLs = ["United States": [Alexa: "pitangui.amazon.com", Amazon: "alexa.amazon.com", Language: "en-US"], 
                 "Canada": [Alexa: "alexa.amazon.ca", Amazon: "alexa.amazon.ca", Language: "en-US"], 
-                "United Kingdom": [Alexa: "layla.amazon.co.uk", Amazon: "amazon.co.uk", Language: "en-GB"],
+                "United Kingdom": [Alexa: "layla.amazon.co.uk", Amazon: "amazon.co.uk", Language: "en-GB"], 
                 "Italy": [Alexa: "alexa.amazon.it", Amazon: "alexa.amazon.it", Language: "it-IT"]]
     return URLs
 }
@@ -323,4 +333,146 @@ def createVchild(container, alexaName){
 
 def initialize() {
     log.debug "'initialize()' called"
+}
+
+private def getCookieFromOptions(options) {
+    try
+    {
+        def cookie = new groovy.json.JsonSlurper().parseText(options)
+        if (!cookie || cookie == "") {
+            log.error("'getCookieFromOptions()': wrong options format!")
+            notifyIfEnabled("Alexa TTS: Error parsing cookie, see logs for more information!")
+            return ""
+        }
+        cookie = cookie.localCookie.replace('"',"")
+        if(cookie.endsWith(",")) {
+            cookie = cookie.reverse().drop(1).reverse()
+        }
+        cookie += ";"
+        log.info("Alexa TTS: new cookie parsed succesfully")
+        return cookie
+    }
+    catch(e)
+    {
+        log.error("'getCookieFromOptions()': error = ${e}")
+        notifyIfEnabled("Alexa TTS: Error parsing cookie, see logs for more information!")
+        return ""
+    }
+}
+
+def refreshCookie() {
+    log.info("Alexa TTS: starting cookie refresh procedure")
+    try {
+        def authHeaders = ""
+        if(alexaRefreshUsername != "")
+            authHeaders = "Basic " + (alexaRefreshUsername + ":" + alexaRefreshPassword).bytes.encodeBase64().toString() + "}"
+        def params =[
+            uri: alexaRefreshURL,
+            headers: [
+                "Authorization":"${authHeaders}",
+                "Connection": "keep-alive",
+                "DNT":"1"
+            ],
+            requestContentType: "application/json; charset=UTF-8",
+            body: alexaRefreshOptions
+        ]
+
+       httpPost(params) { resp ->
+            if ((resp.status == 200)) {
+                //log.debug resp.contentType
+                //log.debug resp.status
+                //log.debug resp.data
+                def respGuid = resp.data.toString()
+                log.info("Alexa TTS: Request for new cookie sent succesfully, guid: " + respGuid)
+                runIn(60*5, getCookie, [data: [guid: respGuid]])
+            }
+            else {
+                log.error "Encountered an error. http resp.status = '${resp.status}'. http resp.contentType = '${resp.contentType}'. Should be '200' and 'application/json; charset=utf-8'"
+                notifyIfEnabled("Alexa TTS: Error sending request for cookie refresh, see logs for more information!")
+                return "error"
+            }
+       }
+    }
+    catch (groovyx.net.http.HttpResponseException hre) {
+        // Noticed an error in parsing the http response
+        if (hre.getResponse().getStatus() != 200) {
+            log.error "'refreshCookie()': Error making Call (Data): ${hre.getResponse().getData()}"
+            log.error "'refreshCookie()': Error making Call (Status): ${hre.getResponse().getStatus()}"
+            log.error "'refreshCookie()': Error making Call (getMessage): ${hre.getMessage()}"
+            if (hre.getResponse().getStatus() == 400) {
+                notifyIfEnabled("Alexa TTS: ${hre.getResponse().getData()}")
+            }
+            else {
+                notifyIfEnabled("Alexa TTS: Error sending request for cookie refresh, see logs for more information!")
+            }
+        }
+    }
+    catch (e) {
+        log.error "'refreshCookie()': error = ${e}"
+        notifyIfEnabled("Alexa TTS: Error sending request for cookie refresh, see logs for more information!")
+    }
+}
+def getCookie(data){
+    log.info("Alexa TTS: starting cookie download procedure")
+    if(!data.guid || data.guid == "") {
+        log.error "'getCookie()': error = guid not provided!"
+        notifyIfEnabled("Alexa TTS: Error downloading cookie, see logs for more information!")
+        return "error"
+    }
+    try {
+        def authHeaders = ""
+        if(alexaRefreshUsername != "")
+            authHeaders = "Basic " + (alexaRefreshUsername + ":" + alexaRefreshPassword).bytes.encodeBase64().toString() + "}"
+        def params =[
+            uri: alexaRefreshURL,
+            headers: [
+                "Authorization":"${authHeaders}",
+                "Connection": "keep-alive",
+                "DNT":"1"
+            ],
+            requestContentType: "application/json; charset=UTF-8",
+            query: [guid: data.guid]
+        ]
+
+       httpGet(params) { resp ->
+            //log.debug resp.contentType
+            //log.debug resp.status
+            //log.debug resp.data
+            if ((resp.status == 200) && (resp.contentType == "application/json")) {
+                //If saved directly as resp.data then double quotes are stripped
+                def newOptions = new groovy.json.JsonBuilder(resp.data).toString()
+                app.updateSetting("alexaRefreshOptions",[type:"text", value: newOptions])
+                log.info("Alexa TTS: cookie downloaded succesfully")
+                app.updateSetting("alexaCookie",[type:"text", value: getCookieFromOptions(newOptions)])
+            }
+            else {
+                log.error "Encountered an error. http resp.status = '${resp.status}'. http resp.contentType = '${resp.contentType}'. Should be '200' and 'application/json; charset=utf-8'"
+                notifyIfEnabled("Alexa TTS: Error downloading cookie, see logs for more information!")
+                return "error"
+            }
+       }
+    }
+    catch (groovyx.net.http.HttpResponseException hre) {
+        // Noticed an error in parsing the http response
+        if (hre.getResponse().getStatus() != 200) {
+            log.error "'getCookie()': Error making Call (Data): ${hre.getResponse().getData()}"
+            log.error "'getCookie()': Error making Call (Status): ${hre.getResponse().getStatus()}"
+            log.error "'getCookie()': Error making Call (getMessage): ${hre.getMessage()}"
+            if (hre.getResponse().getStatus() == 400) {
+                notifyIfEnabled("Alexa TTS: ${hre.getResponse().getData()}")
+            }
+            else {
+                notifyIfEnabled("Alexa TTS: Error downloading cookie, see logs for more information!")
+            }
+        }
+    }
+    catch (e) {
+        log.error "'getCookie()': error = ${e}"
+        notifyIfEnabled("Alexa TTS: Error dowloading cookie, see logs for more information!")
+    }
+}
+def notifyIfEnabled(message) {
+    if (notificationDevice) {
+        notificationDevice.deviceNotification(message)
+    }
 }

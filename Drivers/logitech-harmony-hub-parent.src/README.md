@@ -4,7 +4,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 
 - v0.1.20181225 - Initial beta release
 - v0.1.20181227 - Fixed Hub Restart Issue
-- v0.1.20180104 - Faster Activity Switch Response Times
+- v0.1.20190104 - Faster Activity Switch Response Times
 
 **Instructions For Use**
 

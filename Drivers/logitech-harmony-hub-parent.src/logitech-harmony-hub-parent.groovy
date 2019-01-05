@@ -28,7 +28,7 @@
  *    ----        ---            ----
  *    2018-12-25  Dan Ogorchock  Original Creation
  *    2018-12-27  Dan Ogorchock  Fixes to correct hub reboot issue
- *    2018-01-04  Dan Ogorchock  Faster updates to Child Switch Devices to prevent Alexa "Device is not repsonding" message
+ *    2019-01-04  Dan Ogorchock  Faster updates to Child Switch Devices to prevent Alexa "Device is not repsonding" message
  *
  *
  */

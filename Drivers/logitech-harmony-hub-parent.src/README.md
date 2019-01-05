@@ -6,7 +6,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20181227 - Fixed Hub Restart Issue
 - v0.1.20180104 - Faster Activity Switch Response Times
 
-Instructions for use
+**Instructions For Use**
 
 NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer! 
 

@@ -28,11 +28,12 @@
  *    ----        ---            ----
  *    2018-12-25  Dan Ogorchock  Original Creation
  *    2018-12-27  Dan Ogorchock  Fixes to correct hub reboot issue
+ *    2018-01-04  Dan Ogorchock  Faster updates to Child Switch Devices to prevent Alexa "Device is not repsonding" message
  *
  *
  */
 
-def version() {"v0.1.20181227"}
+def version() {"v0.1.20190104"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -45,7 +46,7 @@ metadata {
         //command "getConfig"
         //command "startActivity", ["String"]
         //command "stopActivity"
-        //command "getCurrentActivity"
+        command "getCurrentActivity"
         
         attribute "Activity","String"
     }
@@ -56,7 +57,7 @@ preferences {
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
 
-/*
+
 def parse(String description) {
     //log.debug "parsed $description"
     def json = null;
@@ -72,7 +73,7 @@ def parse(String description) {
         return
     }
     
-    def result
+    //def results = []
     //Retrieves the Harmony device configuration, including all Activity Names and IDs
     if (json?.cmd == "vnd.logitech.harmony/vnd.logitech.harmony.engine?config") {
         if (json?.msg == "OK") {
@@ -81,7 +82,7 @@ def parse(String description) {
                 if (logEnable) log.debug "Activity Label: ${it.label}, ID: ${tempID}"
                 
                 //Create a Child Switch Device for each Activity if needed, default all of them to 'off' for now
-                updateChild(tempID, "off", it.label)
+                updateChild(tempID, "unknown", it.label)
             }
         } else {
             log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"
@@ -92,26 +93,7 @@ def parse(String description) {
         if ((json?.data?.errorString == "OK") && (json?.data?.errorCode == "200")) {
             if (logEnable) log.debug "Harmony Activity Started - activityID: ${json?.data?.activityId}"
             
-            //Make sure the correct Activity Child Switch is updated as ON.  Make sure all others are set to OFF.  If "-1", turn off all child activity switches
-            def tempID = (json?.data?.activityId == "-1") ? "PowerOff" : "${json?.data?.activityId}" 
-            try {
-                childDevices.each{ it ->
-                    def childDNI = it.deviceNetworkId.split("-")[-1]
-                    if(childDNI == "${tempID}")
-                    {
-                        updateChild(childDNI, "on")
-                        sendEvent(name: "Activity", value: "${it.label}", isStateChange: true)
-                        //log.debug result
-                        //return result
-                    }
-                    else {
-                        updateChild(childDNI, "off")    
-                    }
-                }
-            } 
-            catch(e) {
-                log.error "Failed to find child without exception: ${e}";
-            }
+            updateChildren(json?.data?.activityId)
             
         } else {
             log.error "Received errorString = '${json?.data?.errorString}' and errorCode = '${json?.data?.errorCode}' from Harmony Hub"
@@ -120,6 +102,10 @@ def parse(String description) {
     //Retrieves changes to activities as they happen.  Status = 1 is the start of a change.  Status = 2 is the end of the change.  
     else if (json?.type == "connect.stateDigest?notify") {
         if (logEnable) log.debug "Harmony Activity Digest - activityID: ${json?.data?.activityId}, runningActivityList: ${json?.data?.runningActivityList}, activityStatus: ${json?.data?.activityStatus}"
+
+        if (json?.data?.activityStatus == 1) {
+        	updateChildren(json?.data?.activityId)
+        }
     }
     // ????
     else if (json?.cmd == "vnd.logitech.connect/vnd.logitech.statedigest?get") {
@@ -137,26 +123,8 @@ def parse(String description) {
         if ((json?.msg == "OK") && (json?.code == 200)) {
             if (logEnable) log.debug "Current Harmony Activity result: ${json?.data?.result}"
             
-            //Switch Child Device States based on the return value.  If "-1" turn off all child activity devices
-            def tempID = (json?.data?.result == "-1") ? "PowerOff" : "${json?.data?.result}"
-            try {
-                childDevices.each{ it ->
-                    def childDNI = it.deviceNetworkId.split("-")[-1]
-                    if(childDNI == "${tempID}")
-                    {
-                        updateChild(childDNI, "on")
-                        sendEvent(name: "Activity", value: "${it.label}", isStateChange: true)
-                        //log.debug result
-                        //return result
-                    }
-                    else {
-                        updateChild(childDNI, "off")    
-                    }
-                }
-            }
-            catch(e) {
-                log.error "Failed to find child without exception: ${e}";
-            }
+            updateChildren(json?.data?.result)
+
         } else {
             log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"
         }
@@ -167,120 +135,32 @@ def parse(String description) {
         }
     }
     
-}
-*/
-
-def parse(String description) {
-    //log.debug "parsed $description"
-    def json = null;
-    try{
-        json = new groovy.json.JsonSlurper().parseText(description)
-        //log.debug "${json}"    
-        if(json == null){
-            log.warn "String description not parsed"
-            return
-        }
-    }  catch(e) {
-        log.error("Failed to parse json e = ${e}")
-        return
-    }
-    
-    def results = []
-    //Retrieves the Harmony device configuration, including all Activity Names and IDs
-    if (json?.cmd == "vnd.logitech.harmony/vnd.logitech.harmony.engine?config") {
-        if (json?.msg == "OK") {
-            json?.data?.activity?.each { it ->
-                def tempID = (it.id == "-1") ? "PowerOff" : "${it.id}"                    
-                if (logEnable) log.debug "Activity Label: ${it.label}, ID: ${tempID}"
-                
-                //Create a Child Switch Device for each Activity if needed, default all of them to 'off' for now
-                updateChild(tempID, "off", it.label)
-            }
-        } else {
-            log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"
-        }
-    } 
-    //Retrieves the Harmony Start Activity Finished event
-    else if (json?.type == "harmony.engine?startActivityFinished") {
-        if ((json?.data?.errorString == "OK") && (json?.data?.errorCode == "200")) {
-            if (logEnable) log.debug "Harmony Activity Started - activityID: ${json?.data?.activityId}"
-            
-            //Make sure the correct Activity Child Switch is updated as ON.  Make sure all others are set to OFF.  If "-1", turn off all child activity switches
-            def tempID = (json?.data?.activityId == "-1") ? "PowerOff" : "${json?.data?.activityId}" 
-            try {
-                childDevices.each{ it ->
-                    def childDNI = it.deviceNetworkId.split("-")[-1]
-                    if(childDNI == "${tempID}")
-                    {
-                        updateChild(childDNI, "on")
-                        results << createEvent(name: "Activity", value: "${it.name}", isStateChange: true)
-                        //log.debug results
-                    }
-                    else {
-                        updateChild(childDNI, "off")    
-                    }
-                }
-            } 
-            catch(e) {
-                log.error "Failed to find child without exception: ${e}";
-            }
-            
-        } else {
-            log.error "Received errorString = '${json?.data?.errorString}' and errorCode = '${json?.data?.errorCode}' from Harmony Hub"
-        }
-    }
-    //Retrieves changes to activities as they happen.  Status = 1 is the start of a change.  Status = 2 is the end of the change.  
-    else if (json?.type == "connect.stateDigest?notify") {
-        if (logEnable) log.debug "Harmony Activity Digest - activityID: ${json?.data?.activityId}, runningActivityList: ${json?.data?.runningActivityList}, activityStatus: ${json?.data?.activityStatus}"
-    }
-    // ????
-    else if (json?.cmd == "vnd.logitech.connect/vnd.logitech.statedigest?get") {
-        if ((json?.msg == "OK") && (json?.code == 200)) {
-            if (logEnable) log.debug "Harmony Activity Stated Digest - activityID: ${json?.data?.activityId}, runningActivityList: ${json?.data?.runningActivityList}, activityStatus: ${json?.data?.activityStatus}"   
-
-            //TODO - ????
-
-        } else {
-            log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"
-        }
-    } 
-    //Retrieves the current activity on demand
-    else if (json?.cmd == "vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity") {
-        if ((json?.msg == "OK") && (json?.code == 200)) {
-            if (logEnable) log.debug "Current Harmony Activity result: ${json?.data?.result}"
-            
-            //Switch Child Device States based on the return value.  If "-1" turn off all child activity devices
-            def tempID = (json?.data?.result == "-1") ? "PowerOff" : "${json?.data?.result}"
-            try {
-                childDevices.each{ it ->
-                    def childDNI = it.deviceNetworkId.split("-")[-1]
-                    if(childDNI == "${tempID}")
-                    {
-                        updateChild(childDNI, "on")
-                        results << createEvent(name: "Activity", value: "${it.name}", isStateChange: true)
-                        //log.debug results
-                    }
-                    else {
-                        updateChild(childDNI, "off")    
-                    }
-                }
-            }
-            catch(e) {
-                log.error "Failed to find child without exception: ${e}";
-            }
-        } else {
-            log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"
-        }
-    }
-    else {
-        if ((json?.cmd != "harmony.engine?startActivity") && (json?.cmd != "harmony.activityengine?runactivity")) {
-            log.warn "Unhandled response from Harmony Hub.  json = ${description}"
-        }
-    }
-    
-    return results
+    //return results
     
 }
+
+
+def updateChildren(String ActivityID) {
+    //Switch Child Device States based on the return value.  If "-1" turn off all child activity devices
+    def tempID = (ActivityID == "-1") ? "PowerOff" : ActivityID
+    try {
+        childDevices.each{ it ->
+            def childDNI = it.deviceNetworkId.split("-")[-1]
+            if(childDNI == "${tempID}")
+            {
+                updateChild(childDNI, "on")
+                sendEvent(name: "Activity", value: "${it.name}", isStateChange: true)
+            }
+            else {
+                updateChild(childDNI, "off")    
+            }
+        }
+    }
+    catch(e) {
+        log.error "Failed to find child without exception: ${e}";
+    }    
+}
+
 def logsOff(){
     log.warn "debug logging disabled..."
     device.updateSetting("logEnable",[value:"false",type:"bool"])
@@ -461,10 +341,9 @@ def updateChild(String activityId, String value, String activityName = null) {
         //log.trace "child with activityId=${activityId} exists already."
     }
 
-    //If we now have a valid child device, update its attributes
-    if(child != null)
-    {
-        try{
+    //If we have a valid child device and a valid value, update its attributes
+    if((child != null) && (value != "unknown")) {
+        try {
             if (logEnable) log.debug "Calling child.parse for Activity '${child.label}' with 'switch ${value}'"
             child.parse("switch ${value}")
         } 

@@ -2,9 +2,9 @@
 
 It is used to communicate via webSockets to a Logitech Harmony Hub and it creates child devices for each Harmony Activity.  Instant status updates are included as well!  No polling necessary to keep Hubitat updated when a user changes the Activity via a Harmony Remote Control or the Harmony Mobile Phone App.
 
-v0.1.20181225 - Initial beta release
-
-v0.1.20181227 - Fixed Hub Restart Issue
+- v0.1.20181225 - Initial beta release
+- v0.1.20181227 - Fixed Hub Restart Issue
+- v0.1.20180104 - Faster Activity Switch Response Times
 
 Instructions for use
 

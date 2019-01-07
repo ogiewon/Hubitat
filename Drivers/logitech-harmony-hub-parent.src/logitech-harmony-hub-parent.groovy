@@ -131,7 +131,7 @@ def parse(String description) {
     }
     else {
         if ((json?.cmd != "harmony.engine?startActivity") && (json?.cmd != "harmony.activityengine?runactivity")) {
-            log.warn "Unhandled response from Harmony Hub.  json = ${description}"
+            log.info "Unhandled data from Harmony Hub. json = ${description}"
         }
     }
     

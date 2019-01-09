@@ -1,6 +1,8 @@
 /**
  *  Alexa TTS Manager
  *
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Apps/alexa-tts-manager.src/alexa-tts-manager.groovy
+ *
  *  Copyright 2018 Daniel Ogorchock - Special thanks to Chuck Schwer for his tips and prodding me
  *                                    to not let this idea fall through the cracks!  
  *  Copyright 2018 Gabriele         - Automatic cookie refresh with Apollon77/Alexa-Cookie

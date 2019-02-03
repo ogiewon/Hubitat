@@ -1,6 +1,8 @@
 /**
  *  Google Home Assistant Relay v2
  *
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/google-home-assistant-relay-v2.src/google-home-assistant-relay-v2.groovy
+ *
  *  Copyright 2018 Daniel Ogorchock
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -19,8 +21,9 @@
  *    2018-12-16  Dan Ogorchock  Original Creation of HUbitat Driver to work with Greg Hesp's Assistant Relay v2
  *    2018-12-18  Dan Ogorchock  Added support for Assistant Relay's PRESETs.  Just add a [P] before the preset you want to use
  *    2018-12-18  Mark Rorem     Added support for specifying a username - default is blank
+ *    2019-02-03  Ryan Casler    Added replaceAll for removing "%20" as an artifact of the MakerAPI.
  *
- *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this very simplified version!
+ *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this version!
  */
 metadata {
     definition (name: "Google Home Assistant Relay v2", namespace: "ogiewon", author: "Dan Ogorchock") {
@@ -46,6 +49,7 @@ def parse(String description) {
 }
 
 def speak(message) {
+	message = message.replaceAll("%20", " ")
     def myJSON = ""
     
     if(message.startsWith("[CC]")){ 

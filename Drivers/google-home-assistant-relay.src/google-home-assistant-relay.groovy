@@ -1,6 +1,8 @@
 /**
  *  Google Home Assistant Relay
  *
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/f82fb4fd5dac921e5093eedc0d55620afac25e66/Drivers/google-home-assistant-relay.src/google-home-assistant-relay.groovy
+ *
  *  Copyright 2018 Daniel Ogorchock
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -20,8 +22,9 @@
  *    2018-07-01  Dan Ogorchock  Add support for Custom Commands - prefix string with [CC] to POST /custom?command= instead of /customBroadcast?text=
  *    2018-07-02  Dan Ogorchock  Add support for Confirmation - prefix sting with [CCC] to POST /custom?command=<your command>&converse=true
  *    2018-10-18  Dan Ogorchock  Reduced debug logging
+ *    2019-02-03  Ryan Casler    Added replaceAll for removing "%20" as an artifact of the MakerAPI.
  *
- *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this very simplified version!
+ *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this version!
  */
 metadata {
 	definition (name: "Google Home Assistant Relay", namespace: "ogiewon", author: "Dan Ogorchock") {
@@ -40,6 +43,7 @@ def parse(String description) {
 }
 
 def speak(message) {
+	message = message.replaceAll("%20", " ")
     def command = "/customBroadcast?text="
     def suffix = ""
     

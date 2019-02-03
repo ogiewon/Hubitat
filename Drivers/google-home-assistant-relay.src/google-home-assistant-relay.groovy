@@ -20,6 +20,7 @@
  *    2018-07-01  Dan Ogorchock  Add support for Custom Commands - prefix string with [CC] to POST /custom?command= instead of /customBroadcast?text=
  *    2018-07-02  Dan Ogorchock  Add support for Confirmation - prefix sting with [CCC] to POST /custom?command=<your command>&converse=true
  *    2018-10-18  Dan Ogorchock  Reduced debug logging
+ *    2019-02-03  Ryan Casler    Added replaceAll for removing "%20" as an artifact of the MakerAPI.
  *
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this very simplified version!
  */
@@ -46,14 +47,16 @@ def speak(message) {
     if(message.startsWith("[CC]")){ 
       command = "/custom?command="
       message = message.minus("[CC]")
+	  message = message.replaceAll("%20", " ")
     }  
     else if(message.startsWith("[CCC]")){ 
       command = "/custom?command="
       suffix = "&converse=true"
       message = message.minus("[CCC]")
+	  message = message.replaceAll("%20", " ")
     } 
     
-    def text = URLEncoder.encode(message, "UTF-8");
+    def text = URLEncoder.encode(message.replaceAll("%20"," "), "UTF-8");
     
     if (suffix == "") {
         //log.debug "${command}${text}"
@@ -66,7 +69,7 @@ def speak(message) {
 }
 
 def deviceNotification(message) {
-    speak(message)
+    speak(message.replaceAll("%20"," "))
 }
 
 def httpPostJSON(path) {

@@ -1,4 +1,4 @@
-# Hubitat Amazon Alexa Text To Speech  v0.5.0
+# Hubitat Amazon Alexa Text To Speech  v0.5.1
 (USA, Canada, UK, Italy currently supported)
 
 History
@@ -15,6 +15,7 @@ History
 - v0.4.5  Added support for entering raw cookie (no parsing required, just copy from browser and paste in app)
 - v0.4.6  Added support for Italy.  Thank you @gabriele!
 - v0.5.0  Added support for automatic cookie refresh with external NodeJS webserver
+- v0.5.1  Corrected contentType to prevent response parsing errors
 
 WARNING: v0.4.x will delete and create new child devices if you choose to enable the virtual container support feature.  To use the Virtual Container feature, you will need @stephack's Virtual Container Driver from his repo at https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy.
 

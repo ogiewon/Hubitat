@@ -33,6 +33,7 @@
  *     v0.4.5   2018-12-14  Stephan Hackett Added ability to paste in the entire Raw Cookie.  No manual editing required.  Improved setup page flow.
  *     v0.4.6   2018-12-23  Dan Ogorchock   Added support for Italy.  Thank you @gabriele!
  *     v0.5.0   2019-01-02  Gabriele        Added support for automatic cookie refresh with external NodeJS webserver
+ *     v0.5.1   2019-02-12  Dan Ogorchock   Corrected contentType to prevent errors in response parsing
  *
  */
 
@@ -143,14 +144,14 @@ def speakMessage(String message, String device) {
                                             "Connection": "keep-alive",
                                             "DNT":"1"],
                                           //requestContentType: "application/json",
-                                          //contentType: "application/json; charset=UTF-8",
+                                            contentType: "text/plain",
                                             body: command
                                 ]
     
                     httpPost(params) { resp ->
-                        //log.debug resp.contentType
-                        //log.debug resp.status
-                        //log.debug resp.data   
+                        log.debug resp.contentType
+                        log.debug resp.status
+                        log.debug resp.data   
                         if (resp.status != 200) {
                             log.error "'speakMessage()':  httpPost() resp.status = ${resp.status}"
                             notifyIfEnabled("Alexa TTS: Please check your cookie!")

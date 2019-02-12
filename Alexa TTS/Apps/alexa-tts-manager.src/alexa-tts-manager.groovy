@@ -149,9 +149,9 @@ def speakMessage(String message, String device) {
                                 ]
     
                     httpPost(params) { resp ->
-                        log.debug resp.contentType
-                        log.debug resp.status
-                        log.debug resp.data   
+                        //log.debug resp.contentType
+                        //log.debug resp.status
+                        //log.debug resp.data   
                         if (resp.status != 200) {
                             log.error "'speakMessage()':  httpPost() resp.status = ${resp.status}"
                             notifyIfEnabled("Alexa TTS: Please check your cookie!")

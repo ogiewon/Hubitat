@@ -30,11 +30,12 @@
  *    2018-12-27  Dan Ogorchock  Fixes to correct hub reboot issue
  *    2019-01-04  Dan Ogorchock  Faster updates to Child Switch Devices to prevent Alexa "Device is not repsonding" message
  *    2019-01-07  Dan Ogorchock  Changed log.warn to log.info for unhandled data from harmony hub
+ *    2019-02-20  @corerootedxb  Fixed routine to obtain the remoteId due to firmware 4.15.250 changes by Logitech
  *
  *
  */
 
-def version() {"v0.1.20190107"}
+def version() {"v0.1.20190220"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -209,6 +210,22 @@ def initialize() {
         return
     }
     
+    if (state.remoteId == null) {
+        httpPost(uri: "http://${ip}:8088",
+                 path: '/',
+                 contentType: 'application/json',
+                 requestContentType: 'application/json',
+                 //Logitech changed webSockets interface in 4.15.250.  Updated Origin and body cmd.
+                 headers: ['Origin': 'http://sl.dhg.myharmony.com'],
+                 body: '{"id": 1, "cmd": "setup.account?getProvisionInfo", "params": {}}'
+                ) { response ->
+             //activeRemoteId is the new property name instead of just remoteId.
+             log.debug "hub remote id: ${response.data.data.activeRemoteId}"
+             state.remoteId = response.data.data.activeRemoteId
+         }
+    }
+
+/*    Original code for users on older firmware - need to make more elegant DGO 2019-02-20
     //Make sure we know the remoteId of the Harmony Hub
     if (state.remoteId == null) {
         httpPost(uri: "http://${ip}:8088",
@@ -222,7 +239,7 @@ def initialize() {
             state.remoteId = response.data.data.remoteId
         }
     }
-    
+  */  
     //Connect the webSocket to the Harmony Hub
     try {
         InterfaceUtils.webSocketConnect(device, "ws://${ip}:8088/?domain=svcs.myharmony.com&hubId=${state.remoteId}")

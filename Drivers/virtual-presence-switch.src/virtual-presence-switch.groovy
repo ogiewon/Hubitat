@@ -1,6 +1,8 @@
 /*
  * Virtual Presence with Switch
  *
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/virtual-presence-switch.src/virtual-presence-switch.groovy
+ *
  *  Copyright 2018 Daniel Ogorchock
  *
  *  Licensed Virtual the Apache License, Version 2.0 (the "License"); you may not use this file except

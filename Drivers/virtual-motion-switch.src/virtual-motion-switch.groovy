@@ -1,6 +1,8 @@
 /**
  *  Virtual Motion with Switch
  *
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/virtual-motion-switch.src/virtual-motion-switch.groovy
+ *
  *  Copyright 2018 Daniel Ogorchock
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except

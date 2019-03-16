@@ -1,25 +1,28 @@
 /*
 Custom Laundry monitor device for Aeon HEM V1 
 
+  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/aeon-hem-v1-laundry.src/aeon-hem-v1-laundry.groovy
+  
   originally written by Mike Maxwell for SmartThings
   
   modified by Dan Ogorchock to work with Hubitat
 
   2018-05-26  Dan Ogorchock  Added optional delay parameter to add debounce feature to prevent multiple events
+  2019-03-15  Dan Ogorchock  Tweaked for v2.0.7 compatibility
 
 */
 
 metadata {
-	definition (name: "Aeon HEM V1 Laundry DTH", namespace:	"MikeMaxwell", author: "Mike Maxwell") 
+	definition (name: "Aeon HEM V1 Laundry DTH", namespace:	"MikeMaxwell", author: "Mike Maxwell", importURL: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/aeon-hem-v1-laundry.src/aeon-hem-v1-laundry.groovy") 
 	{
-		capability "Configuration"
-		capability "Switch"
-        capability "Button"
+        capability "Configuration"
+        capability "Switch"
+        //capability "Button"
         //capability "Energy Meter"
-		capability "Actuator"
+        capability "Actuator"
         capability "Pushable Button"
         //capability "Holdable Button"
-		capability "Sensor"
+        capability "Sensor"
 
         attribute "washerWatts", "string"
         attribute "dryerWatts", "string"

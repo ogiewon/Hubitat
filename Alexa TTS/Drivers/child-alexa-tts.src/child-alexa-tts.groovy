@@ -1,6 +1,8 @@
 /**
  *  Child Alexa TTS
  *
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
+ *
  *  Copyright 2018 Daniel Ogorchock
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -18,16 +20,18 @@
  *    ----        ---             	----
  *    2018-10-20  Dan Ogorchock   	Original Creation
  *    2018-11-18  Stephan Hackett	Added support for Virtual Containers
- *    2019-04-04  Thomas Howard     Added support for get/set volume
+ *    2019-04-04  Thomas Howard         Added support for get/set volume
+ *    2019-04-04  Dan Ogorchock         Added Refresh Capability to simplify calling getVoloume
  * 
  */
 
 metadata {
-    definition (name: "Child Alexa TTS", namespace: "ogiewon", author: "Dan Ogorchock") {
+    definition (name: "Child Alexa TTS", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy") {
         capability "Speech Synthesis"
-		capability "AudioVolume"
+        capability "AudioVolume"
+        capability "Refresh"
 		
-		command "getVolume"
+        command "getVolume"
     }
 }
 
@@ -46,28 +50,32 @@ def speak(message) {
 
 def setVolume(volumeLevel){
 	
-	def name = device.deviceNetworkId.split("-")[-1]
-	def vId = device.data.vcId
+    def name = device.deviceNetworkId.split("-")[-1]
+    def vId = device.data.vcId
 
-	//Bounds check the volume
-	volumeLevel = (volumeLevel > 100) ? 100 : volumeLevel;
-	volumeLevel = (volumeLevel < 0) ? 0 : volumeLevel;
-	volumeLevel = Math.max(Math.min(Math.round(volumeLevel), 100), 0);
+    //Bounds check the volume
+    volumeLevel = (volumeLevel > 100) ? 100 : volumeLevel;
+    volumeLevel = (volumeLevel < 0) ? 0 : volumeLevel;
+    volumeLevel = Math.max(Math.min(Math.round(volumeLevel), 100), 0);
 	
-	log.debug "Setting Volume to '${volumeLevel}'"
+    log.debug "Setting Volume to '${volumeLevel}'"
 	
-	if(vId) parent.childComm("setVolume", volumeLevel, vId)	
-	else parent.setVolume(volumeLevel, name);
+    if(vId) parent.childComm("setVolume", volumeLevel, vId)	
+    else parent.setVolume(volumeLevel, name);
+}
+
+def refresh() {
+    getVolume()
 }
 
 def getVolume() {
-	def name = device.deviceNetworkId.split("-")[-1]
-	def vId = device.data.vcId
+    def name = device.deviceNetworkId.split("-")[-1]
+    def vId = device.data.vcId
 	
-	log.debug "Getting volume"
+    log.debug "Getting volume"
 	
-	if(vId) parent.childComm("getVolume", null, vId)	
-	else parent.getVolume(name);
+    if(vId) parent.childComm("getVolume", null, vId)	
+    else parent.getVolume(name);
 }
 
 def installed() {

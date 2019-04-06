@@ -1,9 +1,4 @@
-/**
- *  Alexa TTS Manager
- *
- *  Copyright 2018 Daniel Ogorchock - Special thanks to Chuck Schwer for his tips and prodding me
- *                                    to not let this idea fall through the cracks!  
-/**
+/*
  *  Alexa TTS Manager
  *
  *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Apps/alexa-tts-manager.src/alexa-tts-manager.groovy
@@ -39,7 +34,7 @@
  *     v0.4.6   2018-12-23  Dan Ogorchock   Added support for Italy.  Thank you @gabriele!
  *     v0.5.0   2019-01-02  Gabriele        Added support for automatic cookie refresh with external NodeJS webserver
  *     v0.5.1   2019-02-12  Dan Ogorchock   Corrected contentType to prevent errors in response parsing
- *     v0.5.2   2019-04-04  Thomas Howard   Added get/set Volume Control
+ *     v0.5.2   2019-04-04  Thomas Howard   Added get/set Volume Control (not working currently - Dan O 4/6/19)
  *
  */
 
@@ -189,6 +184,7 @@ def speakMessage(String message, String device) {
     }
 }
 
+/*
 def setVolume(float volume, String device) {
 	vol = volume.toInteger();
     log.debug "Setting Volume to '${vol}' to '${device}"
@@ -253,67 +249,7 @@ def setVolume(float volume, String device) {
             }
         }
 }
-
-def getVolume(Object dummy, String device) {
-	atomicState.alexaJSON.devices.each {it->
-		if (it.accountName == device) {
-					//log.debug "${it.accountName}"
-					//log.debug "${it.deviceType}"
-					//log.debug "${it.serialNumber}"
-					//log.debug "${it.deviceOwnerCustomerId}"
-
-					try{
-						def SEQUENCECMD = "VolumeLevelCommand"
-						def DEVICETYPE = "${it.deviceType}"
-						def DEVICESERIALNUMBER = "${it.serialNumber}"
-						def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
-						def LANGUAGE = getURLs()."${alexaCountry}".Language
-						def command = "{\"type\":\"VolumeLevelCommand\",\"volumeLevel\": ${vol}}"
-
-						def csrf = (alexaCookie =~ "csrf=(.*?);")[0][1]
-
-						def params = [uri: "https://" + getURLs()."${alexaCountry}".Amazon + "/api/np/player?deviceSerialNumber=${DEVICESERIALNUMBER}&deviceType=${DEVICETYPE}",
-									  headers: ["Cookie":"""${alexaCookie}""",
-												"Referer": "https://" + getURLs()."${alexaCountry}".Amazon + "/spa/index.html",
-												"Origin": "https://" + getURLs()."${alexaCountry}".Amazon,
-												"csrf": "${csrf}",
-												"Connection": "keep-alive",
-												"DNT":"1"]
-									]
-						log.debug "Params: ${params}"
-						httpGet(params) { resp ->
-							//log.debug resp.contentType
-							//log.debug resp.status
-							//log.debug resp.data   
-							if (resp.status != 200) {
-								log.error "'getVolume()':  httpPost() resp.status = ${resp.status}"
-								notifyIfEnabled("Alexa TTS: Please check your cookie!")
-							} else {
-								log.debug("Volume: ${resp.data.playerInfo.volume.volume}");
-							}
-						}
-					}
-					catch (groovyx.net.http.HttpResponseException hre) {
-						//Noticed an error in parsing the http response.  For now, catch it to prevent errors from being logged
-						if (hre.getResponse().getStatus() != 200) {
-							log.error "'getVolume()': Error making Call (Data): ${hre.getResponse().getData()}"
-							log.error "'getVolume()': Error making Call (Status): ${hre.getResponse().getStatus()}"
-							log.error "'getVolume()': Error making Call (getMessage): ${hre.getMessage()}"
-							if (hre.getResponse().getStatus() == 400) {
-								notifyIfEnabled("Alexa TTS: ${hre.getResponse().getData()}")
-							}
-							else {
-								notifyIfEnabled("Alexa TTS: Please check your cookie!")
-							}
-						}
-					}
-					catch (e) {
-						log.error "'getVolume()': error = ${e}"
-						notifyIfEnabled("Alexa TTS: Please check your cookie!")
-					}        
-				}
-			}
-}
+*/
 
 def getDevices() {
     if (alexaCookie == null) {log.debug "No cookie yet"

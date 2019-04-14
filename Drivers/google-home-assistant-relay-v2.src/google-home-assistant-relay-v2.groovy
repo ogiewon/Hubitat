@@ -22,6 +22,7 @@
  *    2018-12-18  Dan Ogorchock  Added support for Assistant Relay's PRESETs.  Just add a [P] before the preset you want to use
  *    2018-12-18  Mark Rorem     Added support for specifying a username - default is blank
  *    2019-02-03  Ryan Casler    Added replaceAll for removing "%20" as an artifact of the MakerAPI.
+ *    2019-04-14  Dan Ogorchock  Added support for Swedish characters - thanks @chrbratt!
  *
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this version!
  */
@@ -49,7 +50,13 @@ def parse(String description) {
 }
 
 def speak(message) {
-	message = message.replaceAll("%20", " ")
+    message = message.replaceAll("%20", " ")
+    message = message.replace("Å", "\\u00C5")
+    message = message.replace("å", "\\u00E5")
+    message = message.replace("Ä", "\\u00C4")
+    message = message.replace("ä", "\\u00E4")
+    message = message.replace("Ö", "\\u00D6")
+    message = message.replace("ö", "\\u00F6")
     def myJSON = ""
     
     if(message.startsWith("[CC]")){ 

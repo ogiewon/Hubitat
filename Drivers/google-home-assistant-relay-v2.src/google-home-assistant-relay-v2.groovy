@@ -57,6 +57,11 @@ def speak(message) {
     message = message.replace("ä", "\\u00E4")
     message = message.replace("Ö", "\\u00D6")
     message = message.replace("ö", "\\u00F6")
+    message = message.replace("Ø", "\\u00D8")
+	message = message.replace("Æ", "\\u00C6")
+	message = message.replace("æ", "\\u00E6")
+	message = message.replace("ø", "\\u00F8")
+    
     def myJSON = ""
     
     if(message.startsWith("[CC]")){ 

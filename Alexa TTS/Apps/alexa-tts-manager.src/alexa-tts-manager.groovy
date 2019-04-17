@@ -35,6 +35,7 @@
  *     v0.5.0   2019-01-02  Gabriele        Added support for automatic cookie refresh with external NodeJS webserver
  *     v0.5.1   2019-02-12  Dan Ogorchock   Corrected contentType to prevent errors in response parsing
  *     v0.5.2   2019-04-04  Thomas Howard   Added get/set Volume Control (not working currently - Dan O 4/6/19)
+ *     v0.5.3   2019-04-16  Gabriele        Added app events to have some historic logging
  *
  */
 
@@ -115,7 +116,8 @@ def pageTwo(){
 
 
 def speakMessage(String message, String device) {
-    log.debug "Sending '${message}' to '${device}"
+    log.debug "Sending '${message}' to '${device}'"
+	sendEvent(name:"speakMessage", value: message, descriptionText: "Sending message to '${device}'")
     if (message == '' || message.length() == 0) {
         log.warn "Message is empty. Skipping sending request to Amazon"
     }
@@ -517,6 +519,7 @@ def getCookie(data){
                 app.updateSetting("alexaRefreshOptions",[type:"text", value: newOptions])
                 log.info("Alexa TTS: cookie downloaded succesfully")
                 app.updateSetting("alexaCookie",[type:"text", value: getCookieFromOptions(newOptions)])
+				sendEvent(name:"GetCookie", descriptionText: "New cookie downloaded succesfully")
             }
             else {
                 log.error "Encountered an error. http resp.status = '${resp.status}'. http resp.contentType = '${resp.contentType}'. Should be '200' and 'application/json; charset=utf-8'"

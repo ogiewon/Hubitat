@@ -29,7 +29,7 @@
  *
  */
 
- def version() {"v0.1.20181220"}
+ def version() {"v0.1.20190524"}
 
 metadata {
     definition (name: "IoTaWatt Parent", namespace: "ogiewon", author: "Dan Ogorchock", importURL: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy") {

@@ -1,7 +1,7 @@
 /**
  *  Google Home Assistant Relay
  *
- *  https://raw.githubusercontent.com/ogiewon/Hubitat/f82fb4fd5dac921e5093eedc0d55620afac25e66/Drivers/google-home-assistant-relay.src/google-home-assistant-relay.groovy
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/google-home-assistant-relay.src/google-home-assistant-relay.groovy
  *
  *  Copyright 2018 Daniel Ogorchock
  *
@@ -29,7 +29,7 @@
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this version!
  */
 metadata {
-	definition (name: "Google Home Assistant Relay", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/f82fb4fd5dac921e5093eedc0d55620afac25e66/Drivers/google-home-assistant-relay.src/google-home-assistant-relay.groovy") {
+	definition (name: "Google Home Assistant Relay", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/google-home-assistant-relay.src/google-home-assistant-relay.groovy") {
         capability "Speech Synthesis"
     	capability "Notification"
 	}

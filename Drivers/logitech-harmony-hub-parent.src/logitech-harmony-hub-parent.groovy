@@ -31,16 +31,17 @@
  *    2019-01-04  Dan Ogorchock  Faster updates to Child Switch Devices to prevent Alexa "Device is not repsonding" message
  *    2019-01-07  Dan Ogorchock  Changed log.warn to log.info for unhandled data from harmony hub
  *    2019-02-20  @corerootedxb  Fixed routine to obtain the remoteId due to firmware 4.15.250 changes by Logitech
+ *    2019-06-09  Dan OGorchock  Aded importURL to definition
  *
  *
  */
 
-def version() {"v0.1.20190220"}
+def version() {"v0.1.20190609"}
 
 import hubitat.helper.InterfaceUtils
 
 metadata {
-    definition (name: "Logitech Harmony Hub Parent", namespace: "ogiewon", author: "Dan Ogorchock") {
+    definition (name: "Logitech Harmony Hub Parent", namespace: "ogiewon", author: "Dan Ogorchock", importURL: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/logitech-harmony-hub-parent.src/logitech-harmony-hub-parent.groovy") {
         capability "Initialize"
         capability "Refresh"
 

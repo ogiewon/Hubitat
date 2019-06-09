@@ -31,7 +31,7 @@
  *    2019-01-04  Dan Ogorchock  Faster updates to Child Switch Devices to prevent Alexa "Device is not repsonding" message
  *    2019-01-07  Dan Ogorchock  Changed log.warn to log.info for unhandled data from harmony hub
  *    2019-02-20  @corerootedxb  Fixed routine to obtain the remoteId due to firmware 4.15.250 changes by Logitech
- *    2019-06-09  Dan OGorchock  Aded importURL to definition
+ *    2019-06-09  Dan Ogorchock  Added importURL to definition
  *
  *
  */

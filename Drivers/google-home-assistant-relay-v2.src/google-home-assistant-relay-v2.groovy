@@ -23,11 +23,13 @@
  *    2018-12-18  Mark Rorem     Added support for specifying a username - default is blank
  *    2019-02-03  Ryan Casler    Added replaceAll for removing "%20" as an artifact of the MakerAPI.
  *    2019-04-14  Dan Ogorchock  Added support for Swedish characters - thanks @chrbratt!
+ *    2019-06-09  Dan Ogorchock  Added importUrl to definition
  *
  *    Credit goes to Greg Hesp's work on the SmartThings platform as a starting point for this version!
  */
+
 metadata {
-    definition (name: "Google Home Assistant Relay v2", namespace: "ogiewon", author: "Dan Ogorchock") {
+    definition (name: "Google Home Assistant Relay v2", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/google-home-assistant-relay-v2.src/google-home-assistant-relay-v2.groovy") {
         capability "Speech Synthesis"
         capability "Notification"
     }

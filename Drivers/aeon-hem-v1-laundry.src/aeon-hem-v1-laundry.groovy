@@ -13,7 +13,7 @@ Custom Laundry monitor device for Aeon HEM V1
 */
 
 metadata {
-	definition (name: "Aeon HEM V1 Laundry DTH", namespace:	"MikeMaxwell", author: "Mike Maxwell", importURL: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/aeon-hem-v1-laundry.src/aeon-hem-v1-laundry.groovy") 
+	definition (name: "Aeon HEM V1 Laundry DTH", namespace:	"MikeMaxwell", author: "Mike Maxwell", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/aeon-hem-v1-laundry.src/aeon-hem-v1-laundry.groovy") 
 	{
         capability "Configuration"
         capability "Switch"

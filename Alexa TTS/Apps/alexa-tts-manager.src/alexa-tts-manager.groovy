@@ -36,6 +36,7 @@
  *     v0.5.1   2019-02-12  Dan Ogorchock   Corrected contentType to prevent errors in response parsing
  *     v0.5.2   2019-04-04  Thomas Howard   Added get/set Volume Control (not working currently - Dan O 4/6/19)
  *     v0.5.3   2019-04-16  Gabriele        Added app events to have some historic logging
+ *     v0.5.4   2019-06-24  Dan Ogorchock   Attempt to add Australia
  *
  */
 
@@ -326,7 +327,8 @@ def getURLs() {
     def URLs = ["United States": [Alexa: "pitangui.amazon.com", Amazon: "alexa.amazon.com", Language: "en-US"], 
                 "Canada": [Alexa: "alexa.amazon.ca", Amazon: "alexa.amazon.ca", Language: "en-US"], 
                 "United Kingdom": [Alexa: "layla.amazon.co.uk", Amazon: "amazon.co.uk", Language: "en-GB"], 
-                "Italy": [Alexa: "alexa.amazon.it", Amazon: "alexa.amazon.it", Language: "it-IT"]]
+                "Italy": [Alexa: "alexa.amazon.it", Amazon: "alexa.amazon.it", Language: "it-IT"],
+                "Australia": [Alexa: "alexa.amazon.com.au", Amazon: "alexa.amazon.com.au", Language: "en-AU"]]
     return URLs
 }
 

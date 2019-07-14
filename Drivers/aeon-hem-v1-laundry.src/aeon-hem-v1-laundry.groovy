@@ -9,6 +9,7 @@ Custom Laundry monitor device for Aeon HEM V1
 
   2018-05-26  Dan Ogorchock  Added optional delay parameter to add debounce feature to prevent multiple events
   2019-03-15  Dan Ogorchock  Tweaked for v2.0.7 compatibility
+  2019-07-14  Matt Baran     Added separate debounces for Washer/Dryer
 
 */
 
@@ -35,7 +36,8 @@ metadata {
 	preferences {
        	input name: "washerRW", type: "number", title: "Washer running watts:", description: "", required: true
         input name: "dryerRW", type: "number", title: "Dryer running watts:", description: "", required: true
-        input name: "debounceDelay", type: "number", title: "Debounce delay time (seconds):", description: "", required: true
+        input name: "washerDebounceDelay", type: "number", title: "Washer debounce delay time (seconds):", description: "", required: true
+        input name: "dryerDebounceDelay", type: "number", title: "Dryer debounce delay time (seconds:)", description: "", required: true
     }
 }
 
@@ -79,8 +81,8 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
                     } else {
                     	//washer is off
                         if (state.washerIsRunning == true){
-                            log.debug "runIn(${debounceDelay.toInteger()}, sendWasherDone) called"
-                            runIn(debounceDelay.toInteger(), sendWasherDone)
+                            log.debug "runIn(${washerDebounceDelay.toInteger()}, sendWasherDone) called"
+                            runIn(washerDebounceDelay.toInteger(), sendWasherDone)
                         }
                         state.washerIsRunning = false
                     }
@@ -98,8 +100,8 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
                     } else {
                     	//dryer is off
                         if (state.dryerIsRunning == true){
-                            log.debug "runIn(${debounceDelay.toInteger()}, sendDryerDone) called"
-                            runIn(debounceDelay.toInteger(), sendDryerDone)
+                            log.debug "runIn(${dryerDebounceDelay.toInteger()}, sendDryerDone) called"
+                            runIn(dryerDebounceDelay.toInteger(), sendDryerDone)
                         }
                         state.dryerIsRunning = false
                     }

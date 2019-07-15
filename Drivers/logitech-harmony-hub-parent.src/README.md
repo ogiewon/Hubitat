@@ -7,6 +7,8 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20190104 - Faster Activity Switch Response Times
 - v0.1.20190107 - Live Logging Tweak
 - v0.1.20190220 - Fixed routine to obtain the remoteId due to firmware 4.15.250 changes by Logitech - Thanks @corerootedxb!
+- v0.1.20190609 - Added importURL to definition
+- v0.1.20190714 - Added Volume and Channel controls (for activities that support these features)- Thanks @aaron for the help!
 
 **Instructions For Use**
 

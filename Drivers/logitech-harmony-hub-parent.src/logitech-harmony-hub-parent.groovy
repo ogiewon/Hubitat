@@ -32,11 +32,12 @@
  *    2019-01-07  Dan Ogorchock  Changed log.warn to log.info for unhandled data from harmony hub
  *    2019-02-20  @corerootedxb  Fixed routine to obtain the remoteId due to firmware 4.15.250 changes by Logitech
  *    2019-06-09  Dan Ogorchock  Added importURL to definition
+ *    2019-07-14  Dan Ogorchock  Added Harmony Volume and Channel control (for activities that support it) (with help from @aaron!)
  *
  *
  */
 
-def version() {"v0.1.20190609"}
+def version() {"v0.1.20190714"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -51,6 +52,13 @@ metadata {
         //command "stopActivity"
         command "getCurrentActivity"
         
+        command "volumeUp"
+        command "volumeDown"
+        command "mute"
+        command "channelUp"
+        command "channelDown"
+        command "channelPrev"
+        
         attribute "Activity","String"
     }
 }
@@ -63,6 +71,7 @@ preferences {
 
 def parse(String description) {
     //log.debug "parsed $description"
+	//state.description = []
     def json = null;
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
@@ -76,17 +85,34 @@ def parse(String description) {
         return
     }
     
-    //def results = []
+
     //Retrieves the Harmony device configuration, including all Activity Names and IDs
     if (json?.cmd == "vnd.logitech.harmony/vnd.logitech.harmony.engine?config") {
         if (json?.msg == "OK") {
+
+            state.HarmonyConfig =[]
+            
             json?.data?.activity?.each { it ->
                 def tempID = (it.id == "-1") ? "PowerOff" : "${it.id}"                    
                 if (logEnable) log.debug "Activity Label: ${it.label}, ID: ${tempID}"
                 
+                //store portion of config results in state veraible (needed for volume/channel control) 
+                def volume = "null"
+                if (it.roles?.VolumeActivityRole) volume = it.roles?.VolumeActivityRole
+                def channel = "null"
+                if (it.roles?.ChannelChangingActivityRole) channel = it.roles?.ChannelChangingActivityRole
+                state.HarmonyConfig << ["id":"${it.id}", "label":"${it.label}", "VolumeActivityRole":"${volume}", "ChannelChangingActivityRole":"${channel}"]
+                
                 //Create a Child Switch Device for each Activity if needed, default all of them to 'off' for now
                 updateChild(tempID, "unknown", it.label)
             }
+
+            if (logEnable) { 
+                def temp = new groovy.json.JsonBuilder(state.HarmonyConfig).toString()
+                log.debug state.HarmonyConfig
+                log.debug temp
+            }
+
         } else {
             log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"
         }
@@ -153,6 +179,7 @@ def updateChildren(String ActivityID) {
             {
                 updateChild(childDNI, "on")
                 sendEvent(name: "Activity", value: "${it.name}", isStateChange: true)
+                state.currentActivity = ActivityID
             }
             else {
                 updateChild(childDNI, "off")    
@@ -283,6 +310,89 @@ def getCurrentActivity() {
 
 def sendMsg(String s) {
     InterfaceUtils.sendWebSocketMessage(device, s)
+}
+
+def deviceCommand(command, deviceID) {
+    sendMsg('{"hubId":"' + state.remoteId + '","timeout":30,"hbus":{"cmd":"vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction","id": "0", "params":{"status": "press","timestamp": "0","verb": "render", "action": "{\\"command\\": \\"' + command + '\\", \\"type\\":\\"IRCommand\\", \\"deviceId\\": \\"' + deviceID + '\\"}"}}}')
+    log.debug "message sent ${command} to ${state.StereoReceiver}"
+}
+
+def mute() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.VolumeActivityRole != "null") {
+                log.debug it.VolumeActivityRole
+                deviceCommand("Mute", it.VolumeActivityRole)
+            } else {
+                log.info "Activity ${it.label} does not support volume control"
+            }
+        }
+    }
+}
+
+def volumeUp() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.VolumeActivityRole != "null") {
+                log.debug it.VolumeActivityRole
+                deviceCommand("VolumeUp", it.VolumeActivityRole)
+            } else {
+                log.info "Activity ${it.label} does not support volume control"
+            }
+        }
+    }
+}
+
+def volumeDown() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.VolumeActivityRole != "null") {
+                log.debug it.VolumeActivityRole
+                deviceCommand("VolumeDown", it.VolumeActivityRole)
+            } else {
+                log.info "Activity ${it.label} does not support volume control"
+            }
+        }
+    }
+}
+
+def channelUp() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.ChannelChangingActivityRole != "null") {
+                log.debug it.ChannelChangingActivityRole
+                deviceCommand("ChannelUp", it.ChannelChangingActivityRole)
+            } else {
+                log.info "Activity ${it.label} does not support channel control"
+            }
+        }
+    }
+}
+
+def channelDown() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.ChannelChangingActivityRole != "null") {
+                log.debug it.ChannelChangingActivityRole
+                deviceCommand("ChannelDown", it.ChannelChangingActivityRole)
+            } else {
+                log.info "Activity ${it.label} does not support channel control"
+            }
+        }
+    }
+}
+
+def channelPrev() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.ChannelChangingActivityRole != "null") {
+                log.debug it.ChannelChangingActivityRole
+                deviceCommand("PrevChannel", it.ChannelChangingActivityRole)
+            } else {
+                log.info "Activity ${it.label} does not support channel control"
+            }
+        }
+    }
 }
 
 //sendData() is called from the Child Devices to start/stop activities

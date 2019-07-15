@@ -26,13 +26,13 @@ NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer
 - In the window that appears, please fill in the "Device Name", "Device Label", and "Device Network Id" fields.  Make sure the Device Network Id field is UNIQUE!  For example:
   - "Device Name" = "Family Room"
   - "Device Label" = {optional}
-  - "Device Network Id" = FamilyRoomHarmonyHub  (Note:  make sure this is unique!)
+  - "Device Network Id" = FamilyRoomHarmonyHub  (Note:  make sure this is unique! Update: Hubitat now defaults to a unique value.)
 - In the "Type" field, scroll to the bottom of the list and select "Logitich Harmony Hub Parent"
 - Click Save
 - In the next window that appears, fill in the "Device IP Address" with values appropriate to your application.  For example:
   - "Device IP Address" = 192.168.1.137   (this is the IP Address of my Logitich Harmony Hub device)
 - Click Save
 - Look at Live Logs (or Past Logs if you didn't have a tab open when you clicked SAVE)
-- You should see all of the Child Devices created for your Logitich Harmony Hub
+- You should see all of the Child Devices created for your Logitech Harmony Hub
 - You can now add these devices to the Hubitat Dashboard, use them in Rules, etc...
 - Clicking "Refresh" in the parent device will simply cause a synchronization between your Harmony Hub and your Hubitat Hub's Chile Activity Switches.  This should not be necessary very often as this driver supports INSTANT STATUS UPDATES! :) 

@@ -163,7 +163,7 @@ def parse(String description) {
     }
     else {
         if ((json?.cmd != "harmony.engine?startActivity") && (json?.cmd != "harmony.activityengine?runactivity")) {
-            log.info "Unhandled data from Harmony Hub. json = ${description}"
+            if (logEnable) log.info "Unhandled data from Harmony Hub. json = ${description}"
         }
     }
 }
@@ -227,11 +227,14 @@ def updated() {
     
     //Get the current activity to make sure the child devices are synched with the harmony hub
     getCurrentActivity()
+    
+    sendEvent(name: "level", value: 50, unit: "%")
 }
 
 def initialize() {
     state.version = version()
     log.info "initialize() called"
+    sendEvent(name: "level", value: 50, unit: "%")
     
     if (!ip) {
         log.warn "Harmony Hub IP Address not configured yet"
@@ -248,7 +251,7 @@ def initialize() {
                  body: '{"id": 1, "cmd": "setup.account?getProvisionInfo", "params": {}}'
                 ) { response ->
              //activeRemoteId is the new property name instead of just remoteId.
-             log.debug "hub remote id: ${response.data.data.activeRemoteId}"
+             if (logEnable) log.debug "hub remote id: ${response.data.data.activeRemoteId}"
              state.remoteId = response.data.data.activeRemoteId
          }
     }
@@ -263,7 +266,7 @@ def initialize() {
                  headers: ['Origin': 'http//:localhost.nebula.myharmony.com'],
                  body: '{"id": 124, "cmd": "connect.discoveryinfo?get", "params": {}}'
                 ) { response ->
-            log.debug "hub remote id: ${response.data.data.remoteId}"
+            if (logEnable) log.debug "hub remote id: ${response.data.data.remoteId}"
             state.remoteId = response.data.data.remoteId
         }
     }
@@ -298,7 +301,7 @@ def startActivity(String activityID) {
 
 def stopActivity() {
     if(!state.remoteId) return
-    log.debug "stopActivity() called..."
+    if (logEnable) log.debug "stopActivity() called..."
     startActivity("-1")
 }
 
@@ -314,14 +317,12 @@ def sendMsg(String s) {
 
 def deviceCommand(command, deviceID) {
     sendMsg('{"hubId":"' + state.remoteId + '","timeout":30,"hbus":{"cmd":"vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction","id": "0", "params":{"status": "press","timestamp": "0","verb": "render", "action": "{\\"command\\": \\"' + command + '\\", \\"type\\":\\"IRCommand\\", \\"deviceId\\": \\"' + deviceID + '\\"}"}}}')
-    log.debug "message sent ${command} to ${state.StereoReceiver}"
 }
 
 def mute() {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
             if (it.VolumeActivityRole != "null") {
-                log.debug it.VolumeActivityRole
                 deviceCommand("Mute", it.VolumeActivityRole)
             } else {
                 log.info "Activity ${it.label} does not support volume control"
@@ -338,7 +339,6 @@ def volumeUp() {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
             if (it.VolumeActivityRole != "null") {
-                log.debug it.VolumeActivityRole
                 deviceCommand("VolumeUp", it.VolumeActivityRole)
             } else {
                 log.info "Activity ${it.label} does not support volume control"
@@ -351,7 +351,6 @@ def volumeDown() {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
             if (it.VolumeActivityRole != "null") {
-                log.debug it.VolumeActivityRole
                 deviceCommand("VolumeDown", it.VolumeActivityRole)
             } else {
                 log.info "Activity ${it.label} does not support volume control"
@@ -382,7 +381,6 @@ def channelUp() {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
             if (it.ChannelChangingActivityRole != "null") {
-                log.debug it.ChannelChangingActivityRole
                 deviceCommand("ChannelUp", it.ChannelChangingActivityRole)
             } else {
                 log.info "Activity ${it.label} does not support channel control"
@@ -395,7 +393,6 @@ def channelDown() {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
             if (it.ChannelChangingActivityRole != "null") {
-                log.debug it.ChannelChangingActivityRole
                 deviceCommand("ChannelDown", it.ChannelChangingActivityRole)
             } else {
                 log.info "Activity ${it.label} does not support channel control"
@@ -408,7 +405,6 @@ def channelPrev() {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
             if (it.ChannelChangingActivityRole != "null") {
-                log.debug it.ChannelChangingActivityRole
                 deviceCommand("PrevChannel", it.ChannelChangingActivityRole)
             } else {
                 log.info "Activity ${it.label} does not support channel control"
@@ -441,7 +437,7 @@ def sendData(message) {
 
 
 def webSocketStatus(String status){
-    log.debug "webSocketStatus- ${status}"
+    if (logEnable) log.debug "webSocketStatus- ${status}"
 
     if(status.startsWith('failure: ')) {
         log.warn("failure message from web socket ${status}")

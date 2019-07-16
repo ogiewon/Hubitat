@@ -9,6 +9,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20190220 - Fixed routine to obtain the remoteId due to firmware 4.15.250 changes by Logitech - Thanks @corerootedxb!
 - v0.1.20190609 - Added importURL to definition
 - v0.1.20190714 - Added Volume and Channel controls (for activities that support these features)- Thanks @aaron for the help!
+- v0.1.20190715 - Added setLevel and setVolume commands to enable limited Dashboard support
 
 **Instructions For Use**
 
@@ -36,3 +37,9 @@ NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer
 - You should see all of the Child Devices created for your Logitech Harmony Hub
 - You can now add these devices to the Hubitat Dashboard, use them in Rules, etc...
 - Clicking "Refresh" in the parent device will simply cause a synchronization between your Harmony Hub and your Hubitat Hub's Chile Activity Switches.  This should not be necessary very often as this driver supports INSTANT STATUS UPDATES! :) 
+
+**Very basic VolumeUP, VolumeDown, and Mute Support**
+- If the current Activity supports volume control, then you can use the Parent's volumeUp, volumeDown, and mute commands
+- You can also use the setVolume() and setLevel() commands, to increase or decrease the volume BUT NOT ACTUALLY SET A SPECIFIC VOLUME PERCENTAGE.  The Harmony Hub can only increase or decrease the volume relative to whatever the real device's volume currently is.  The Harmony Hub does no know what that percentage is, and therefore neither can Hubitat.
+- mute() and unmute() both do the exact same thing, simply toggle the status of mute on the real audio device.  again, there is no way for Hubitat to know the accurate state of the audio device's current mute status.
+- Hubitat Dashboard Support - you can now assign the Harmony Hub Parent device a Volume Tile in the Dashboard.  This tile will always revert back to 50%.  If you slide it UP, a volumeUp() call will be made to increase the volume.  If you slide it DOWN, a volumeDown() call will be made.  This was the only solution I could figure out to control volume from the Dashboard.  If anyone has a betetr idea, I am all ears. 

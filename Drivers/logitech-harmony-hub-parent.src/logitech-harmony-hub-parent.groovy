@@ -38,7 +38,7 @@
  *
  */
 
-def version() {"v0.1.20190714"}
+def version() {"v0.1.20190715"}
 
 import hubitat.helper.InterfaceUtils
 

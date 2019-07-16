@@ -33,6 +33,7 @@
  *    2019-02-20  @corerootedxb  Fixed routine to obtain the remoteId due to firmware 4.15.250 changes by Logitech
  *    2019-06-09  Dan Ogorchock  Added importURL to definition
  *    2019-07-14  Dan Ogorchock  Added Harmony Volume and Channel control (for activities that support it) (with help from @aaron!)
+ *    2019-07-15  Dan Ogorchock  Added setLevel and setVolume commands for greater compatability with Hubitat Dashboard and other Apps
  *
  *
  */
@@ -45,6 +46,8 @@ metadata {
     definition (name: "Logitech Harmony Hub Parent", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/logitech-harmony-hub-parent.src/logitech-harmony-hub-parent.groovy") {
         capability "Initialize"
         capability "Refresh"
+        capability "Switch Level"
+        capability "Audio Volume"
 
         //command "sendMsg", ["String"]
         //command "getConfig"
@@ -107,11 +110,11 @@ def parse(String description) {
                 updateChild(tempID, "unknown", it.label)
             }
 
-            if (logEnable) { 
-                def temp = new groovy.json.JsonBuilder(state.HarmonyConfig).toString()
-                log.debug state.HarmonyConfig
-                log.debug temp
-            }
+            //if (logEnable) { 
+            //    def temp = new groovy.json.JsonBuilder(state.HarmonyConfig).toString()
+            //    log.debug state.HarmonyConfig
+            //    log.debug temp
+            //}
 
         } else {
             log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"
@@ -163,9 +166,6 @@ def parse(String description) {
             log.info "Unhandled data from Harmony Hub. json = ${description}"
         }
     }
-    
-    //return results
-    
 }
 
 
@@ -281,7 +281,7 @@ def initialize() {
 def getConfig() {
     if(!state.remoteId) return
     
-    //Not sure what this is used for
+    //Not sure what this is used for, but not needed for our purposes... ;)
     //sendMsg('{"hubId":"' + state.remoteId + '","timeout":30,"hbus":{"cmd":"vnd.logitech.connect/vnd.logitech.deviceinfo?get","id":"0","params":{"verb":"get"}}}')   
     //Refresh current status - Using getCurrentActivity instead
     //sendMsg('{"hubId":"' + state.remoteId + '","timeout":30,"hbus":{"cmd":"vnd.logitech.connect/vnd.logitech.statedigest?get","id":"0","params":{"verb":"get","format":"json"}}}')
@@ -330,6 +330,10 @@ def mute() {
     }
 }
 
+def unmute() {
+    mute()
+}
+
 def volumeUp() {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
@@ -354,6 +358,24 @@ def volumeDown() {
             }
         }
     }
+}
+
+def setLevel(value,duration=null) {
+	if (logEnable) log.debug "setLevel >> value: $value"
+	//def valueaux = value as Integer
+	def level = Math.max(Math.min(value.toInteger(), 100), 0)
+
+	if (level > 50) {
+		 volumeUp()
+    } else if (level < 50) {
+		 volumeDown()
+	}
+	sendEvent(name: "level", value: level, unit: "%")
+    runIn(1, setLevel, [data: 50])
+}
+
+def setVolume(volumelevel) {
+    setLevel(volumelevel)
 }
 
 def channelUp() {

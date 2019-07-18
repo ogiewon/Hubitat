@@ -37,6 +37,7 @@
  *     v0.5.2   2019-04-04  Thomas Howard   Added get/set Volume Control (not working currently - Dan O 4/6/19)
  *     v0.5.3   2019-04-16  Gabriele        Added app events to have some historic logging
  *     v0.5.4   2019-06-24  Dan Ogorchock   Attempt to add Australia
+ *     v0.5.5   2019-07-18  Dan Ogorchock   Reduced Debug Logging
  *
  */
 
@@ -151,7 +152,7 @@ def speakMessage(String message, String device) {
                                             contentType: "text/plain",
                                             body: command
                                 ]
-    				log.debug "Command = ${params}"
+    				//log.debug "Command = ${params}"
 
                     httpPost(params) { resp ->
                         //log.debug resp.contentType
@@ -313,8 +314,7 @@ private void createChildDevice(String deviceName) {
 }
 
 def installed() {
-    log.debug "'installed()' called"
-    log.debug "'Installed' with settings: ${settings}"
+    log.debug "'Installed()' called with settings: ${settings}"
     updated()
 }
 

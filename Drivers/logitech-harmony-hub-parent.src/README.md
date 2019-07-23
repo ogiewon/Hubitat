@@ -29,7 +29,7 @@ NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer
   - "Device Name" = "Family Room"
   - "Device Label" = {optional}
   - "Device Network Id" = FamilyRoomHarmonyHub  (Note:  make sure this is unique! Update: Hubitat now defaults to a unique value.)
-- In the "Type" field, scroll to the bottom of the list and select "Logitich Harmony Hub Parent"
+- In the "Type" field, scroll to the bottom of the list and select "Logitech Harmony Hub Parent"
 - Click Save
 - In the next window that appears, fill in the "Device IP Address" with values appropriate to your application.  For example:
   - "Device IP Address" = 192.168.1.137   (this is the IP Address of my Logitich Harmony Hub device)
@@ -43,4 +43,4 @@ NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer
 - If the current Activity supports volume control, then you can use the Parent's volumeUp, volumeDown, and mute commands
 - You can also use the setVolume() and setLevel() commands, to increase or decrease the volume BUT NOT ACTUALLY SET A SPECIFIC VOLUME PERCENTAGE.  The Harmony Hub can only increase or decrease the volume relative to whatever the real device's volume currently is.  The Harmony Hub does no know what that percentage is, and therefore neither can Hubitat.
 - mute() and unmute() both do the exact same thing, simply toggle the status of mute on the real audio device.  again, there is no way for Hubitat to know the accurate state of the audio device's current mute status.
-- Hubitat Dashboard Support - you can now assign the Harmony Hub Parent device a Volume Tile in the Dashboard.  This tile will always revert back to 50%.  If you slide it UP, a volumeUp() call will be made to increase the volume.  If you slide it DOWN, a volumeDown() call will be made.  This was the only solution I could figure out to control volume from the Dashboard.  If anyone has a betetr idea, I am all ears. 
+- Hubitat Dashboard Support - you can now assign the Harmony Hub Parent device a Volume Tile in the Dashboard.  This tile will always revert back to 50%.  If you slide it UP, a volumeUp() call will be made to increase the volume.  If you slide it DOWN, a volumeDown() call will be made.  This was the only solution I could figure out to control volume from the Dashboard.  If anyone has a better idea, I am all ears. 

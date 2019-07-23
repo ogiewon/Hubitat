@@ -10,6 +10,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20190609 - Added importURL to definition
 - v0.1.20190714 - Added Volume and Channel controls (for activities that support these features)- Thanks @aaron for the help!
 - v0.1.20190715 - Added setLevel and setVolume commands to enable limited Dashboard support
+- v0.1.20190723 - Added Actuator Capability to allow device to be used in RM's 'Custom Actions' 
 
 **Instructions For Use**
 

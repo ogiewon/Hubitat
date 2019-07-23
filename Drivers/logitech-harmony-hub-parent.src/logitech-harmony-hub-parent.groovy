@@ -34,11 +34,12 @@
  *    2019-06-09  Dan Ogorchock  Added importURL to definition
  *    2019-07-14  Dan Ogorchock  Added Harmony Volume and Channel control (for activities that support it) (with help from @aaron!)
  *    2019-07-15  Dan Ogorchock  Added setLevel and setVolume commands for greater compatability with Hubitat Dashboard and other Apps
+ *    2019-07-23  Dan Ogorchock  Added Actuator Capability to allow RM Custom Actions to select this device
  *
  *
  */
 
-def version() {"v0.1.20190715"}
+def version() {"v0.1.20190723"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -48,6 +49,7 @@ metadata {
         capability "Refresh"
         capability "Switch Level"
         capability "Audio Volume"
+        capability "Actuator"
 
         //command "sendMsg", ["String"]
         //command "getConfig"
@@ -55,9 +57,9 @@ metadata {
         //command "stopActivity"
         command "getCurrentActivity"
         
-        command "volumeUp"
-        command "volumeDown"
-        command "mute"
+        //command "volumeUp"
+        //command "volumeDown"
+        //command "mute"
         command "channelUp"
         command "channelDown"
         command "channelPrev"

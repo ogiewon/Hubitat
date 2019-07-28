@@ -53,6 +53,8 @@ def parse(String description) {
 
 def speak(message) {
     message = message.replaceAll("%20", " ")
+    message = message.replaceAll("%5B", "[")
+    message = message.replaceAll("%5D", "]")
     message = message.replace("Å", "\\u00C5")
     message = message.replace("å", "\\u00E5")
     message = message.replace("Ä", "\\u00C4")

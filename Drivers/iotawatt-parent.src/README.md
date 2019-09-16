@@ -2,6 +2,9 @@
 
 This driver implements the "Refresh" capability.  It is used to communicate via http to an IoTaWatt Power Monitor system and it creates child devices for Power and Voltage
 
+This driver implements the "Presence" capability.  It is used to indicate good communications as "present" and lack of communications as "not present"
+
+v0.1.20190915 - Added Capability Presence to indicate communications issue with the IoTaWatt device
 v0.1.20181220 - Initial beta release
 
 Instructions for use
@@ -18,8 +21,8 @@ Instructions for use
 - In the window that appears, please fill in the "Device Name", "Device Label", and "Device Network Id" fields.  Make sure the Device Network Id field is UNIQUE!  For example:
   - "Device Name" = IoTaWatt
   - "Device Label" = {optional}
-  - "Device Network Id" = IoTaWatt_MP  (e.g. 'MP' for Main Panel)
-- In the "Type" field, scroll to the bottom of the list and select "IoTaWatt Parent"
+  - "Device Network Id" = (automatically filled in by Hubitat)
+  - In the "Type" field, scroll to the bottom of the list and select "IoTaWatt Parent"
 - Click Save
 - In the next window that appears, fill in the "Device IP Address" and "Polling Interval" with values appropriate to your application.  For example:
   - "Device IP Address" = 192.168.1.138   (this is the IP Address of my IoTaWatt device)

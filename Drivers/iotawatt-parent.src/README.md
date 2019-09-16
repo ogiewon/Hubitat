@@ -5,6 +5,7 @@ This driver implements the "Refresh" capability.  It is used to communicate via 
 This driver implements the "Presence" capability.  It is used to indicate good communications as "present" and lack of communications as "not present"
 
 v0.1.20190915 - Added Capability Presence to indicate communications issue with the IoTaWatt device
+
 v0.1.20181220 - Initial beta release
 
 Instructions for use

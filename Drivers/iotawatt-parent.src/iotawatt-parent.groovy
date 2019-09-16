@@ -25,21 +25,24 @@
  *    ----        ---            ----
  *    2018-12-20  Dan Ogorchock  Original Creation
  *    2019-05-24  Dan Ogorchock  Added ImportURL metadata
+ *    2019-09-15  Dan Ogorchock  Added Presence Capability to know if the IoTaWatt device is online or offline
  *
  *
  */
 
- def version() {"v0.1.20190524"}
+ def version() {"v0.1.20190915"}
 
 metadata {
     definition (name: "IoTaWatt Parent", namespace: "ogiewon", author: "Dan Ogorchock", importURL: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy") {
         capability "Refresh"
+        capability "Presence Sensor"  //used to determine is the IoTaWatt microcontroller is still reporting data or not
     }
 }
 
 preferences {
     input "deviceIP", "text", title: "IoTaWatt IP Address", description: "in form of 192.168.1.138", required: true, displayDuringSetup: true
     input "pollingInterval", "number", title: "Polling Interval", description: "in seconds", range: "10..300", defaultValue: 30, displayDuringSetup: true
+//    input "timeOut", "number", title: "Timeout in Seconds", description: "Max time w/o HubDuino update before setting device to 'not present'", defaultValue: "900", required: true, displayDuringSetup:true
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
 
@@ -136,8 +139,14 @@ def getData(){
         try{
             httpGet(params){response ->
                 if(response.status != 200) {
+                    if (device.currentValue("presence") != "not present") {
+                        sendEvent(name: "presence", value: "not present", isStateChange: true, descriptionText: "Error trying to communicate with IoTaWatt device")
+                    }
                     log.error "Received HTTP error ${response.status}. Check your IP Address and IoTaWatt!"
                 } else {
+                    if (device.currentValue("presence") != "present") {
+                        sendEvent(name: "presence", value: "present", isStateChange: true, descriptionText: "New update received from IoTaWatt device")
+                    }
                     //log.debug "Response from IoTaWatt = ${response.data}"
                     def inputs = response.data.inputs
                     def outputs = response.data.outputs             
@@ -166,7 +175,10 @@ def getData(){
                 }
             }
         } catch (Exception e) {
-                log.error "IoTaWatt Server Returned: ${e}"
+            if (device.currentValue("presence") != "not present") {
+                sendEvent(name: "presence", value: "not present", isStateChange: true, descriptionText: "Error trying to communicate with IoTaWatt device")
+            }
+            log.error "IoTaWatt Server Returned: ${e}"
         } 
     } else {
         log.error "IP Address '${deviceIP}' is not properly formatted!"

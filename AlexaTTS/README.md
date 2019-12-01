@@ -71,8 +71,8 @@ If you are able to install a NodeJS service on a machine in your network (or dep
 
 Okay, so you've got your cookie string.  Congratulations as I know that was a bit of manual work!  Now for the easy part!
 -----------------------------------------------------------------------------------------------------
-1) Add the "Alexa TTS Manager" source code to your Hubitat 'Apps Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Apps/alexa-tts-manager.src/alexa-tts-manager.groovy
-2) Add the "Child Alexa TTS" source code to your Hubitat 'Drivers Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
+1) Add the "Alexa TTS Manager" source code to your Hubitat 'Apps Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/AlexaTTS/Apps/alexa-tts-manager.src/alexa-tts-manager.groovy
+2) Add the "Child Alexa TTS" source code to your Hubitat 'Drivers Code" as a new app and save it. https://raw.githubusercontent.com/ogiewon/Hubitat/master/AlexaTTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
 3) Go to your 'Apps', and click 'Load New App' and select the "Alexa TTS Manager"
 4) Now copy and paste that huge cookie string you created earlier and paste it into the text box.  
 5) Select your country from the drop down list.

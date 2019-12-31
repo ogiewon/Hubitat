@@ -35,6 +35,7 @@
  *    2019-07-14  Dan Ogorchock  Added Harmony Volume and Channel control (for activities that support it) (with help from @aaron!)
  *    2019-07-15  Dan Ogorchock  Added setLevel and setVolume commands for greater compatability with Hubitat Dashboard and other Apps
  *    2019-07-23  Dan Ogorchock  Added Actuator Capability to allow RM Custom Actions to select this device
+ *    2019-12-31  Dan Ogorchock  Changed volume control logic to be more robust and clear to users
  *
  *
  */
@@ -57,9 +58,6 @@ metadata {
         //command "stopActivity"
         command "getCurrentActivity"
         
-        //command "volumeUp"
-        //command "volumeDown"
-        //command "mute"
         command "channelUp"
         command "channelDown"
         command "channelPrev"
@@ -69,8 +67,8 @@ metadata {
 }
 
 preferences {
-    input name: "VolumeRepeat", type: "text", title: "Increase/Decrease Volume by # of repeats", required: false, defaultValue: "0"
-    input("ip", "text", title: "IP Address", description: "IP Address", required: true)
+    input("ip", "text", title: "Harmony Hub", description: "IP Address (in form of 192.168.1.45)", required: true)
+    input name: "VolumeRepeat", type: "number", title: "Volume Control", description: "Increase/Decrease by this number of 'presses'",required: true, defaultValue: "1", range: "1..100"
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
     
 }
@@ -340,26 +338,21 @@ def unmute() {
 }
 
 def volumeUp() {
-    state.HarmonyConfig.each { it ->
-        if (it.id == state.currentActivity) {
-            if (it.VolumeActivityRole != "null") {
-                for(int x=0; x<VolumeRepeat.toInteger();x++) {
-                    deviceCommand("VolumeUp", it.VolumeActivityRole)
-                    pauseExecution(500)
-                }
-            } else {
-                log.info "Activity ${it.label} does not support volume control"
-            }
-        }
-    }
+    adjustVolume("VolumeUp")
 }
 
 def volumeDown() {
+    adjustVolume("VolumeDown")
+}
+
+def adjustVolume(String direction) {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
             if (it.VolumeActivityRole != "null") {
-                for(int x=0; x<VolumeRepeat.toInteger();x++) {
-                    deviceCommand("VolumeDown", it.VolumeActivityRole)
+                int numPresses = (VolumeRepeat == null) ? 1 : VolumeRepeat.toInteger()
+                for(int x = 1; x <= numPresses; x++) {
+                    deviceCommand(direction, it.VolumeActivityRole)
+                    if (logEnable) log.debug "${direction}"
                     pauseExecution(500)
                 }                
             } else {
@@ -367,6 +360,7 @@ def volumeDown() {
             }
         }
     }
+
 }
 
 def setLevel(value,duration=null) {

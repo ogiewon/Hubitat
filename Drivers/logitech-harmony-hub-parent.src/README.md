@@ -11,6 +11,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20190714 - Added Volume and Channel controls (for activities that support these features)- Thanks @aaron for the help!
 - v0.1.20190715 - Added setLevel and setVolume commands to enable limited Dashboard support
 - v0.1.20190723 - Added Actuator Capability to allow device to be used in RM's 'Custom Actions' 
+- v0.1.20191231 - Improved volume control logic, fixed small bug preventing volume updates if number of repeats was 0 
 
 **Instructions For Use**
 

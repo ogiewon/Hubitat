@@ -20,20 +20,17 @@
  *    ----        ---             	----
  *    2018-10-20  Dan Ogorchock   	Original Creation
  *    2018-11-18  Stephan Hackett	Added support for Virtual Containers
- *    2019-04-04  Thomas Howard         Added support for get/set volume (not working currently - Dan O 4/6/19)
  * 
  */
 
 metadata {
     definition (name: "Child Alexa TTS", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/AlexaTTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy") {
         capability "Speech Synthesis"
-        //capability "AudioVolume"
     }
 }
 
 preferences {  
 }
-
 
 def speak(message) {
     log.debug "Speaking message = '${message}'"
@@ -43,22 +40,6 @@ def speak(message) {
 	else parent.speakMessage(message, name)
     
 }
-
-/*def setVolume(volumeLevel){
-	
-    def name = device.deviceNetworkId.split("-")[-1]
-    def vId = device.data.vcId
-
-    //Bounds check the volume
-    volumeLevel = (volumeLevel > 100) ? 100 : volumeLevel;
-    volumeLevel = (volumeLevel < 0) ? 0 : volumeLevel;
-    volumeLevel = Math.max(Math.min(Math.round(volumeLevel), 100), 0);
-	
-    log.debug "Setting Volume to '${volumeLevel}'"
-	
-    if(vId) parent.childComm("setVolume", volumeLevel, vId)	
-    else parent.setVolume(volumeLevel, name);
-}*/
 
 def installed() {
     initialize()

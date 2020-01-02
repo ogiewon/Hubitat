@@ -38,6 +38,7 @@
  *     v0.5.3   2019-04-16  Gabriele        Added app events to have some historic logging
  *     v0.5.4   2019-06-24  Dan Ogorchock   Attempt to add Australia
  *     v0.5.5   2019-07-18  Dan Ogorchock   Reduced Debug Logging
+ *     v0.5.6   2020-01-02  Dan Ogorchock   Add support for All Echo Device Broadcast
  *
  */
 
@@ -124,8 +125,8 @@ def speakMessage(String message, String device) {
         log.warn "Message is empty. Skipping sending request to Amazon"
     }
     else {
-        atomicState.alexaJSON.devices.each {it->
-            if (it.accountName == device) {
+        atomicState.alexaJSON.devices.any {it->
+            if ((it.accountName == device) || (device == "All Echos")) {
                 //log.debug "${it.accountName}"
                 //log.debug "${it.deviceType}"
                 //log.debug "${it.serialNumber}"
@@ -138,7 +139,15 @@ def speakMessage(String message, String device) {
                     def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
                     def LANGUAGE = getURLs()."${alexaCountry}".Language
                     def TTS= ",\\\"textToSpeak\\\":\\\"${message}\\\""
-                    def command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"type\\\":\\\"${SEQUENCECMD}\\\",\\\"operationPayload\\\":{\\\"deviceType\\\":\\\"${DEVICETYPE}\\\",\\\"deviceSerialNumber\\\":\\\"${DEVICESERIALNUMBER}\\\",\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"${TTS}}}}\",\"status\":\"ENABLED\"}"
+                    
+                    def command = ""
+                    if (device == "All Echos") { 
+                        command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"operationPayload\\\":{\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\",\\\"expireAfter\\\":\\\"PT5S\\\",\\\"content\\\":[{\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"display\\\":{\\\"title\\\":\\\"AlexaTTS\\\",\\\"body\\\":\\\"${message}\\\"},\\\"speak\\\":{\\\"type\\\":\\\"text\\\",\\\"value\\\":\\\"${message}\\\"}}],\\\"target\\\":{\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"}},\\\"type\\\":\\\"AlexaAnnouncement\\\"}}\",\"status\":\"ENABLED\"}"
+                    }
+                    else {
+                        command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"type\\\":\\\"${SEQUENCECMD}\\\",\\\"operationPayload\\\":{\\\"deviceType\\\":\\\"${DEVICETYPE}\\\",\\\"deviceSerialNumber\\\":\\\"${DEVICESERIALNUMBER}\\\",\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"${TTS}}}}\",\"status\":\"ENABLED\"}"
+                    }
+                    
                     def csrf = (alexaCookie =~ "csrf=(.*?);")[0][1]
 
                     def params = [uri: "https://" + getURLs()."${alexaCountry}".Alexa + "/api/behaviors/preview",
@@ -164,7 +173,7 @@ def speakMessage(String message, String device) {
                         }
                     }
                 }
-                catch (groovyx.net.http.HttpResponseException hre) {
+               catch (groovyx.net.http.HttpResponseException hre) {
                     //Noticed an error in parsing the http response.  For now, catch it to prevent errors from being logged
                     if (hre.getResponse().getStatus() != 200) {
                         log.error "'speakMessage()': Error making Call (Data): ${hre.getResponse().getData()}"
@@ -182,78 +191,14 @@ def speakMessage(String message, String device) {
                     log.error "'speakMessage()': error = ${e}"
                     //log.error "'speakMessage()':  httpPost() resp.contentType = ${e.response.contentType}"
                     notifyIfEnabled("Alexa TTS: Please check your cookie!")
-                }        
+                }
+
+                return true
             }
         }
     }
 }
 
-/*
-def setVolume(float volume, String device) {
-	vol = volume.toInteger();
-    log.debug "Setting Volume to '${vol}' to '${device}"
-    
-	atomicState.alexaJSON.devices.each {it->
-            if (it.accountName == device) {
-                //log.debug "${it.accountName}"
-                //log.debug "${it.deviceType}"
-                //log.debug "${it.serialNumber}"
-                //log.debug "${it.deviceOwnerCustomerId}"
-
-                try{
-                    def SEQUENCECMD = "VolumeLevelCommand"
-                    def DEVICETYPE = "${it.deviceType}"
-                    def DEVICESERIALNUMBER = "${it.serialNumber}"
-                    def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
-                    def LANGUAGE = getURLs()."${alexaCountry}".Language
-					def command = "{\"type\":\"VolumeLevelCommand\",\"volumeLevel\": ${vol}}"
-
-					def csrf = (alexaCookie =~ "csrf=(.*?);")[0][1]
-
-                    def params = [uri: "https://" + getURLs()."${alexaCountry}".Amazon + "/api/np/command?deviceSerialNumber=${DEVICESERIALNUMBER}&deviceType=${DEVICETYPE}",
-                                  headers: ["Cookie":"""${alexaCookie}""",
-                                            "Referer": "https://" + getURLs()."${alexaCountry}".Amazon + "/spa/index.html",
-                                            "Origin": "https://" + getURLs()."${alexaCountry}".Amazon,
-                                            "csrf": "${csrf}",
-                                            "Connection": "keep-alive",
-                                            "DNT":"1"],
-                                            requestContentType: "application/json",
-                                            contentType: "text/plain",
-                                            body: command
-                                ]
-					log.debug "Params: ${params}"
-                    httpPost(params) { resp ->
-                        //log.debug resp.contentType
-                        //log.debug resp.status
-                        //log.debug resp.data   
-                        if (resp.status != 200) {
-                            log.error "'setVolume()':  httpPost() resp.status = ${resp.status}"
-                            notifyIfEnabled("Alexa TTS: Please check your cookie!")
-                        }
-                    }
-                }
-                catch (groovyx.net.http.HttpResponseException hre) {
-                    //Noticed an error in parsing the http response.  For now, catch it to prevent errors from being logged
-                    if (hre.getResponse().getStatus() != 200) {
-                        log.error "'setVolume()': Error making Call (Data): ${hre.getResponse().getData()}"
-                        log.error "'setVolume()': Error making Call (Status): ${hre.getResponse().getStatus()}"
-                        log.error "'setVolume()': Error making Call (getMessage): ${hre.getMessage()}"
-                        if (hre.getResponse().getStatus() == 400) {
-                            notifyIfEnabled("Alexa TTS: ${hre.getResponse().getData()}")
-                        }
-                        else {
-                            notifyIfEnabled("Alexa TTS: Please check your cookie!")
-                        }
-                    }
-                }
-                catch (e) {
-                    log.error "'setVolume()': error = ${e}"
-                    notifyIfEnabled("Alexa TTS: Please check your cookie!")
-                }        
-            }
-        }
-}
-*/
 
 def getDevices() {
     if (alexaCookie == null) {log.debug "No cookie yet"
@@ -275,7 +220,7 @@ def getDevices() {
             //log.debug resp.status
             //log.debug resp.data
             if ((resp.status == 200) && (resp.contentType == "application/json")) {
-                def validDevices = []
+                def validDevices = ["All Echos"]
                 atomicState.alexaJSON = resp.data
                 //log.debug state.alexaJSON.devices.accountName
                 atomicState.alexaJSON.devices.each {it->
@@ -287,6 +232,7 @@ def getDevices() {
                         validDevices << it.accountName
                     }
                 }
+                log.debug "getDevices(): validDevices = ${validDevices}"
                 return validDevices
             }
             else {

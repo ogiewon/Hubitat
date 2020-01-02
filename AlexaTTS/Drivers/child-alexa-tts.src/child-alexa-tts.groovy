@@ -1,7 +1,7 @@
 /**
  *  Child Alexa TTS
  *
- *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/AlexaTTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy
  *
  *  Copyright 2018 Daniel Ogorchock
  *
@@ -25,7 +25,7 @@
  */
 
 metadata {
-    definition (name: "Child Alexa TTS", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Alexa%20TTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy") {
+    definition (name: "Child Alexa TTS", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/AlexaTTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy") {
         capability "Speech Synthesis"
         //capability "AudioVolume"
     }

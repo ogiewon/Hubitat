@@ -1,4 +1,4 @@
-# Hubitat Amazon Alexa Text To Speech  v0.5.4
+# Hubitat Amazon Alexa Text To Speech  v0.5.6
 (USA, Canada, UK, Italy, Australia currently supported)
 
 History
@@ -19,6 +19,8 @@ History
 - v0.5.2  Attempt to add volume control, but not working so commented out
 - v0.5.3  Added app events to have some historic logging
 - v0.5.4  Attempt to add support for Australia (Successfully tested)
+- v0.5.5  Reduced Debug Logging
+- v0.5.6  Add support for All Echo Device Broadcast (thanks @rjb.bob!)
 
 WARNING: v0.4.x will delete and create new child devices if you choose to enable the virtual container support feature.  To use the Virtual Container feature, you will need @stephack's Virtual Container Driver from his repo at https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy.
 
@@ -31,10 +33,10 @@ First things first...  Credit where credit is due...  Thank you to the authors o
 
   https://blog.loetzimmer.de/2017/10/amazon-alexa-hort-auf-die-shell-echo.html
 
-Also, much thanks to Hubitat's Chuck Schwer, for his tips, tricks, nudging, and advice!
+Also, much thanks to Hubitat's Chuck Schwer, for his tips, tricks, and advice!
 
 
-I have created a Hubitat App (Alexa TTS Manager) and Driver (Child Alexa TTS) which implement basic TTS capability directly on the Hubitat Elevation hub, with no need for another computer or hub.  The "Alexa TTS Manager" app communicates directly to the alexa.amazon.com website to list your devices.  You then select which devices you want to be able to issue TTS commands to.  The app then creates a "Child Alexa TTS" device for each selected Amazon device.  These child devices can be used by any Hubitat App that can utilize the "Speech Synthesis" Capability. 
+I have created a Hubitat App (Alexa TTS Manager) and Driver (Child Alexa TTS) which implement basic TTS capability directly on the Hubitat Elevation hub, with no need for another computer or hub.  The "Alexa TTS Manager" app communicates directly to the alexa.amazon.com website to list your devices.  You then select which devices you want to be able to issue TTS commands to.  The app then creates a "Child Alexa TTS" device for each selected Amazon Echo device.  These child devices can be used by any Hubitat App that can utilize the "Speech Synthesis" Capability. There is also an "All Echos" child device that is created as of v0.5.6.  This device can be used to send a brodcast to all of your echo devices at once.  This helps to prevent hitting the rate limit threshold imposed by Amazon.
 
 Now, the tricky part...  (there's always a 'gotcha', right?)
 

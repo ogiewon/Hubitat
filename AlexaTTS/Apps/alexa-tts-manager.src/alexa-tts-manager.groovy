@@ -39,6 +39,7 @@
  *     v0.5.4   2019-06-24  Dan Ogorchock   Attempt to add Australia
  *     v0.5.5   2019-07-18  Dan Ogorchock   Reduced Debug Logging
  *     v0.5.6   2020-01-02  Dan Ogorchock   Add support for All Echo Device Broadcast
+ *     v0.5.7   2020-01-02  Bob Butler      Add an override switch that disables all voice messages when off 
  *
  */
 
@@ -96,6 +97,10 @@ def pageOne(){
             paragraph "Optionally assign a device for error notifications (like when the cookie is invalid or refresh fails)"
             input "notificationDevice", "capability.notification", multiple: false, required: false
         }
+        section("Override Switch") {
+            paragraph "Optionally assign a switch that will disable voice when turned off"
+            input "overrideSwitch", "capability.switch", multiple: false, required: false
+        }
         section("App Name") {
             label title: "Optionally assign a custom name for this app", required: false
         }
@@ -119,6 +124,12 @@ def pageTwo(){
 
 
 def speakMessage(String message, String device) {
+    
+    if (overrideSwitch != null && overrideSwitch.currentSwitch == 'off') {
+        log.info "${overrideSwitch} is off, AlexaTTS will not speak message '${message}'"
+        return
+    } 
+    
     log.debug "Sending '${message}' to '${device}'"
 	sendEvent(name:"speakMessage", value: message, descriptionText: "Sending message to '${device}'")
     if (message == '' || message.length() == 0) {

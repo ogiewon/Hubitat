@@ -1,5 +1,5 @@
-# Hubitat Amazon Alexa Text To Speech  v0.5.7
-(USA, Canada, UK, Italy, Australia currently supported)
+# Hubitat Amazon Alexa Text To Speech  v0.5.8
+(USA, Canada, UK, Italy, Australia, Brazil currently supported)
 
 History
 -------
@@ -22,6 +22,7 @@ History
 - v0.5.5  Reduced Debug Logging
 - v0.5.6  Add support for All Echo Device Broadcast (thanks @rjb.bob!)
 - v0.5.7  Add an override switch that disables all voice messages when off (thanks @rjb.bob!)
+- v0.5.8  Added support for Brazil (thank you Marco Felicio / @maffpt)
 
 WARNING: v0.4.x will delete and create new child devices if you choose to enable the virtual container support feature.  To use the Virtual Container feature, you will need @stephack's Virtual Container Driver from his repo at https://github.com/stephack/Hubitat/blob/master/drivers/Virtual%20Container/Virtual%20Container.groovy.
 

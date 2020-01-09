@@ -40,7 +40,7 @@
  *     v0.5.5   2019-07-18  Dan Ogorchock   Reduced Debug Logging
  *     v0.5.6   2020-01-02  Dan Ogorchock   Add support for All Echo Device Broadcast
  *     v0.5.7   2020-01-02  Bob Butler      Add an override switch that disables all voice messages when off 
- *
+ *     v0.5.8   2020-01-07  Marco Felicio   Added support for Brazil
  */
 
 definition(
@@ -285,7 +285,8 @@ def getURLs() {
                 "Canada": [Alexa: "alexa.amazon.ca", Amazon: "alexa.amazon.ca", Language: "en-US"], 
                 "United Kingdom": [Alexa: "layla.amazon.co.uk", Amazon: "amazon.co.uk", Language: "en-GB"], 
                 "Italy": [Alexa: "alexa.amazon.it", Amazon: "alexa.amazon.it", Language: "it-IT"],
-                "Australia": [Alexa: "alexa.amazon.com.au", Amazon: "alexa.amazon.com.au", Language: "en-AU"]]
+                "Australia": [Alexa: "alexa.amazon.com.au", Amazon: "alexa.amazon.com.au", Language: "en-AU"]],
+                "Brazil": [Alexa: "alexa.amazon.com.br", Amazon: "alexa.amazon.com.br", Language: "pt-BR"]]
     return URLs
 }
 

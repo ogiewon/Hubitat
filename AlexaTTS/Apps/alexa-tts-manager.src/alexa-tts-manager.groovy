@@ -149,14 +149,36 @@ def speakMessage(String message, String device) {
                     def DEVICESERIALNUMBER = "${it.serialNumber}"
                     def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
                     def LANGUAGE = getURLs()."${alexaCountry}".Language
-                    def TTS= ",\\\"textToSpeak\\\":\\\"${message}\\\""
                     
                     def command = ""
                     if (device == "All Echos") { 
-                        command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"operationPayload\\\":{\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\",\\\"expireAfter\\\":\\\"PT5S\\\",\\\"content\\\":[{\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"display\\\":{\\\"title\\\":\\\"AlexaTTS\\\",\\\"body\\\":\\\"${message}\\\"},\\\"speak\\\":{\\\"type\\\":\\\"text\\\",\\\"value\\\":\\\"${message}\\\"}}],\\\"target\\\":{\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"}},\\\"type\\\":\\\"AlexaAnnouncement\\\"}}\",\"status\":\"ENABLED\"}"
+                      //command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"operationPayload\\\":{\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\",\\\"expireAfter\\\":\\\"PT5S\\\",\\\"content\\\":[{\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"display\\\":{\\\"title\\\":\\\"AlexaTTS\\\",\\\"body\\\":\\\"${message}\\\"},\\\"speak\\\":{\\\"type\\\":\\\"text\\\",\\\"value\\\":\\\"${message}\\\"}}],\\\"target\\\":{\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"}},\\\"type\\\":\\\"AlexaAnnouncement\\\"}}\",\"status\":\"ENABLED\"}"
+                        command = "{\"behaviorId\":\"PREVIEW\",\
+                                    \"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\
+                                                        \\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\
+                                                                           \\\"operationPayload\\\":{\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\",\
+                                                                           \\\"expireAfter\\\":\\\"PT5S\\\",\
+                                                                           \\\"content\\\":[{\\\"locale\\\":\\\"${LANGUAGE}\\\",\
+                                                                                             \\\"display\\\":{\\\"title\\\":\\\"AlexaTTS\\\",\
+                                                                                                              \\\"body\\\":\\\"${message}\\\"},\
+                                                                                                              \\\"speak\\\":{\\\"type\\\":\\\"text\\\",\
+                                                                                                                             \\\"value\\\":\\\"${message}\\\"}}],\
+                                                                           \\\"target\\\":{\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"}},\
+                                                                           \\\"type\\\":\\\"AlexaAnnouncement\\\"}}\",\
+                                    \"status\":\"ENABLED\"}"
                     }
                     else {
-                        command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"type\\\":\\\"${SEQUENCECMD}\\\",\\\"operationPayload\\\":{\\\"deviceType\\\":\\\"${DEVICETYPE}\\\",\\\"deviceSerialNumber\\\":\\\"${DEVICESERIALNUMBER}\\\",\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"${TTS}}}}\",\"status\":\"ENABLED\"}"
+                      //command = "{\"behaviorId\":\"PREVIEW\",\"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\\\"type\\\":\\\"${SEQUENCECMD}\\\",\\\"operationPayload\\\":{\\\"deviceType\\\":\\\"${DEVICETYPE}\\\",\\\"deviceSerialNumber\\\":\\\"${DEVICESERIALNUMBER}\\\",\\\"locale\\\":\\\"${LANGUAGE}\\\",\\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\"${TTS}}}}\",\"status\":\"ENABLED\"}"
+                        command = "{\"behaviorId\":\"PREVIEW\",\
+                                    \"sequenceJson\":\"{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.Sequence\\\",\
+                                                        \\\"startNode\\\":{\\\"@type\\\":\\\"com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode\\\",\
+                                                        \\\"type\\\":\\\"${SEQUENCECMD}\\\",\
+                                                        \\\"operationPayload\\\":{\\\"deviceType\\\":\\\"${DEVICETYPE}\\\",\
+                                                                                  \\\"deviceSerialNumber\\\":\\\"${DEVICESERIALNUMBER}\\\",\
+                                                                                  \\\"locale\\\":\\\"${LANGUAGE}\\\",\
+                                                                                  \\\"customerId\\\":\\\"${MEDIAOWNERCUSTOMERID}\\\",\
+                                                                                  \\\"textToSpeak\\\":\\\"${message}\\\"}}}\",\
+                                    \"status\":\"ENABLED\"}"
                     }
                     
                     def csrf = (alexaCookie =~ "csrf=(.*?);")[0][1]

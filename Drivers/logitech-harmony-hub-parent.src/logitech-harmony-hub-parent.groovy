@@ -36,11 +36,13 @@
  *    2019-07-15  Dan Ogorchock  Added setLevel and setVolume commands for greater compatability with Hubitat Dashboard and other Apps
  *    2019-07-23  Dan Ogorchock  Added Actuator Capability to allow RM Custom Actions to select this device
  *    2019-12-31  Dan Ogorchock  Changed volume control logic to be more robust and clear to users
+ *    2020-01-14  Dan Ogorchock  Added Switch Capability and Default Activity user preference.  If the Parent switch is turned on, 
+ *                               the default activity is turned on.  If the Parent switch is turned off, the current Activity is turned off.
  *
  *
  */
 
-def version() {"v0.1.20191231"}
+def version() {"v0.1.20200114"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -51,6 +53,7 @@ metadata {
         capability "Switch Level"
         capability "Audio Volume"
         capability "Actuator"
+        capability "Switch"
 
         //command "sendMsg", ["String"]
         //command "getConfig"
@@ -69,8 +72,8 @@ metadata {
 preferences {
     input("ip", "text", title: "Harmony Hub", description: "IP Address (in form of 192.168.1.45)", required: true)
     input name: "VolumeRepeat", type: "number", title: "Volume Control", description: "Increase/Decrease by this number of 'presses'",required: true, defaultValue: "1", range: "1..100"
-    input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
-    
+    input("deviceName", "enum", title: "Default Activity:", description: "used for parent device's switch capability", multiple: false, required: false, options: getActivities())
+    input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true   
 }
 
 
@@ -295,9 +298,28 @@ def getConfig() {
     sendMsg('{"hubId":"' + state.remoteId + '","timeout":60,"hbus":{"cmd":"vnd.logitech.harmony/vnd.logitech.harmony.engine?config","id":"0","params":{"verb":"get"}}}')
 }
 
+def on() {
+    if (deviceName) {
+        if (logEnable) log.debug "Default Activity = ${deviceName}"
+        startActivity(deviceName)
+    }
+    else {
+        log.info "Default Activity not selected yet"
+    }
+}
+
+def off() {
+        stopActivity()
+}
+
 def startActivity(String activityID) {
     if(!state.remoteId) return
-    
+    if (activityID != "-1") {
+        sendEvent(name: "switch", value: "on")
+    }
+    else {
+        sendEvent(name: "switch", value: "off")
+    }
     sendMsg('{"hubId":"' + state.remoteId + '","timeout":30,"hbus":{"cmd":"harmony.activityengine?runactivity","id":"0","params":{"async": "true","timestamp": 0,"args": {"rule": "start"},"activityId": "' + activityID + '"}}}')
 }
 
@@ -502,6 +524,30 @@ def updateChild(String activityId, String value, String activityName = null) {
             log.error("Child parse call failed: ${e}")
         }
     }
+}
+
+def getActivities() {
+    def result = [:]
+    def activity
+    def name
+    
+    try {
+        childDevices.each{ it ->
+            activity = it.deviceNetworkId.minus("${device.deviceNetworkId}-")
+            name = it.name
+            //log.debug "child: ${activity}:${name}"
+            if (name != "PowerOff") {
+                result << ["${activity}":"${name}"]
+            }
+        }
+        //result = ["${activity}":"${name}"]
+        //log.debug result
+        return result;
+    } 
+    catch(e) {
+        //log.error "Failed to find child without exception: ${e}";
+        //return null;
+    }   
 }
 
 private def getChild(String activityId)

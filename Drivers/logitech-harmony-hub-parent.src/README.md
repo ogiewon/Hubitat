@@ -12,6 +12,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20190715 - Added setLevel and setVolume commands to enable limited Dashboard support
 - v0.1.20190723 - Added Actuator Capability to allow device to be used in RM's 'Custom Actions' 
 - v0.1.20191231 - Improved volume control logic, fixed small bug preventing volume updates if number of repeats was 0 
+- v0.1.20200114 - Added Switch Capability and Default Activity user preference.  If the Parent switch is turned on, the default activity is turned on.  If the Parent switch is turned off, the current Activity is turned off.
 
 **Instructions For Use**
 
@@ -38,6 +39,7 @@ NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer
 - Look at Live Logs (or Past Logs if you didn't have a tab open when you clicked SAVE)
 - You should see all of the Child Devices created for your Logitech Harmony Hub
 - You can now add these devices to the Hubitat Dashboard, use them in Rules, etc...
+- After the initial connection to the HArmony Hub is verified, Select a "Default Activity" that you can use via the Parent's Switch Capability and click SAVE.
 - Clicking "Refresh" in the parent device will simply cause a synchronization between your Harmony Hub and your Hubitat Hub's Chile Activity Switches.  This should not be necessary very often as this driver supports INSTANT STATUS UPDATES! :) 
 
 **Very basic VolumeUP, VolumeDown, and Mute Support**

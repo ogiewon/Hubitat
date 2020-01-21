@@ -38,11 +38,11 @@
  *    2019-12-31  Dan Ogorchock  Changed volume control logic to be more robust and clear to users
  *    2020-01-14  Dan Ogorchock  Added Switch Capability and Default Activity user preference.  If the Parent switch is turned on, 
  *                               the default activity is turned on.  If the Parent switch is turned off, the current Activity is turned off.
- *
+ *    2020-01-21  Dan Ogorchock  Fixed bug in the Parent Switch's Status not updating when controlled via the physical remote control
  *
  */
 
-def version() {"v0.1.20200114"}
+def version() {"v0.1.20200121"}
 
 import hubitat.helper.InterfaceUtils
 

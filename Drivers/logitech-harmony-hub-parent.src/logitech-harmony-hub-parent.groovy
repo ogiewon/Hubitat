@@ -175,6 +175,14 @@ def parse(String description) {
 
 
 def updateChildren(String ActivityID) {
+    //Make sure the parent's "Switch" status is correct
+    if (ActivityID != "-1") {
+        sendEvent(name: "switch", value: "on")
+    }
+    else {
+        sendEvent(name: "switch", value: "off")
+    }	
+	
     //Switch Child Device States based on the return value.  If "-1" turn off all child activity devices
     def tempID = (ActivityID == "-1") ? "PowerOff" : ActivityID
     try {

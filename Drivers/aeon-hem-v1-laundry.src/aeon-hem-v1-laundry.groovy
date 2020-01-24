@@ -10,6 +10,7 @@ Custom Laundry monitor device for Aeon HEM V1
   2018-05-26  Dan Ogorchock  Added optional delay parameter to add debounce feature to prevent multiple events
   2019-03-15  Dan Ogorchock  Tweaked for v2.0.7 compatibility
   2019-07-14  Matt Baran     Added separate debounces for Washer/Dryer
+  2010-01-24  Dan Ogorchock  Attempt to prevent errors in logs
 
 */
 
@@ -57,7 +58,8 @@ def parse(String description) {
 
 def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
 	//log.info "mc3v cmd: ${cmd}"
-	if (cmd.commandClass == 50) {  
+	//if (cmd.commandClass == 50) {
+	if (cmd.commandClass == 50 && cmd.command == 2) {
     	def encapsulatedCommand = cmd.encapsulatedCommand([0x30: 1, 0x31: 1])
         if (encapsulatedCommand) {
         	def scale = encapsulatedCommand.scale

@@ -18,26 +18,28 @@
  *    ----        ---             ----
  *    2018-02-18  Dan Ogorchock   Original Creation
  *    2019-10-11  Stephan Hackett Added ContentType and Body inputs(very limited functionality)
+ *    2020-01-25  Dan Ogorchock   Added ImportURL Metadata
  * 
  */
+
 metadata {
-	definition (name: "HTTP Momentary Switch", namespace: "ogiewon", author: "Dan Ogorchock") {
+    definition (name: "HTTP Momentary Switch", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/http-momentary-switch.src/http-momentary-switch.groovy") {
         capability "Switch"
         capability "Momentary"
-	}
+    }
 
-	preferences {
-		input(name: "deviceIP", type: "string", title:"Device IP Address", description: "Enter IP Address of your HTTP server", required: true, displayDuringSetup: true)
-		input(name: "devicePort", type: "string", title:"Device Port", description: "Enter Port of your HTTP server (defaults to 80)", defaultValue: "80", required: false, displayDuringSetup: true)
-		input(name: "devicePath", type: "string", title:"URL Path", description: "Rest of the URL, include forward slash.", displayDuringSetup: true)
-		input(name: "deviceMethod", type: "enum", title: "POST, GET, or PUT", options: ["POST","GET","PUT"], defaultValue: "POST", required: true, displayDuringSetup: true)
-		input(name: "deviceContent", type: "enum", title: "Content-Type", options: getCtype(), defaultValue: "application/x-www-form-urlencoded", required: true, displayDuringSetup: true)
-		input(name: "deviceBody", type: "string", title:"Body", description: "Body of message", displayDuringSetup: true)
-	}
+    preferences {
+        input(name: "deviceIP", type: "string", title:"Device IP Address", description: "Enter IP Address of your HTTP server", required: true, displayDuringSetup: true)
+        input(name: "devicePort", type: "string", title:"Device Port", description: "Enter Port of your HTTP server (defaults to 80)", defaultValue: "80", required: false, displayDuringSetup: true)
+        input(name: "devicePath", type: "string", title:"URL Path", description: "Rest of the URL, include forward slash.", displayDuringSetup: true)
+        input(name: "deviceMethod", type: "enum", title: "POST, GET, or PUT", options: ["POST","GET","PUT"], defaultValue: "POST", required: true, displayDuringSetup: true)
+        input(name: "deviceContent", type: "enum", title: "Content-Type", options: getCtype(), defaultValue: "application/x-www-form-urlencoded", required: true, displayDuringSetup: true)
+        input(name: "deviceBody", type: "string", title:"Body", description: "Body of message", displayDuringSetup: true)
+    }
 }
 
 def parse(String description) {
-	log.debug(description)
+    log.debug(description)
 }
 
 def getCtype() {
@@ -58,33 +60,33 @@ def toggleOff() {
 }
 
 def on() {
-	push()
+    push()
 }
 
 def off() {
-	push()
+    push()
 }
 
 def runCmd(String varCommand, String method) {
-	def localDevicePort = (devicePort==null) ? "80" : devicePort
-	def path = varCommand 
-	def body = ""
-	if(deviceBody) body = deviceBody
-	def headers = [:] 
+    def localDevicePort = (devicePort==null) ? "80" : devicePort
+    def path = varCommand 
+    def body = ""
+    if(deviceBody) body = deviceBody
+    def headers = [:] 
     headers.put("HOST", "${deviceIP}:${localDevicePort}")
-	headers.put("Content-Type", deviceContent)
+    headers.put("Content-Type", deviceContent)
 
-	try {
-		def hubAction = new hubitat.device.HubAction(
-			method: method,
-			path: path,
-			body: body,
-			headers: headers
-			)
-		log.debug hubAction
-		return hubAction
-	}
-	catch (Exception e) {
+    try {
+        def hubAction = new hubitat.device.HubAction(
+            method: method,
+            path: path,
+            body: body,
+            headers: headers
+            )
+        log.debug hubAction
+        return hubAction
+    }
+    catch (Exception e) {
         log.debug "runCmd hit exception ${e} on ${hubAction}"
-	}  
+    }  
 }

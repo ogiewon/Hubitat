@@ -7,6 +7,7 @@
 *       2018-03-11 Dan Ogorchock    Modified/Simplified for Hubitat
 *       2018-03-23 Stephan Hackett  Added new preferences/features
 *       2018-08-02 Dan and Stephan  Add contentType/requestContentType to httpPost calls (for FW v1.2.1)
+*       2020-01-25 Dan Ogorchock    Added ImportURL Metadata & Minor code cleanup - no functionality changes
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -23,29 +24,31 @@
 *
 *
 */
-def version() {"v1.0.20180324"}
-
-preferences {
-    input("apiKey", "text", title: "API Key:", description: "Pushover API Key")
-    input("userKey", "text", title: "User Key:", description: "Pushover User Key")
-    if(getValidated()){
-        input("deviceName", "enum", title: "Device Name (Blank = All Devices):", description: "", multiple: true, required: false, options: getValidated("deviceList"))
-        input("priority", "enum", title: "Default Message Priority (Blank = NORMAL):", description: "", defaultValue: "0", options:[["-1":"LOW"], ["0":"NORMAL"], ["1":"HIGH"]])
-        input("sound", "enum", title: "Notification Sound (Blank = App Default):", description: "", options: getSoundOptions())
-        input("url", "text", title: "Supplementary URL:", description: "")
-        input("urlTitle", "text", title: "URL Title:", description: "")
-        input("retry", "number", title: "Retry Interval in seconds:(30 minimum)", description: "Applies to Emergency Requests Only")
-        input("expire", "number", title: "Auto Expire After in seconds:(10800 max)", description: "Applies to Emergency Requests Only")
-    }
-}
+def version() {"v1.0.20200125"}
 
 metadata {
-    definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock") {
+    definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
         capability "Notification"
         capability "Actuator"
         capability "Speech Synthesis"
     }
+    
+    preferences {
+        input("apiKey", "text", title: "API Key:", description: "Pushover API Key")
+        input("userKey", "text", title: "User Key:", description: "Pushover User Key")
+        if(getValidated()){
+            input("deviceName", "enum", title: "Device Name (Blank = All Devices):", description: "", multiple: true, required: false, options: getValidated("deviceList"))
+            input("priority", "enum", title: "Default Message Priority (Blank = NORMAL):", description: "", defaultValue: "0", options:[["-1":"LOW"], ["0":"NORMAL"], ["1":"HIGH"]])
+            input("sound", "enum", title: "Notification Sound (Blank = App Default):", description: "", options: getSoundOptions())
+            input("url", "text", title: "Supplementary URL:", description: "")
+            input("urlTitle", "text", title: "URL Title:", description: "")
+            input("retry", "number", title: "Retry Interval in seconds:(30 minimum)", description: "Applies to Emergency Requests Only")
+            input("expire", "number", title: "Auto Expire After in seconds:(10800 max)", description: "Applies to Emergency Requests Only")
+        }
+    }
 }
+
+
 
 def installed() {
     initialize()

@@ -10,7 +10,7 @@ Custom Laundry monitor device for Aeon HEM V1
   2018-05-26  Dan Ogorchock  Added optional delay parameter to add debounce feature to prevent multiple events
   2019-03-15  Dan Ogorchock  Tweaked for v2.0.7 compatibility
   2019-07-14  Matt Baran     Added separate debounces for Washer/Dryer
-  2010-01-24  Dan Ogorchock  Attempt to prevent errors in logs
+  2020-01-24  Dan Ogorchock  Attempt to prevent errors in logs
 
 */
 

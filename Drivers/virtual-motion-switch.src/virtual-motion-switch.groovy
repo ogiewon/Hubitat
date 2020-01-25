@@ -19,15 +19,16 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2018-11-03  Dan Ogorchock  Original Creation
+ *    2020-01-25  Dan Ogorchock  Added ImportURL metadata
  * 
  */
 
 metadata {
-	definition (name: "Virtual Motion with Switch", namespace: "ogiewon", author: "Daniel Ogorchock") {
-		capability "Sensor"
-		capability "Motion Sensor"
+    definition (name: "Virtual Motion with Switch", namespace: "ogiewon", author: "Daniel Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/virtual-motion-switch.src/virtual-motion-switch.groovy") {
+        capability "Sensor"
+        capability "Motion Sensor"
         capability "Switch"
-	}   
+    }   
 }
 
 def on() {

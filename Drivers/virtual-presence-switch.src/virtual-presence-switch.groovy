@@ -20,11 +20,12 @@
  *    ----        ---            ----
  *    2018-08-04  Dan Ogorchock  Original Creation
  *    2018-11-18  Dan Ogorchock  Added arrived() and departed() custom commands
+ *    2020-01-25  Dan Ogorchock  Added ImportURL metadata
  * 
  */
 
 metadata {
-    definition (name: "Virtual Presence with Switch", namespace: "ogiewon", author: "Daniel Ogorchock") {
+    definition (name: "Virtual Presence with Switch", namespace: "ogiewon", author: "Daniel Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/virtual-presence-switch.src/virtual-presence-switch.groovy") {
         capability "Sensor"
         capability "Presence Sensor"
         capability "Switch"

@@ -81,7 +81,7 @@ def pageOne(){
         else {
             // Schedule automatic update
             unschedule()
-            schedule("0 0 1 1/6 * ? *", refreshCookie) //  Check for updates every 6 days at 2:00 AM
+            schedule("0 0 1 1/6 * ? *", refreshCookie) //  Check for updates every 6 days at 1:00 AM
             //Extract cookie from options if cookie is empty
             if(alexaCookie == null){
                 app.updateSetting("alexaCookie",[type:"text", value: getCookieFromOptions(alexaRefreshOptions)])

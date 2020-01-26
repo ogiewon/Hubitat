@@ -41,6 +41,7 @@
  *     v0.5.6   2020-01-02  Dan Ogorchock   Add support for All Echo Device Broadcast
  *     v0.5.7   2020-01-02  Bob Butler      Add an override switch that disables all voice messages when off 
  *     v0.5.8   2020-01-07  Marco Felicio   Added support for Brazil
+ *     v0.5.9   2020-01-26  Dan Ogorchock   Changed automatic cookie refresh time to 1am to avoid hub maintenance window
  */
 
 definition(
@@ -80,7 +81,7 @@ def pageOne(){
         else {
             // Schedule automatic update
             unschedule()
-            schedule("0 0 2 1/6 * ? *", refreshCookie) //  Check for updates every 6 days at 2:00 AM
+            schedule("0 0 1 1/6 * ? *", refreshCookie) //  Check for updates every 6 days at 2:00 AM
             //Extract cookie from options if cookie is empty
             if(alexaCookie == null){
                 app.updateSetting("alexaCookie",[type:"text", value: getCookieFromOptions(alexaRefreshOptions)])

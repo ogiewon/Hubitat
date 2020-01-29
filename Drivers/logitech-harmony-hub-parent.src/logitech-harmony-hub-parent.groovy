@@ -81,7 +81,7 @@ preferences {
 
 def parse(String description) {
     //log.debug "parsed: $description"
-	state.description = []
+    //state.description = []
     def json = null;
     try{
         json = new groovy.json.JsonSlurper().parseText(description)

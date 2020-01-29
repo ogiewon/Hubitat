@@ -39,10 +39,11 @@
  *    2020-01-14  Dan Ogorchock  Added Switch Capability and Default Activity user preference.  If the Parent switch is turned on, 
  *                               the default activity is turned on.  If the Parent switch is turned off, the current Activity is turned off.
  *    2020-01-21  Dan Ogorchock  Fixed bug in the Parent Switch's Status not updating when controlled via the physical remote control
+ *    2020-01-28  Dan Ogorchock  Exposed "deviceCommand" as a custom command per idea from @Geoff_T
  *
  */
 
-def version() {"v0.1.20200121"}
+def version() {"v0.1.20200128"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -60,6 +61,7 @@ metadata {
         //command "startActivity", ["String"]
         //command "stopActivity"
         command "getCurrentActivity"
+        command "deviceCommand", ["String", "Number"]
         
         command "channelUp"
         command "channelDown"

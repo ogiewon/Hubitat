@@ -80,12 +80,12 @@ preferences {
 
 
 def parse(String description) {
-    //log.debug "parsed $description"
-	//state.description = []
+    //log.debug "parsed: $description"
+	state.description = []
     def json = null;
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
-        //log.debug "${json}"    
+        //log.debug "${json}"
         if(json == null){
             log.warn "String description not parsed"
             return
@@ -106,7 +106,7 @@ def parse(String description) {
                 def tempID = (it.id == "-1") ? "PowerOff" : "${it.id}"                    
                 if (logEnable) log.debug "Activity Label: ${it.label}, ID: ${tempID}"
                 
-                //store portion of config results in state veraible (needed for volume/channel control) 
+                //store portion of config results in state variable (needed for volume/channel control) 
                 def volume = "null"
                 if (it.roles?.VolumeActivityRole) volume = it.roles?.VolumeActivityRole
                 def channel = "null"
@@ -116,12 +116,20 @@ def parse(String description) {
                 //Create a Child Switch Device for each Activity if needed, default all of them to 'off' for now
                 updateChild(tempID, "unknown", it.label)
             }
-
+           
             //if (logEnable) { 
             //    def temp = new groovy.json.JsonBuilder(state.HarmonyConfig).toString()
             //    log.debug state.HarmonyConfig
             //    log.debug temp
             //}
+
+            
+            //2020-01-28 DGO - Add new State Variable to display list of Device ID's on Device Details web page.
+            state.HarmonyDevices =[]
+            json?.data?.device?.each { it ->                    
+                if (logEnable) log.debug "Device Label: ${it.label}, ID: ${it.id}"
+                state.HarmonyDevices << ["id":"${it.id}", "label":"${it.label}"]
+            }
 
         } else {
             log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"

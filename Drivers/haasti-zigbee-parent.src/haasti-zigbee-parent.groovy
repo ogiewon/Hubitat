@@ -1,7 +1,7 @@
 /**
  *  HaasTI_Zigbee_Parent.groovy
  *
- *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/haasti-zigbee-parent.src/http-momentary-switch.groovy
+ *  https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/haasti-zigbee-parent.src/haasti-zigbee-parent.groovy
  *
  *  Copyright 2020 Dan G Ogorchock & Andy Haas
  *
@@ -27,7 +27,7 @@ import hubitat.device.HubMultiAction
 import hubitat.device.Protocol
 
 metadata {
-	definition (name: "HaasTI ZigBee Parent", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/haasti-zigbee-parent.src/http-momentary-switch.groovy") {
+	definition (name: "HaasTI ZigBee Parent", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/haasti-zigbee-parent.src/haasti-zigbee-parent.groovy") {
 		capability "Actuator"
 		capability "Configuration"
 		capability "Switch"

@@ -66,6 +66,14 @@ metadata {
         command "channelUp"
         command "channelDown"
         command "channelPrev"
+	
+	// Labelled Actuator
+	command "customCommand", ["command", "deviceID"]
+	command "leftPress", ["deviceID"]
+	command "rightPress", ["deviceID"]
+	command "upPress", ["deviceID"]
+	command "downPress", ["deviceID"]
+	command "okPress", ["deviceID"]
         
         attribute "Activity","String"
     }
@@ -361,6 +369,12 @@ def deviceCommand(command, deviceID) {
     sendMsg('{"hubId":"' + state.remoteId + '","timeout":30,"hbus":{"cmd":"vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction","id": "0", "params":{"status": "press","timestamp": "0","verb": "render", "action": "{\\"command\\": \\"' + command + '\\", \\"type\\":\\"IRCommand\\", \\"deviceId\\": \\"' + deviceID + '\\"}"}}}')
 }
 
+//This enables a press-release single-click command as from testing, commands like DirectionLeft don't release.
+
+def deviceCommandPressRelease(command, deviceID) {
+    sendMsg('{"hubId":"' + state.remoteId + '","timeout":30,"hbus":{"cmd":"vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction","id": "0", "params":{"status": "pressrelease","timestamp": "0","verb": "render", "action": "{\\"command\\": \\"' + command + '\\", \\"type\\":\\"IRCommand\\", \\"deviceId\\": \\"' + deviceID + '\\"}"}}}')
+}
+
 def mute() {
     state.HarmonyConfig.each { it ->
         if (it.id == state.currentActivity) {
@@ -455,6 +469,32 @@ def channelPrev() {
             }
         }
     }
+}
+
+// Sends a custom command to a chosen device, not reliant on whether it is the default volume/channel changing device
+
+def customCommand(String command, String device) {
+    deviceCommandPressRelease(command, device)
+}
+
+def leftPress(String device) {
+    deviceCommandPressRelease("DirectionLeft", device)
+}
+
+def rightPress(String device) {
+    deviceCommandPressRelease("DirectionRight", device)
+}
+
+def upPress(String device) {
+    deviceCommandPressRelease("DirectionUp", device)
+}
+
+def downPress(String device) {
+    deviceCommandPressRelease("DirectionDown", device)
+}
+
+def okPress(String device) {
+    deviceCommandPressRelease("OK", device)
 }
 
 //sendData() is called from the Child Devices to start/stop activities

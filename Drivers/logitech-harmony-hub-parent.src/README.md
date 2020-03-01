@@ -13,6 +13,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20190723 - Added Actuator Capability to allow device to be used in RM's 'Custom Actions' 
 - v0.1.20191231 - Improved volume control logic, fixed small bug preventing volume updates if number of repeats was 0 
 - v0.1.20200114 - Added Switch Capability and Default Activity user preference.  If the Parent switch is turned on, the default activity is turned on.  If the Parent switch is turned off, the current Activity is turned off.
+- v0.1.20200301 - Added Left, Right, Up, Down and OK commands along with custom command option - Requires the device ID - @rebecca (Rebecca Ellenby)
 
 **Instructions For Use**
 

@@ -26,6 +26,7 @@
  *    2018-12-20  Dan Ogorchock  Original Creation
  *    2019-05-24  Dan Ogorchock  Added ImportURL metadata
  *    2019-09-15  Dan Ogorchock  Added Presence Capability to know if the IoTaWatt device is online or offline
+ *    2020-05-06  Dan Ogorchock  Added cleanup functionality to the uninstalled() routine. 
  *
  *
  */
@@ -217,4 +218,16 @@ private def getChild(String name)
         log.error "Failed to find child without exception: ${e}";
         return null;
     }
+}
+
+def uninstalled() {
+    log.info "Executing 'uninstalled()'"
+    deleteAllChildDevices()
+}
+
+def deleteAllChildDevices() {
+    log.info "Uninstalling all Child Devices"
+    getChildDevices().each {
+          deleteChildDevice(it.deviceNetworkId)
+       }
 }

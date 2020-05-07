@@ -65,7 +65,8 @@ def updated() {
     unschedule()
     if (logEnable) runIn(1800,logsOff)
     initialize()
-    schedule("0/${pollingInterval} * * * * ? *", handleUpdates)
+    runIn(pollingInterval, handleUpdates)
+    //schedule("0/${pollingInterval} * * * * ? *", handleUpdates)
 }
 
 def initialize() {
@@ -82,49 +83,51 @@ def initialize() {
 }
 
 def handleUpdates() {
-        getData()?.each{ it -> //iterate over all the updates in array
-            //make sure we were given name and type
-            if(!it.containsKey('name'))
-            {
-                log.error("'name' was not supplied")
-                return
+    runIn(pollingInterval, handleUpdates)
+    
+    getData()?.each{ it -> //iterate over all the updates in array
+        //make sure we were given name and type
+        if(!it.containsKey('name'))
+        {
+            log.error("'name' was not supplied")
+            return
+        }
+        if(!it.containsKey('value'))
+        {
+            log.error("'value' was not supplied")
+            return
+        }
+        if(!it.containsKey('units'))
+        {
+            log.error("'units' was not supplied")
+            return
+        }
+
+        def child = getChild(it.name)
+        if(child == null)
+        {
+            if (logEnable) log.debug "child with name=${it.name} does not exist."
+            def childType = (it.units == "Watts") ? "Child Power Meter" : "Child Voltage Sensor"
+            createChildDevice(it.name, childType)
+            child = getChild(it.name)
+        }
+        else
+        {
+            if (logEnable) log.debug "child with name=${it.name} exists already."
+        }
+
+        if(child != null) // update the child
+        {
+            try{
+                def nameValue = (it.units == "Watts") ? "power ${it.value}" : "voltage ${it.value}"
+                if (logEnable) log.debug "Calling child.parse with '${nameValue}'"
+                child.parse(nameValue)
             }
-            if(!it.containsKey('value'))
-            {
-                log.error("'value' was not supplied")
-                return
-            }
-            if(!it.containsKey('units'))
-            {
-                log.error("'units' was not supplied")
-                return
-            }
-            
-            def child = getChild(it.name)
-            if(child == null)
-            {
-                if (logEnable) log.debug "child with name=${it.name} does not exist."
-                def childType = (it.units == "Watts") ? "Child Power Meter" : "Child Voltage Sensor"
-                createChildDevice(it.name, childType)
-                child = getChild(it.name)
-            }
-            else
-            {
-                if (logEnable) log.debug "child with name=${it.name} exists already."
-            }
-            
-            if(child != null) // update the child
-            {
-                try{
-                    def nameValue = (it.units == "Watts") ? "power ${it.value}" : "voltage ${it.value}"
-                    if (logEnable) log.debug "Calling child.parse with '${nameValue}'"
-                    child.parse(nameValue)
-                }
-                catch(e){
-                    log.error("Child parse call failed: ${e}")
-                }
+            catch(e){
+                log.error("Child parse call failed: ${e}")
             }
         }
+    }
 }
 
 

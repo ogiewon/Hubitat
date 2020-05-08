@@ -26,24 +26,27 @@
  *    2018-12-20  Dan Ogorchock  Original Creation
  *    2019-05-24  Dan Ogorchock  Added ImportURL metadata
  *    2019-09-15  Dan Ogorchock  Added Presence Capability to know if the IoTaWatt device is online or offline
- *    2020-05-06  Dan Ogorchock  Added cleanup functionality to the uninstalled() routine. 
+ *    2020-05-06  Dan Ogorchock  Added cleanup functionality to the uninstalled() routine 
+ *    2020-05-08  Dan ogorchock  Ensure scheduling works properly after a hub reboot
  *
  *
  */
 
- def version() {"v0.1.20200506"}
+ def version() {"v0.1.20200508"}
 
 metadata {
     definition (name: "IoTaWatt Parent", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy") {
+        capability "Initialize"
         capability "Refresh"
         capability "Presence Sensor"  //used to determine is the IoTaWatt microcontroller is still reporting data or not
+        
+        //command "deleteAllChildDevices"
     }
 }
 
 preferences {
     input "deviceIP", "text", title: "IoTaWatt IP Address", description: "in form of 192.168.1.138", required: true, displayDuringSetup: true
     input "pollingInterval", "number", title: "Polling Interval", description: "in seconds", range: "10..300", defaultValue: 30, displayDuringSetup: true
-//    input "timeOut", "number", title: "Timeout in Seconds", description: "Max time w/o HubDuino update before setting device to 'not present'", defaultValue: "900", required: true, displayDuringSetup:true
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 }
 
@@ -61,25 +64,25 @@ def installed() {
 }
 
 def updated() {
-    log.debug "updated() called"
+    log.info "updated() called"
     unschedule()
     if (logEnable) runIn(1800,logsOff)
-    initialize()
-    runIn(pollingInterval, handleUpdates)
+    if (deviceIP) {
+        handleUpdates()
+        runIn(pollingInterval, handleUpdates)
+    }
+    else
+    {
+        log.warn "Please enter the IoTaWatt IP Address and then click SAVE"
+    }
+    
     //schedule("0/${pollingInterval} * * * * ? *", handleUpdates)
 }
 
 def initialize() {
     state.version = version()
-    log.debug "initialize() called"
-    if (deviceIP) {
-        if (logEnable) {
-            getData()?.each {temp ->
-                log.debug "${temp.name}, ${temp.value} ${temp.units}"
-            }
-        }
-        handleUpdates()
-    }
+    log.info "initialize() called"
+    updated()
 }
 
 def handleUpdates() {
@@ -190,13 +193,13 @@ def getData(){
 }
 
 private void createChildDevice(String name, String type) {
-    log.trace "Attempting to create child with name=" + name + " type=" + type;
+    log.info "Attempting to create child with name=" + name + " type=" + type;
     
     try {
         addChildDevice("${type}", "${device.deviceNetworkId}_${name}",
             [label: "${device.displayName} (${name})", 
              isComponent: false, name: "${name}"])
-        log.trace "Created child device with network id: ${device.deviceNetworkId}_${name}"
+        log.info "Created child device with network id: ${device.deviceNetworkId}_${name}"
     } 
     catch(e) {
         log.error "Failed to create child device with error = ${e}";

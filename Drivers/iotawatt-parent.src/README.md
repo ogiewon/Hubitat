@@ -1,11 +1,12 @@
 # Hubitat IoTaWatt Driver 
 
-This driver implements the "Refresh" capability.  It is used to communicate via http to an IoTaWatt Power Monitor system and it creates child devices for Power and Voltage
+This driver implements the "Refresh" capability.  It is used to communicate via http to an IoTaWatt Power Monitor system and it creates child devices for Power and Voltage.  Scheduling is handled automatically via a user preference polling interval in seconds.
 
 This driver implements the "Presence" capability.  It is used to indicate good communications as "present" and lack of communications as "not present"
 
+v0.1.20200508 - Ensure scheduling works properly after a hub reboot
+v0.1.20200508 - Added cleanup functionality to the uninstalled() routine
 v0.1.20190915 - Added Capability Presence to indicate communications issue with the IoTaWatt device
-
 v0.1.20181220 - Initial beta release
 
 Instructions for use

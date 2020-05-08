@@ -228,6 +228,7 @@ private def getChild(String name)
 
 def uninstalled() {
     log.info "Executing 'uninstalled()'"
+    unschedule()
     deleteAllChildDevices()
 }
 

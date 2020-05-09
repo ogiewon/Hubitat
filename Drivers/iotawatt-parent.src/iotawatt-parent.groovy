@@ -67,22 +67,21 @@ def updated() {
     log.info "updated() called"
     unschedule()
     if (logEnable) runIn(1800,logsOff)
-    if (deviceIP) {
-        handleUpdates()
-        runIn(pollingInterval, handleUpdates)
-    }
-    else
-    {
-        log.warn "Please enter the IoTaWatt IP Address and then click SAVE"
-    }
-    
+    initialize()
     //schedule("0/${pollingInterval} * * * * ? *", handleUpdates)
 }
 
 def initialize() {
     state.version = version()
     log.info "initialize() called"
-    updated()
+    if (deviceIP) {
+        handleUpdates()
+    }
+    else
+    {
+        log.warn "Please enter the IoTaWatt IP Address and then click SAVE"
+    }
+
 }
 
 def handleUpdates() {

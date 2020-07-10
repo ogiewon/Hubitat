@@ -40,11 +40,12 @@
  *                               the default activity is turned on.  If the Parent switch is turned off, the current Activity is turned off.
  *    2020-01-21  Dan Ogorchock  Fixed bug in the Parent Switch's Status not updating when controlled via the physical remote control
  *    2020-01-28  Dan Ogorchock  Exposed "deviceCommand" as a custom command per idea from @Geoff_T
- *    2020-03-01  Rebecca Ellenby Added Left, Right, Up, Down, and Ok custom commands.  
+ *    2020-03-01  Rebecca Ellenby Added Left, Right, Up, Down, and Ok custom commands.
+ *    2020-07-10  Dan Ogorchock  Fixed minor bug in setLevel() command
  *
  */
 
-def version() {"v0.1.20200301"}
+def version() {"v0.1.20200710"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -411,17 +412,18 @@ def adjustVolume(String direction) {
 }
 
 def setLevel(value,duration=null) {
-	if (logEnable) log.debug "setLevel >> value: $value"
-	//def valueaux = value as Integer
-	def level = Math.max(Math.min(value.toInteger(), 100), 0)
+    if (logEnable) log.debug "setLevel >> value: $value"
+    //def valueaux = value as Integer
+    def level = Math.max(Math.min(value.toInteger(), 100), 0)
 
-	if (level > 50) {
-		 volumeUp()
+    if (level > 50) {
+        volumeUp()
+        runIn(1, setLevel, [data: 50])
     } else if (level < 50) {
-		 volumeDown()
-	}
-	sendEvent(name: "level", value: level, unit: "%")
-    runIn(1, setLevel, [data: 50])
+        volumeDown()
+        runIn(1, setLevel, [data: 50])
+    }
+    sendEvent(name: "level", value: level, unit: "%") 
 }
 
 def setVolume(volumelevel) {

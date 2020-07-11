@@ -28,6 +28,7 @@
  *    2019-09-15  Dan Ogorchock  Added Presence Capability to know if the IoTaWatt device is online or offline
  *    2020-05-06  Dan Ogorchock  Added cleanup functionality to the uninstalled() routine 
  *    2020-05-08  Dan ogorchock  Ensure scheduling works properly after a hub reboot
+ *    2020-05-16  Dan Ogorchock  Improved error handling
  *
  *
  */
@@ -184,7 +185,11 @@ def getData(){
             if (device.currentValue("presence") != "not present") {
                 sendEvent(name: "presence", value: "not present", isStateChange: true, descriptionText: "Error trying to communicate with IoTaWatt device")
             }
-            log.error "IoTaWatt Server Returned: ${e}"
+            log.warn "IoTaWatt Server Returned: ${e}"
+            if (e == "java.net.NoRouteToHostException: No route to host (Host unreachable)") {
+                //Give the IoTaWatt extra time to recover
+                runIn((pollingInterval * 2), handleUpdates)
+            }
         } 
     } else {
         log.error "IP Address '${deviceIP}' is not properly formatted!"

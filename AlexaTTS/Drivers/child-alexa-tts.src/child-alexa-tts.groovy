@@ -20,14 +20,13 @@
  *    ----        ---             	----
  *    2018-10-20  Dan Ogorchock   	Original Creation
  *    2018-11-18  Stephan Hackett	Added support for Virtual Containers
+ *    2020-07-29  nh.schottfam      Remove characters from message text that may cause issues
  * 
  */
 
 metadata {
     definition (name: "Child Alexa TTS", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/AlexaTTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy") {
         capability "Speech Synthesis"
-        
-        command "initialize"
     }
 }
 
@@ -39,19 +38,12 @@ def speak(message) {
     log.debug "Speaking message = '${nmsg}'"
     def name = device.deviceNetworkId.split("-")[-1]
 	def vId = device.data.vcId
-	if(vId) parent.childComm("speakMessage", message, vId)
+	if(vId) parent.childComm("speakMessage", nmsg.toString(), vId)
 	else parent.speakMessage(nmsg.toString(), name)
-    
 }
 
 def installed() {
-    initialize()
 }
 
 def updated() {
-    initialize()   
 }
-
-def initialize() {
-}
-

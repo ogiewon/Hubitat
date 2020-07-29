@@ -26,6 +26,8 @@
 metadata {
     definition (name: "Child Alexa TTS", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/AlexaTTS/Drivers/child-alexa-tts.src/child-alexa-tts.groovy") {
         capability "Speech Synthesis"
+        
+        command "initialize"
     }
 }
 
@@ -33,11 +35,12 @@ preferences {
 }
 
 def speak(message) {
-    log.debug "Speaking message = '${message}'"
+    String nmsg = message.replaceAll(/(\r\n|\r|\n|\\r\\n|\\r|\\n)+/, " ")
+    log.debug "Speaking message = '${nmsg}'"
     def name = device.deviceNetworkId.split("-")[-1]
 	def vId = device.data.vcId
 	if(vId) parent.childComm("speakMessage", message, vId)
-	else parent.speakMessage(message, name)
+	else parent.speakMessage(nmsg.toString(), name)
     
 }
 
@@ -51,3 +54,4 @@ def updated() {
 
 def initialize() {
 }
+

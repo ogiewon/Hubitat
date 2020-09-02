@@ -67,6 +67,16 @@ Method 1B - Get the cookie from Firefox (Thanks @NoWon)
 6) Ignore the first "Cookie: " part and just add a semi-colon to the end
 7) Paste the cookie into the app
 
+Method 1C - Get the cookie from Firefox for Australia Macintosh Users (Thanks @derekjosborn)
+-------------------------------------------------------------------------------------------------------
+1) In FireFox goto to https://alexa.amazon.com.au/spa/index.html#smart-home then right click on the web page
+2) Select "inspect element (Q)"
+3) Select network and then XHR
+4) Right click on the "post" that has "skills-store.amazon.com.au" and select "copy request headers"
+5) Then paste that into a notepad and your cookie will be clearly labeled there.
+6) Ignore the first "Cookie: " part and just add a semi-colon to the end
+7) Paste the cookie into the app
+
 Method 2 - Automatically obtain and refresh cookie with AlexaCookieNodeJs (Thanks @gabriele)
 -------------------------------------------------------------------------------------------------------
 If you are able to install a NodeJS service on a machine in your network (or deploy a cloud one), this will be the easiest and automated method, that will take care of refreshing the cookie every 6 days

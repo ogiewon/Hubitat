@@ -42,6 +42,7 @@
  *    2020-01-28  Dan Ogorchock  Exposed "deviceCommand" as a custom command per idea from @Geoff_T
  *    2020-03-01  Rebecca Ellenby Added Left, Right, Up, Down, and Ok custom commands.
  *    2020-07-10  Dan Ogorchock  Fixed minor bug in setLevel() command
+ *    2020-09-18  abuttino       Added Home Control Buttons for Harmony Elite/950
  *
  */
 
@@ -54,6 +55,7 @@ metadata {
         capability "Initialize"
         capability "Refresh"
         capability "Switch Level"
+        capability "PushableButton"
         capability "Audio Volume"
         capability "Actuator"
         capability "Switch"
@@ -83,6 +85,10 @@ preferences {
     input("ip", "text", title: "Harmony Hub", description: "IP Address (in form of 192.168.1.45)", required: true)
     input name: "VolumeRepeat", type: "number", title: "Volume Control", description: "Increase/Decrease by this number of 'presses'",required: true, defaultValue: "1", range: "1..100"
     input("deviceName", "enum", title: "Default Activity:", description: "used for parent device's switch capability", multiple: false, required: false, options: getActivities())
+    input("hcBulbOne", "text", title: "Home Control Light 1", description: "Enable Debug Logging and get Device IDs for each button", required: false)
+    input("hcBulbTwo", "text", title: "Home Control Light 2", description: "Enable Debug Logging and get Device IDs for each button", required: false)
+    input("hcSocketOne", "text", title: "Home Control Socket 1", description: "Enable Debug Logging and get Device IDs for each button", required: false)
+    input("hcSocketTwo", "text", title: "Home Control Socket 2", description: "Enable Debug Logging and get Device IDs for each button", required: false)
     input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true   
 }
 
@@ -93,7 +99,7 @@ def parse(String description) {
     def json = null;
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
-        //log.debug "${json}"
+        // log.debug "${json}"
         if(json == null){
             log.warn "String description not parsed"
             return
@@ -184,12 +190,59 @@ def parse(String description) {
             log.error "Received msg = '${json?.msg}' and code = '${json?.code}' from Harmony Hub"
         }
     }
+    
     else {
         if ((json?.cmd != "harmony.engine?startActivity") && (json?.cmd != "harmony.activityengine?runactivity")) {
             if (logEnable) log.info "Unhandled data from Harmony Hub. json = ${description}"
         }
     }
+// AJB Added On/Off Functions with any-type of identifier
+	if (hcBulbOne)
+		if ((description.contains(hcBulbOne)) && (description.contains('"on":true'))) {
+			log.info "Bulb Button 1 was pressed on"
+			sendEvent(name:"pushed", value: 1, descriptionText: "Bulb Button 1 was pressed", isStateChange: true)
+	}   
+	if (hcBulbTwo)
+		if ((description.contains(hcBulbTwo)) && (description.contains('"on":true'))) {
+			log.info "Bulb Button 2 was pressed on"
+			sendEvent(name:"pushed", value: 2, descriptionText: "Bulb Button 2 was pressed", isStateChange: true)
+	}
+	if (hcSocketOne) {
+		if ((description.contains(hcSocketOne)) && (description.contains('"on":true'))) {
+			log.info "Socket Button 1 was pressed on"
+			sendEvent(name:"pushed", value: 3, descriptionText: "Socket Button 1 was pressed", isStateChange: true)
+		}
+	}
+	if (hcSocketTwo) {
+		if ((description.contains(hcSocketTwo)) && (description.contains('"on":true'))) {
+			log.info "Socket Button 2 was pressed on"
+			sendEvent(name:"pushed", value: 4, descriptionText: "Socket Button 2 was pressed", isStateChange: true)
+		}
+	}
+	if (hcBulbOne)
+		if ((description.contains(hcBulbOne)) && (description.contains('"on":false'))) {
+			log.info "Bulb Button 1 was pressed off"
+			sendEvent(name:"pushed", value: 5, descriptionText: "Bulb Button 1 was pressed", isStateChange: true)
+	}
+	if (hcBulbTwo)
+		if ((description.contains(hcBulbTwo)) && (description.contains('"on":false'))) {
+			log.info "Bulb Button 2 was pressed off"
+			sendEvent(name:"pushed", value: 6, descriptionText: "Bulb Button 2 was pressed", isStateChange: true)
+	}   
+	if (hcSocketOne) {
+		if ((description.contains(hcSocketOne)) && (description.contains('"on":false'))) {
+			log.info "Socket Button 1 was pressed off"
+			sendEvent(name:"pushed", value: 7, descriptionText: "Socket Button 1 was pressed", isStateChange: true)
+		}
+	}
+	if (hcSocketTwo) {
+		if ((description.contains(hcSocketTwo) && (description.contains('"on":false')))) {
+			log.info "Socket Button 2 was pressed off"
+			sendEvent(name:"pushed", value: 8, descriptionText: "Socket Button 2 was pressed", isStateChange: true)
+		}
+	}
 }
+
 
 
 def updateChildren(String ActivityID) {
@@ -271,7 +324,7 @@ def initialize() {
         log.warn "Harmony Hub IP Address not configured yet"
         return
     }
-    
+    sendEvent(name: "numberOfButtons", value: 8, displayed: true)
     if (state.remoteId == null) {
         httpPost(uri: "http://${ip}:8088",
                  path: '/',

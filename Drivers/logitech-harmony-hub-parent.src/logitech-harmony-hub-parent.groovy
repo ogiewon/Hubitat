@@ -300,6 +300,9 @@ def installed() {
 
 def updated() {
     log.info "updated() called"
+    
+    state.version = version()
+    
     //Unschedule any existing schedules
     unschedule()
     

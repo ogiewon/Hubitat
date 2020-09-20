@@ -15,6 +15,8 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20200114 - Added Switch Capability and Default Activity user preference.  If the Parent switch is turned on, the default activity is turned on.  If the Parent switch is turned off, the current Activity is turned off.
 - v0.1.20200301 - Added Left, Right, Up, Down and OK commands along with custom command option - Requires the device ID - @rebecca (Rebecca Ellenby)
 - v0.1.20200918 - Added Home Control Buttons for Harmony remotes that support these buttons - Thanks @abuttino!
+- v0.1.20200920 - Use 'pushed' and 'held' events for 'Home Control Buttons'
+
 **Instructions For Use**
 
 NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer! 

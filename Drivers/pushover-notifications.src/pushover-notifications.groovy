@@ -3,11 +3,13 @@
 *   File: Pushover_Driver.groovy
 *   Platform: Hubitat
 *   Modification History:
-*       Date       Who              What
-*       2018-03-11 Dan Ogorchock    Modified/Simplified for Hubitat
-*       2018-03-23 Stephan Hackett  Added new preferences/features
-*       2018-08-02 Dan and Stephan  Add contentType/requestContentType to httpPost calls (for FW v1.2.1)
-*       2020-01-25 Dan Ogorchock    Added ImportURL Metadata & Minor code cleanup - no functionality changes
+*       Date       Who                   What
+*       2018-03-11 Dan Ogorchock         Modified/Simplified for Hubitat
+*       2018-03-23 Stephan Hackett       Added new preferences/features
+*       2018-08-02 Dan and Stephan       Add contentType/requestContentType to httpPost calls (for FW v1.2.1)
+*       2020-01-25 Dan Ogorchock         Added ImportURL Metadata & Minor code cleanup - no functionality changest
+*       2020-08-13 Steven Dale (tmleafs) Added title and sound options from the message. encase your title in ^^ sound in ##, added default title to preferences
+*       2020-09-23 Dan Ogorchock         Added support for [HTML] formatting of messages
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -24,10 +26,10 @@
 *
 *
 */
-def version() {"v1.0.20200125"}
+def version() {"v1.0.20200813"}
 
 metadata {
-    definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
+    definition (name: "Pushover Modified", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
         capability "Notification"
         capability "Actuator"
         capability "Speech Synthesis"
@@ -42,6 +44,7 @@ metadata {
             input("sound", "enum", title: "Notification Sound (Blank = App Default):", description: "", options: getSoundOptions())
             input("url", "text", title: "Supplementary URL:", description: "")
             input("urlTitle", "text", title: "URL Title:", description: "")
+            input("Message Title", "text", title: "Message Title:", description: "Choose a message title (Blank = Hubitat)")
             input("retry", "number", title: "Retry Interval in seconds:(30 minimum)", description: "Applies to Emergency Requests Only")
             input("expire", "number", title: "Auto Expire After in seconds:(10800 max)", description: "Applies to Emergency Requests Only")
         }
@@ -154,19 +157,42 @@ def deviceNotification(message) {
         message = message.minus("[E]")
     }
     if(customPriority){ priority = customPriority}
+ 
+    def html = "0"    
+    if(message.contains("[HTML]")){ 
+        html = "1"
+        message = message.minus("[HTML]")
+    }
+ 
+    if((matcher = message =~ /\^(.*?)\^/)){                   
+        message = message.minus("^${matcher[0][1]}^")
+        message = message.trim() //trim any whitespace
+        customTitle = matcher[0][1]
+    }
+    if(customTitle){ title = customTitle}
+        
+    if((matcher = message =~ /\#(.*?)\#/)){               
+        message = message.minus("#${matcher[0][1]}#")      
+        message = message.trim() //trim any whitespace
+        customSound = matcher[0][1]
+        customSound = customSound.toLowerCase()
+    }
+    if(customSound){ sound = customSound}
 
     // Define the initial postBody keys and values for all messages
     def postBody = [
         token: "$apiKey",
         user: "$userKey",
         message: "${message}",
+        title: title,
         priority: priority,
         sound: sound,
         url: url,
         device: deviceName,
         url_title: urlTitle,
         retry: retry,
-        expire: expire
+        expire: expire,
+		html: html
     ]
 
     if (deviceName) { log.debug "Sending Message: ${message} Priority: ${priority} to Device: $deviceName"}

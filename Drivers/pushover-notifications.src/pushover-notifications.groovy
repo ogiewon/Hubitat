@@ -10,6 +10,7 @@
 *       2020-01-25 Dan Ogorchock         Added ImportURL Metadata & Minor code cleanup - no functionality changest
 *       2020-08-13 Steven Dale (tmleafs) Added title and sound options from the message. encase your title in ^^ sound in ##, added default title to preferences
 *       2020-09-23 Dan Ogorchock         Added support for [HTML] formatting of messages
+*       2020-09-27 @s1godfrey            Added device name option from the message.  Encase your device name in **, e.g. "[L]*MyPhone*This is a test!"
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -26,10 +27,10 @@
 *
 *
 */
-def version() {"v1.0.20200813"}
+def version() {"v1.0.20200927"}
 
 metadata {
-    definition (name: "Pushover Modified", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
+    definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
         capability "Notification"
         capability "Actuator"
         capability "Speech Synthesis"
@@ -50,8 +51,6 @@ metadata {
         }
     }
 }
-
-
 
 def installed() {
     initialize()
@@ -179,6 +178,14 @@ def deviceNotification(message) {
     }
     if(customSound){ sound = customSound}
 
+    if((matcher = message =~ /\*(.*?)\*/)){               
+        message = message.minus("*${matcher[0][1]}*")      
+        message = message.trim() //trim any whitespace
+        customDevice = matcher[0][1]
+        customDevice = customDevice.toLowerCase()      
+    }
+    if(customDevice){ deviceName = customDevice}
+    
     // Define the initial postBody keys and values for all messages
     def postBody = [
         token: "$apiKey",

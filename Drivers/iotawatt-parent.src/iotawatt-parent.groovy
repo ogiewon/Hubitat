@@ -29,6 +29,7 @@
  *    2020-05-06  Dan Ogorchock  Added cleanup functionality to the uninstalled() routine 
  *    2020-05-08  Dan ogorchock  Ensure scheduling works properly after a hub reboot
  *    2020-05-16  Dan Ogorchock  Improved error handling
+ *    2020-11-02  Dan Ogorchock  Added timeout to http calls
  *
  *
  */
@@ -140,6 +141,7 @@ def getData(){
         uri: "http://${deviceIP}/status?inputs=yes&outputs=yes",
         contentType: "application/json",
         requestContentType: "application/json",
+        timeout: 10
     ]
     
     if (deviceIP) {
@@ -242,4 +244,3 @@ def deleteAllChildDevices() {
           deleteChildDevice(it.deviceNetworkId)
        }
 }
-

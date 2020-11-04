@@ -42,6 +42,7 @@
  *     v0.5.7   2020-01-02  Bob Butler      Add an override switch that disables all voice messages when off 
  *     v0.5.8   2020-01-07  Marco Felicio   Added support for Brazil
  *     v0.5.9   2020-01-26  Dan Ogorchock   Changed automatic cookie refresh time to 1am to avoid hub maintenance window
+ *     v0.6.0   2020-11-04  Dan Ogorchock   Add support for Ecobee Thermostat with Alexa builtin.  Thank you Greg Veres!
  */
 
 definition(
@@ -265,7 +266,10 @@ def getDevices() {
                     if (it.deviceFamily == "THIRD_PARTY_AVS_MEDIA_DISPLAY" && it.capabilities.contains("AUDIBLE")) {
                         validDevices << it.accountName
                     }
-                }
+                    if (it.deviceFamily == "UNKNOWN" && it.capabilities.contains("AUDIO_PLAYER")) {
+                        validDevices << it.accountName
+                    }
+		}
                 log.debug "getDevices(): validDevices = ${validDevices}"
                 return validDevices
             }

@@ -44,6 +44,7 @@
  *     v0.5.9   2020-01-26  Dan Ogorchock   Changed automatic cookie refresh time to 1am to avoid hub maintenance window
  *     v0.6.0   2020-10-25  lg kahn         add mesg if cookie updated sucessfully, also add setvolume command called from each indiv. device.
  *     v0.6.1   2020-11-04  Dan Ogorchock   Add support for Ecobee Thermostat with Alexa builtin.  Thank you Greg Veres!
+ *     v0.6.2   2020-11-04  Dan Ogorchock   Added timeout parameter to all http calls
  */
 
 definition(
@@ -193,8 +194,9 @@ def speakMessage(String message, String device) {
                                             "Connection": "keep-alive",
                                             "DNT":"1"],
                                           //requestContentType: "application/json",
-                                            contentType: "text/plain",
-                                            body: command
+                                  contentType: "text/plain",
+                                  timeout: 20,
+                                  body: command
                                 ]
     				//log.debug "Command = ${params}"
 
@@ -246,8 +248,10 @@ def getDevices() {
                                 "csrf": "${csrf}",
                                 "Connection": "keep-alive",
                                 "DNT":"1"],
-                      requestContentType: "application/json; charset=UTF-8"
+                      requestContentType: "application/json; charset=UTF-8",
+                      timeout: 20
                      ]
+
  
        httpGet(params) { resp ->
             //log.debug resp.contentType
@@ -435,6 +439,7 @@ def refreshCookie() {
                 "DNT":"1"
             ],
             requestContentType: "application/json; charset=UTF-8",
+            timeout: 20,
             body: alexaRefreshOptions
         ]
 
@@ -492,6 +497,7 @@ def getCookie(data){
                 "DNT":"1"
             ],
             requestContentType: "application/json; charset=UTF-8",
+            timeout: 20,
             query: [guid: data.guid]
         ]
 
@@ -586,15 +592,16 @@ def setVolume(Integer newVolume, String device)
                     //log.debug "csrf = $csrf"
                     
                     def params = [uri: "https://" + getURLs()."${alexaCountry}".Alexa + "/api/behaviors/preview",
-                                  headers: ["Cookie":"""${alexaCookie}""",
+                                  headers: ["Cookie":"""${alexaCookie}""",,
                                             "Referer": "https://" + getURLs()."${alexaCountry}".Amazon + "/spa/index.html",
                                             "Origin": "https://" + getURLs()."${alexaCountry}".Amazon,
                                             "csrf": "${csrf}",
                                             "Connection": "keep-alive",
                                             "DNT":"1"],
-                                          //requestContentType: "application/json",
-                                            contentType: "text/plain",
-                                            body: command
+                                  //requestContentType: "application/json",
+                                  contentType: "text/plain",
+                                  timeout: 20,
+                                  body: command
                                 ]
                     
     				//log.debug "parms = ${params}"

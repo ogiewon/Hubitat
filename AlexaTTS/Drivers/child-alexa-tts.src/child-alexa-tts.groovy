@@ -45,8 +45,7 @@ def updated()
 
 def installed()
 {
-    log.debug "in initialize"
-    state.currentVolume = volumeLevel
+    log.debug "installed() called"
 }
 
 def speak(message) {

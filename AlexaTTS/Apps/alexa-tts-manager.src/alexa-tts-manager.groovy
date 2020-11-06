@@ -97,6 +97,9 @@ def pageOne(){
         section("Please choose your country") {
             input "alexaCountry", "enum", multiple: false, required: true, options: getURLs().keySet().collect()
         }
+        section("Alexa Owner ID (Optional)") {
+            input("ownerID", "text", title: "Optionally enter an Owner ID. This is useful for Amazon Household accounts where the Alexa devices have different owners", submitOnChange: true, required: false)
+        }
         section("Notification Device") {
             paragraph "Optionally assign a device for error notifications (like when the cookie is invalid or refresh fails)"
             input "notificationDevice", "capability.notification", multiple: false, required: false
@@ -150,7 +153,13 @@ def speakMessage(String message, String device) {
                     def SEQUENCECMD = "Alexa.Speak"
                     def DEVICETYPE = "${it.deviceType}"
                     def DEVICESERIALNUMBER = "${it.serialNumber}"
-                    def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
+                    def MEDIAOWNERCUSTOMERID
+                    if (ownerID == '' || ownerID == null) {
+                        MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
+                    }
+                    else {
+                        MEDIAOWNERCUSTOMERID = ownerID
+                    }
                     def LANGUAGE = getURLs()."${alexaCountry}".Language
                     
                     def command = ""
@@ -564,7 +573,12 @@ def setVolume(Integer newVolume, String device)
                     def SEQUENCECMD = "Alexa.DeviceControls.Volume"
                     def DEVICETYPE = "${it.deviceType}"
                     def DEVICESERIALNUMBER = "${it.serialNumber}"
-                    def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
+                    if (ownerID == '' || ownerID == null) {
+                        def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
+                    }
+                    else {
+                        def MEDIAOWNERCUSTOMERID = ownerID
+                    }
                     def LANGUAGE = getURLs()."${alexaCountry}".Language
                  
 	

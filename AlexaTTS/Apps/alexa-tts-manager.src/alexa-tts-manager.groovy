@@ -45,6 +45,8 @@
  *     v0.6.0   2020-10-25  lg kahn         add mesg if cookie updated sucessfully, also add setvolume command called from each indiv. device.
  *     v0.6.1   2020-11-04  Dan Ogorchock   Add support for Ecobee Thermostat with Alexa builtin.  Thank you Greg Veres!
  *     v0.6.2   2020-11-04  Dan Ogorchock   Added timeout parameter to all http calls
+ *     v0.6.3   2020-11-05  Dan Ogorchock   Minor tweak to pull request from @yototogblo to allow user defined ownerID. This is needed to use "All Echos"
+ *                                          if there are multiple Echo devices on the account that have different owners.
  */
 
 definition(
@@ -153,13 +155,8 @@ def speakMessage(String message, String device) {
                     def SEQUENCECMD = "Alexa.Speak"
                     def DEVICETYPE = "${it.deviceType}"
                     def DEVICESERIALNUMBER = "${it.serialNumber}"
-                    def MEDIAOWNERCUSTOMERID
-                    if (ownerID == '' || ownerID == null) {
-                        MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
-                    }
-                    else {
-                        MEDIAOWNERCUSTOMERID = ownerID
-                    }
+                    def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
+                    if (ownerID) { MEDIAOWNERCUSTOMERID = ownerID }
                     def LANGUAGE = getURLs()."${alexaCountry}".Language
                     
                     def command = ""
@@ -573,12 +570,8 @@ def setVolume(Integer newVolume, String device)
                     def SEQUENCECMD = "Alexa.DeviceControls.Volume"
                     def DEVICETYPE = "${it.deviceType}"
                     def DEVICESERIALNUMBER = "${it.serialNumber}"
-                    if (ownerID == '' || ownerID == null) {
-                        def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
-                    }
-                    else {
-                        def MEDIAOWNERCUSTOMERID = ownerID
-                    }
+                    def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
+                    if (ownerID) { MEDIAOWNERCUSTOMERID = ownerID }
                     def LANGUAGE = getURLs()."${alexaCountry}".Language
                  
 	

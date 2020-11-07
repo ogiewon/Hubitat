@@ -573,11 +573,12 @@ def setVolume(Integer newVolume, String device)
                     def SEQUENCECMD = "Alexa.DeviceControls.Volume"
                     def DEVICETYPE = "${it.deviceType}"
                     def DEVICESERIALNUMBER = "${it.serialNumber}"
+                    def MEDIAOWNERCUSTOMERID
                     if (ownerID == '' || ownerID == null) {
-                        def MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
+                        MEDIAOWNERCUSTOMERID = "${it.deviceOwnerCustomerId}"
                     }
                     else {
-                        def MEDIAOWNERCUSTOMERID = ownerID
+                        MEDIAOWNERCUSTOMERID = ownerID
                     }
                     def LANGUAGE = getURLs()."${alexaCountry}".Language
                  

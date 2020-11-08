@@ -24,6 +24,7 @@
  *    2020-09-25  lgk               add volume
  *    2020-10-04  lgk               add set volume as command so it can be called from rule machine
  *    2020-11-04  Dan Ogorchock     Refactor volume functionality to use standard Audio Volume capability
+ *    2020-11-07  Dan Ogorchock     Improvements to prevent Amazon throttling due to new automatic volume adjustment feature & debug logging is now optional
  */
 
 metadata {
@@ -34,25 +35,40 @@ metadata {
     }
     
     preferences {
-			input "TTSvolumeLevel", "number", title: "TTS Volume", description: "If defined, will set Alexa volume before each TTS", range: "1..100", displayDuringSetup: false, required: false
+        input "TTSvolumeLevel", "number", title: "TTS Volume", description: "If defined, will set Alexa volume before each group of TTS messages. Warning: May increase chance of Amazon throttling.", range: "1..100", displayDuringSetup: false, required: false
+        input name: "logEnable", type: "bool", title: "Enable debug logging for 30 minutes", defaultValue: true
     }
+}
+
+def logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
 }
 
 def updated() 
 { 
     log.debug "updated() called"
+    if (logEnable) runIn(1800,logsOff)
 }
 
 def installed()
 {
     log.debug "installed() called"
+    updated()
 }
 
 def speak(message) {
     String nmsg = message.replaceAll(/(\r\n|\r|\n|\\r\\n|\\r|\\n)+/, " ")
-    log.debug "Speaking message = '${nmsg}'"
+    if (logEnable) log.debug "Speaking message = '${nmsg}'"
     
-    if (TTSvolumeLevel) setVolume(TTSvolumeLevel)
+    if (TTSvolumeLevel) {
+        if (!state.setVolumeLastRanAt || now() >= state.setVolumeLastRanAt + 10000) {
+            setVolume(TTSvolumeLevel)
+	    }
+	    else {
+		    if (logEnable) log.debug "Automatic setVolume() ran within last 10 seconds. Bypassing to prevent Amazon throttling."
+	    }   
+    }
     def name = device.deviceNetworkId.split("-")[-1]
 	def vId = device.data.vcId
 	if(vId) parent.childComm("speakMessage", nmsg.toString(), vId)
@@ -61,9 +77,10 @@ def speak(message) {
 
 def setVolume(volumelevel)
 {
-    def newLevel = volumelevel.toInteger()
+    state.setVolumeLastRanAt = now()
     
-    log.debug "setting volume to ${newLevel}"
+    def newLevel = volumelevel.toInteger()
+    if (logEnable) log.debug "setting volume to ${newLevel}"
     sendEvent(name: "volume", value: newLevel)
 
     def name = device.deviceNetworkId.split("-")[-1]
@@ -74,20 +91,20 @@ def setVolume(volumelevel)
 
 def mute() 
 {
-    log.debug "mute() not implemented, please use setVolume()"
+    log.info "mute() not implemented, please use setVolume()"
 }
 
 def unmute() 
 {
-    log.debug "unmute() not implemented, please use setVolume()"
+    log.info "unmute() not implemented, please use setVolume()"
 }
 
 def volumeUp() 
 {
-    log.debug "volumeUp() not implemented, please use setVolume()"
+    log.info "volumeUp() not implemented, please use setVolume()"
 }
 
 def volumeDown() 
 {
-    log.debug "volumeDown() not implemented, please use setVolume()"
+    log.info "volumeDown() not implemented, please use setVolume()"
 }

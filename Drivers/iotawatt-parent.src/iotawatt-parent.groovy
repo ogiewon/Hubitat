@@ -34,7 +34,7 @@
  *
  */
 
- def version() {"v0.1.20200508"}
+ def version() {"v0.1.20201102"}
 
 metadata {
     definition (name: "IoTaWatt Parent", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy") {
@@ -244,3 +244,4 @@ def deleteAllChildDevices() {
           deleteChildDevice(it.deviceNetworkId)
        }
 }
+

@@ -43,12 +43,13 @@
  *    2020-03-01  Rebecca Ellenby Added Left, Right, Up, Down, and Ok custom commands.
  *    2020-07-10  Dan Ogorchock  Fixed minor bug in setLevel() command
  *    2020-09-18  abuttino       Added Home Control Buttons for Harmony Elite/950
- *    2020-09-18  Dan Ogorchock   Minor code cleanup
- *    2020-09-20  Dan Ogorchock   Use pushed and held events for Home Control Buttons.
+ *    2020-09-18  Dan Ogorchock  Minor code cleanup
+ *    2020-09-20  Dan Ogorchock  Use pushed and held events for Home Control Buttons.
+ *    2020-11-23  Dan Ogorchock  Added custom level attributes for Home Control Buttons.  Thanks @fabien.giuliano and @abuttino.
  *
  */
 
-def version() {"v0.1.20200920"}
+def version() {"v0.1.20201123"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -81,6 +82,10 @@ metadata {
         command "okPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
         
         attribute "Activity","String"
+        attribute "bulb1Level","Integer"
+        attribute "bulb2Level","Integer"
+        attribute "socket1Level","Integer"
+        attribute "socket2Level","Integer"
     }
 }
 
@@ -196,6 +201,12 @@ def parse(String description) {
     else if ((json?.type == "automation.state?notify")  && (description.contains('"status":1'))) {
         // AJB Added On/Off Functions for Home Control Buttons to generate pushed and held events
         if (hcBulbOne) {
+            if (description.contains(hcBulbOne)) {
+                def tempbrightness = json?.data[hcBulbOne].brightness
+                tempbrightness = Math.round(tempbrightness/254*100/10)*10
+                log.debug "Bulb 1 Changed to $tempbrightness"
+                sendEvent(name:"bulb1Level", value: tempbrightness, descriptionText: "Bulb 1 Dimmer Level changed", isStateChange: true)
+            }
 		    if ((description.contains(hcBulbOne)) && (description.contains('"on":true'))) {
 			    if (logEnable) log.debug "Bulb Button 1 was 'pushed'"
 			    sendEvent(name:"pushed", value: 1, descriptionText: "Bulb Button 1 was pushed", isStateChange: true)
@@ -206,6 +217,12 @@ def parse(String description) {
 	        }
         }
         if (hcBulbTwo) {
+            if (description.contains(hcBulbTwo)) {
+                def tempbrightness = json?.data[hcBulbTwo].brightness
+                tempbrightness = Math.round(tempbrightness/254*100/10)*10
+                log.debug "Bulb 2 Changed to $tempbrightness"
+                sendEvent(name:"bulb2Level", value: tempbrightness, descriptionText: "Bulb 2 Dimmer Level Changed", isStateChange: true)
+            }
 		    if ((description.contains(hcBulbTwo)) && (description.contains('"on":true'))) {
 			    if (logEnable) log.debug "Bulb Button 2 was 'pushed'"
 			    sendEvent(name:"pushed", value: 2, descriptionText: "Bulb Button 2 was pushed", isStateChange: true)
@@ -216,6 +233,12 @@ def parse(String description) {
 	        }   
         }   
 	    if (hcSocketOne) {
+            if (description.contains(hcSocketOne)) {
+                def tempbrightness = json?.data[hcSocketOne].brightness
+                tempbrightness = Math.round(tempbrightness/254*100/10)*10
+                log.debug "Socket 1 Changed to $tempbrightness"
+                sendEvent(name:"socket1Level", value: tempbrightness, descriptionText: "Socket 1 Dimmer Level changed", isStateChange: true)
+            }            
 		    if ((description.contains(hcSocketOne)) && (description.contains('"on":true'))) {
 			    if (logEnable) log.debug "Socket Button 1 was 'pushed'"
 			    sendEvent(name:"pushed", value: 3, descriptionText: "Socket Button 1 was pushed", isStateChange: true)
@@ -226,6 +249,12 @@ def parse(String description) {
 		    }
 	    }
 	    if (hcSocketTwo) {
+            if (description.contains(hcSocketTwo)) {
+                def tempbrightness = json?.data[hcSocketTwo].brightness
+                tempbrightness = Math.round(tempbrightness/254*100/10)*10
+                log.debug "Socket 2 Changed to $tempbrightness"
+                sendEvent(name:"socket2Level", value: tempbrightness, descriptionText: "Socket Button 2 Dimmer Level changed", isStateChange: true)
+            }  
 		    if ((description.contains(hcSocketTwo)) && (description.contains('"on":true'))) {
 			    if (logEnable) log.debug "Socket Button 2 was 'pushed'"
 			    sendEvent(name:"pushed", value: 4, descriptionText: "Socket Button 2 was pushed", isStateChange: true)

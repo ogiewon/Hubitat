@@ -43,4 +43,5 @@ def off() {
 }
 
 def installed() {
+    off()
 }

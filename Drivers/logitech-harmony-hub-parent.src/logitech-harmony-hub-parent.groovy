@@ -47,10 +47,11 @@
  *    2020-09-20  Dan Ogorchock  Use pushed and held events for Home Control Buttons.
  *    2020-11-23  Dan Ogorchock  Added custom level attributes for Home Control Buttons.  Thanks @fabien.giuliano and @abuttino.
  *    2020-12-28  Dan Ogorchock  Fixed Null division issue caused in the 11-23-2020 release
+ *    2021-01-03  Dan Ogorchock  Added Play and Pause custom commands - require Harmony device ID to be passed in
  *
  */
 
-def version() {"v0.1.20201228"}
+def version() {"v0.1.20210103"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -81,6 +82,8 @@ metadata {
         command "upPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
         command "downPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
         command "okPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
+        command "playPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
+        command "pausePress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
         
         attribute "Activity","String"
         attribute "bulb1Level","Integer"
@@ -105,6 +108,8 @@ preferences {
 def parse(String description) {
     if (logEnable) log.debug "parsed: $description"
     //state.description = []
+    //state.description = description
+
     def json = null;
     try{
         json = new groovy.json.JsonSlurper().parseText(description)
@@ -595,6 +600,14 @@ def downPress(String device) {
 
 def okPress(String device) {
     deviceCommand("OK", device)
+}
+
+def playPress(String device) {
+    deviceCommand("Play", device)
+}
+
+def pausePress(String device) {
+    deviceCommand("Pause", device)
 }
 
 //sendData() is called from the Child Devices to start/stop activities

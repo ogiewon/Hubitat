@@ -47,11 +47,10 @@
  *    2020-09-20  Dan Ogorchock  Use pushed and held events for Home Control Buttons.
  *    2020-11-23  Dan Ogorchock  Added custom level attributes for Home Control Buttons.  Thanks @fabien.giuliano and @abuttino.
  *    2020-12-28  Dan Ogorchock  Fixed Null division issue caused in the 11-23-2020 release
- *    2021-01-03  Dan Ogorchock  Added Play and Pause custom commands - require Harmony device ID to be passed in
- *
+ *    2021-01-04  Dan Ogorchock  Added Play, Pause, and Stop custom commands for the current Activity - valid for only Activities that support TransportBasic commands
  */
 
-def version() {"v0.1.20210103"}
+def version() {"v0.1.20210104"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -75,6 +74,9 @@ metadata {
         command "channelUp"
         command "channelDown"
         command "channelPrev"
+        command "play"
+        command "pause"
+        command "stop"
 
         // Labeled Actuator
         command "leftPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
@@ -82,8 +84,6 @@ metadata {
         command "upPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
         command "downPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
         command "okPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
-        command "playPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
-        command "pausePress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
         
         attribute "Activity","String"
         attribute "bulb1Level","Integer"
@@ -134,12 +134,27 @@ def parse(String description) {
                 def tempID = (it.id == "-1") ? "PowerOff" : "${it.id}"                    
                 if (logEnable) log.debug "Activity Label: ${it.label}, ID: ${tempID}"
                 
-                //store portion of config results in state variable (needed for volume/channel control) 
+                //store portion of config results in state variable (needed for volume/channel/play/pause/stop controls) 
+                //find the deviceId for volume controls
                 def volume = "null"
                 if (it.roles?.VolumeActivityRole) volume = it.roles?.VolumeActivityRole
+                //find the deviceId for channel controls
                 def channel = "null"
                 if (it.roles?.ChannelChangingActivityRole) channel = it.roles?.ChannelChangingActivityRole
-                state.HarmonyConfig << ["id":"${it.id}", "label":"${it.label}", "VolumeActivityRole":"${volume}", "ChannelChangingActivityRole":"${channel}"]
+                //find the deviceId for the TransportBasic Controls (Play/Pause/Stop)
+                def transportBasic = "null"
+                it.controlGroup?.each { it2 ->
+                    if (it2.name == "TransportBasic") {
+                        it2.function?.each { it3 ->
+                            if (it3.name == "Play") {
+                                def temp = new groovy.json.JsonSlurper().parseText(it3.action)
+                                transportBasic = "${temp.deviceId}"
+                            }
+                        }
+                    }
+                }
+                //store deviceId's in state variable
+                state.HarmonyConfig << ["id":"${it.id}", "label":"${it.label}", "VolumeActivityRole":"${volume}", "ChannelChangingActivityRole":"${channel}", "TransportBasic":"${transportBasic}"]
                 
                 //Create a Child Switch Device for each Activity if needed, default all of them to 'off' for now
                 updateChild(tempID, "unknown", it.label)
@@ -576,6 +591,42 @@ def channelPrev() {
     }
 }
 
+def play() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.TransportBasic != "null") {
+                deviceCommand("Play", it.TransportBasic)
+            } else {
+                log.info "Activity ${it.label} does not support TransportBasic 'Play' command"
+            }
+        }
+    }
+}
+
+def pause() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.TransportBasic != "null") {
+                deviceCommand("Pause", it.TransportBasic)
+            } else {
+                log.info "Activity ${it.label} does not support TransportBasic 'Pause' command"
+            }
+        }
+    }
+}
+
+def stop() {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.TransportBasic != "null") {
+                deviceCommand("Stop", it.TransportBasic)
+            } else {
+                log.info "Activity ${it.label} does not support TransportBasic 'Stop' command"
+            }
+        }
+    }
+}
+
 // Sends a custom command to a chosen device, not reliant on whether it is the default volume/channel changing device
 
 def customCommand(String command, String device) {
@@ -600,14 +651,6 @@ def downPress(String device) {
 
 def okPress(String device) {
     deviceCommand("OK", device)
-}
-
-def playPress(String device) {
-    deviceCommand("Play", device)
-}
-
-def pausePress(String device) {
-    deviceCommand("Pause", device)
 }
 
 //sendData() is called from the Child Devices to start/stop activities

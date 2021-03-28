@@ -74,6 +74,7 @@ metadata {
         command "channelUp"
         command "channelDown"
         command "channelPrev"
+        command "channelNumber", ["INTEGER"]
         command "play"
         command "pause"
         command "stop"
@@ -140,8 +141,10 @@ def parse(String description) {
                 if (it.roles?.VolumeActivityRole) volume = it.roles?.VolumeActivityRole
                 //find the deviceId for channel controls
                 def channel = "null"
+                def channelNumbers = "null"
                 if (it.roles?.ChannelChangingActivityRole) channel = it.roles?.ChannelChangingActivityRole
                 //find the deviceId for the TransportBasic Controls (Play/Pause/Stop)
+                //find the deviceId for the NumericBasic Controls (0/1/2/3/4/5/6/7/8/9)
                 def transportBasic = "null"
                 it.controlGroup?.each { it2 ->
                     if (it2.name == "TransportBasic") {
@@ -152,9 +155,17 @@ def parse(String description) {
                             }
                         }
                     }
+                    else if (it2.name == "NumericBasic") {
+                        it2.function?.each { it3 ->
+                            if (it3.name == "Number9") {
+                                def temp = new groovy.json.JsonSlurper().parseText(it3.action)
+                                channelNumbers = "${temp.deviceId}"
+                            }
+                        }
+                    }
                 }
                 //store deviceId's in state variable
-                state.HarmonyConfig << ["id":"${it.id}", "label":"${it.label}", "VolumeActivityRole":"${volume}", "ChannelChangingActivityRole":"${channel}", "TransportBasic":"${transportBasic}"]
+                state.HarmonyConfig << ["id":"${it.id}", "label":"${it.label}", "VolumeActivityRole":"${volume}", "ChannelChangingActivityRole":"${channel}", "TransportBasic":"${transportBasic}", "ChannelNumbers":"${channelNumbers}"]
                 
                 //Create a Child Switch Device for each Activity if needed, default all of them to 'off' for now
                 updateChild(tempID, "unknown", it.label)
@@ -586,6 +597,20 @@ def channelPrev() {
                 deviceCommand("PrevChannel", it.ChannelChangingActivityRole)
             } else {
                 log.info "Activity ${it.label} does not support channel control"
+            }
+        }
+    }
+}
+
+def channelNumber(channel) {
+    state.HarmonyConfig.each { it ->
+        if (it.id == state.currentActivity) {
+            if (it.ChannelNumbers != "null") {
+                for (channelNum in channel.toString()){
+                    deviceCommand(channelNum, it.ChannelNumbers)
+                }
+            } else {
+                log.info "Activity ${it.label} does not support channel numbers"
             }
         }
     }

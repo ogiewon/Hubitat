@@ -48,9 +48,10 @@
  *    2020-11-23  Dan Ogorchock  Added custom level attributes for Home Control Buttons.  Thanks @fabien.giuliano and @abuttino.
  *    2020-12-28  Dan Ogorchock  Fixed Null division issue caused in the 11-23-2020 release
  *    2021-01-04  Dan Ogorchock  Added Play, Pause, and Stop custom commands for the current Activity - valid for only Activities that support TransportBasic commands
+ *    2021-03-29  @chirpy        Added Channel Number selection for Activities that support NumericBasic numbers
  */
 
-def version() {"v0.1.20210104"}
+def version() {"v0.1.20210329"}
 
 import hubitat.helper.InterfaceUtils
 

@@ -19,7 +19,7 @@ Instructions for use
 - In your Hubitat Elevation Hub's admin web page, select the "Drivers Code" section and then click the "+ New Driver" button in the top right corner.  This will open a editor window for manipulating source code.
 - Click in the editor window.  Then PASTE all of the code you copied in the first step.
 - Click the SAVE button in the editor window.
-- Repeate the above setps to install the **required** HubDuino "Child Power Meter" and "Child Voltage Sensor" Drivers.  These are avilable at https://github.com/DanielOgorchock/ST_Anything/tree/master/HubDuino/Drivers
+- Repeat the above steps to install the **required** HubDuino "Child Power Meter" and "Child Voltage Sensor" Drivers.  These are avilable at https://github.com/DanielOgorchock/ST_Anything/tree/master/HubDuino/Drivers
 
 **Create the IoTaWatt Hubitat Device**
 - In your Hubitat Elevation Hub's web page, select the "Devices" section, and then click the "+ Add Virtual Device" button in the top right corner.

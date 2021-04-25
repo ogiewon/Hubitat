@@ -18,6 +18,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20200920 - Use 'pushed' and 'held' events for 'Home Control Buttons'
 - v0.1.20201123 - Added custom level attributes for Home Control Buttons.  Thanks @fabien.giuliano and @abuttino.
 - v0.1.20201228 - Fixed Null division issue caused in the 11-23-2020 release
+- v0.1.20210425 - Corected data type of custom attributes
 
 **Instructions For Use**
 

@@ -49,9 +49,10 @@
  *    2020-12-28  Dan Ogorchock  Fixed Null division issue caused in the 11-23-2020 release
  *    2021-01-04  Dan Ogorchock  Added Play, Pause, and Stop custom commands for the current Activity - valid for only Activities that support TransportBasic commands
  *    2021-03-29  @chirpy        Added Channel Number selection for Activities that support NumericBasic numbers
+ *    2021-04-25  Dan Ogorchock  Corrected data type of custom attributes
  */
 
-def version() {"v0.1.20210329"}
+def version() {"v0.1.20210425"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -88,10 +89,10 @@ metadata {
         command "okPress", [[name:"DeviceID", type: "STRING", description: "Harmony Hub Device ID", constraints: ["STRING"]]]
         
         attribute "Activity","String"
-        attribute "bulb1Level","Integer"
-        attribute "bulb2Level","Integer"
-        attribute "socket1Level","Integer"
-        attribute "socket2Level","Integer"
+        attribute "bulb1Level","Number"
+        attribute "bulb2Level","Number"
+        attribute "socket1Level","Number"
+        attribute "socket2Level","Number"
     }
 }
 

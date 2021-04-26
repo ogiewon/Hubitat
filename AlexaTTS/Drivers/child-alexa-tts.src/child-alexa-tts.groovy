@@ -25,6 +25,7 @@
  *    2020-10-04  lgk               add set volume as command so it can be called from rule machine
  *    2020-11-04  Dan Ogorchock     Refactor volume functionality to use standard Audio Volume capability
  *    2020-11-07  Dan Ogorchock     Improvements to prevent Amazon throttling due to new automatic volume adjustment feature & debug logging is now optional
+ *    2021-04-26  Dan Ogorchock     Support changes to Hubitat Speech Synthesis capability to avoid errors in logs (AWS Poly Voice Name feature not supported)
  */
 
 metadata {
@@ -57,18 +58,26 @@ def installed()
     updated()
 }
 
-def speak(message) {
+
+def speak(message, volume = null, voice = null) {
+    if (voice) log.info "Voice Name feature not supported."
+    
     String nmsg = message.replaceAll(/(\r\n|\r|\n|\\r\\n|\\r|\\n)+/, " ")
     if (logEnable) log.debug "Speaking message = '${nmsg}'"
+        
+    if ((volume == null) && TTSvolumeLevel)  {
+        volume = TTSvolumeLevel
+    }
     
-    if (TTSvolumeLevel) {
+    if (volume) {
         if (!state.setVolumeLastRanAt || now() >= state.setVolumeLastRanAt + 10000) {
-            setVolume(TTSvolumeLevel)
+            setVolume(volume)
 	    }
 	    else {
-		    if (logEnable) log.debug "Automatic setVolume() ran within last 10 seconds. Bypassing to prevent Amazon throttling."
+		    if (logEnable) log.debug "Automatic setVolume() ran within last 10 seconds. Bypassing to hopefully prevent Amazon throttling."
 	    }   
     }
+
     def name = device.deviceNetworkId.split("-")[-1]
 	def vId = device.data.vcId
 	if(vId) parent.childComm("speakMessage", nmsg.toString(), vId)

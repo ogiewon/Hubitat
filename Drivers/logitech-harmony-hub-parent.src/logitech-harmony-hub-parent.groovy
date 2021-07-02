@@ -50,9 +50,10 @@
  *    2021-01-04  Dan Ogorchock  Added Play, Pause, and Stop custom commands for the current Activity - valid for only Activities that support TransportBasic commands
  *    2021-03-29  @chirpy        Added Channel Number selection for Activities that support NumericBasic numbers
  *    2021-04-25  Dan Ogorchock  Corrected data type of custom attributes
+ *    2021-07-02  Dan Ogorchock  Added Presence Capability to indicate whether or not the connection to the Harmony Hub is 'present' or 'not present'
  */
 
-def version() {"v0.1.20210425"}
+def version() {"v0.1.20210702"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -66,6 +67,7 @@ metadata {
         capability "Audio Volume"
         capability "Actuator"
         capability "Switch"
+        capability "Presence Sensor"  //used to determine if the Harmony Hub is connected or not
 
         //command "sendMsg", ["String"]
         //command "getConfig"
@@ -708,19 +710,23 @@ def webSocketStatus(String status){
 
     if(status.startsWith('failure: ')) {
         log.warn("failure message from web socket ${status}")
+        sendEvent(name: "presence", value: "not present", descriptionText: "webSocket connection to Harmony Hub is closed")
         reconnectWebSocket()
     } 
     else if(status == 'status: open') {
         log.info "websocket is open"
         // success! reset reconnect delay
+        sendEvent(name: "presence", value: "present", descriptionText: "webSocket connection to Harmony Hub is open")
         pauseExecution(1000)
         state.reconnectDelay = 1
     } 
     else if (status == "status: closing"){
         log.warn "WebSocket connection closing."
+        sendEvent(name: "presence", value: "not present", descriptionText: "webSocket connection to Harmony Hub is closed")
     } 
     else {
         log.warn "WebSocket error, reconnecting."
+        sendEvent(name: "presence", value: "not present", descriptionText: "webSocket connection to Harmony Hub is closed")
         reconnectWebSocket()
     }
 }

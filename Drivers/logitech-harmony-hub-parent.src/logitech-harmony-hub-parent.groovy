@@ -51,9 +51,10 @@
  *    2021-03-29  @chirpy        Added Channel Number selection for Activities that support NumericBasic numbers
  *    2021-04-25  Dan Ogorchock  Corrected data type of custom attributes
  *    2021-07-02  Dan Ogorchock  Added Presence Capability to indicate whether or not the connection to the Harmony Hub is 'present' or 'not present'
+ *    2021-07-25  Dan Ogorchock  Improved log.debug handling
  */
 
-def version() {"v0.1.20210702"}
+def version() {"v0.1.20210725"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -241,7 +242,7 @@ def parse(String description) {
                 def tempbrightness = json?.data[hcBulbOne].brightness
                 if (tempbrightness) {
                     tempbrightness = Math.round(tempbrightness/254*100/10)*10
-                    log.debug "Bulb 1 Changed to $tempbrightness"
+                    if (logEnable) log.debug "Bulb 1 Changed to $tempbrightness"
                     sendEvent(name:"bulb1Level", value: tempbrightness, descriptionText: "Bulb 1 Dimmer Level changed", isStateChange: true)
                 }
             }
@@ -259,7 +260,7 @@ def parse(String description) {
                 def tempbrightness = json?.data[hcBulbTwo].brightness
                 if (tempbrightness) {
                     tempbrightness = Math.round(tempbrightness/254*100/10)*10
-                    log.debug "Bulb 2 Changed to $tempbrightness"
+                    if (logEnable) log.debug "Bulb 2 Changed to $tempbrightness"
                     sendEvent(name:"bulb2Level", value: tempbrightness, descriptionText: "Bulb 2 Dimmer Level Changed", isStateChange: true)
                 }
             }
@@ -277,7 +278,7 @@ def parse(String description) {
                 def tempbrightness = json?.data[hcSocketOne].brightness
                 if (tempbrightness) {
                     tempbrightness = Math.round(tempbrightness/254*100/10)*10
-                    log.debug "Socket 1 Changed to $tempbrightness"
+                    if (logEnable) log.debug "Socket 1 Changed to $tempbrightness"
                     sendEvent(name:"socket1Level", value: tempbrightness, descriptionText: "Socket 1 Dimmer Level changed", isStateChange: true)
                 }
             }            
@@ -295,7 +296,7 @@ def parse(String description) {
                 def tempbrightness = json?.data[hcSocketTwo].brightness
                 if (tempbrightness) {
                     tempbrightness = Math.round(tempbrightness/254*100/10)*10
-                    log.debug "Socket 2 Changed to $tempbrightness"
+                    if (logEnable) log.debug "Socket 2 Changed to $tempbrightness"
                     sendEvent(name:"socket2Level", value: tempbrightness, descriptionText: "Socket Button 2 Dimmer Level changed", isStateChange: true)
                 }
             }  

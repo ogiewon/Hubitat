@@ -11,6 +11,8 @@
 *       2020-08-13 Steven Dale (tmleafs) Added title and sound options from the message. encase your title in ^^ sound in ##, added default title to preferences
 *       2020-09-23 Dan Ogorchock         Added support for [HTML] formatting of messages
 *       2020-09-27 @s1godfrey            Added device name option from the message.  Encase your device name in **, e.g. "[L]*MyPhone*This is a test!"
+*       2021-11-16 @Tsaaek               Added supplementary URL.  Encase your URL in §§, e.g. "[L]§http://example.com§ ¤Example¤This is a test!"
+*       2021-11-16 @Tsaaek               Added supplementary URL Title  Encase your URL Title in ¤¤, e.g. "[L]§http://example.com§ ¤Example¤This is a test!"
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -27,7 +29,7 @@
 *
 *
 */
-def version() {"v1.0.20200927"}
+def version() {"v1.0.20211116"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
@@ -185,6 +187,20 @@ def deviceNotification(message) {
         customDevice = customDevice.toLowerCase()      
     }
     if(customDevice){ deviceName = customDevice}
+    
+    if((matcher = message =~ /\§(.*?)\§/)){               
+        message = message.minus("§${matcher[0][1]}§")      
+        message = message.trim() //trim any whitespace
+        customUrl = matcher[0][1]
+    }
+    if(customUrl){ url = customUrl}
+
+    if((matcher = message =~ /\¤(.*?)\¤/)){               
+        message = message.minus("¤${matcher[0][1]}¤")      
+        message = message.trim() //trim any whitespace
+        customUrlTitle = matcher[0][1]   
+    }
+    if(customUrlTitle){ urlTitle = customUrlTitle}    
     
     // Define the initial postBody keys and values for all messages
     def postBody = [

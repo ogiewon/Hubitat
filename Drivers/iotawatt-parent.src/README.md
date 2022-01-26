@@ -1,6 +1,6 @@
 # Hubitat IoTaWatt Driver 
 
-** v0.1.20220103 is a BREAKING CHANGE!  Please do NOT upgrade to this version as it will end up creating an entire new set of Child Devices from your IoTaWatt.  This is due to the change from custom Child Drivers to Hubitat's built-in 'Generic Component' child drivers.  I have made this change to reduce the amount of custom code required for new installations. **
+**v0.1.20220103 is a BREAKING CHANGE!  Please do NOT upgrade to this version as it will end up creating an entire new set of Child Devices from your IoTaWatt.  This is due to the change from custom Child Drivers to Hubitat's built-in 'Generic Component' child drivers.  I have made this change to reduce the amount of custom code required for new installations.**
 
 This driver implements the "Refresh" capability.  It is used to communicate via http to an IoTaWatt Power Monitor system and it creates child devices for Power and Voltage.  Scheduling is handled automatically via a user preference polling interval in seconds.
 

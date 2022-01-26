@@ -4,9 +4,7 @@
  *  Platform: Hubitat
  *
  *  Requirements:
- *     1) IoTaWatt Home Energy Meter from https://iotawatt.com/
- *     2) HubDuino "Child Power Meter" and "Child Voltage Sensor" Drivers are also necessary.  These
- *        are avilable at https://github.com/DanielOgorchock/ST_Anything/tree/master/HubDuino/Drivers
+ *     1) IoTaWatt Home Energy Meter from https://iotawatt.com/ using a reserved/static TCP/IP address
  *
  *  Copyright 2018 Dan G Ogorchock 
  *
@@ -30,11 +28,13 @@
  *    2020-05-08  Dan ogorchock  Ensure scheduling works properly after a hub reboot
  *    2020-05-16  Dan Ogorchock  Improved error handling
  *    2020-11-02  Dan Ogorchock  Added timeout to http calls
+ *    2022-01-03  Dan Ogorchock  Convert child devices to use Hubitat's built-in 'Generic Component' drivers.
+ *                               Note:  THIS IS A BREAKING CHANGE!
  *
  *
  */
 
- def version() {"v0.1.20201102"}
+ def version() {"v1.0.20220103"}
 
 metadata {
     definition (name: "IoTaWatt Parent", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy") {
@@ -70,7 +70,6 @@ def updated() {
     unschedule()
     if (logEnable) runIn(1800,logsOff)
     initialize()
-    //schedule("0/${pollingInterval} * * * * ? *", handleUpdates)
 }
 
 def initialize() {
@@ -89,7 +88,14 @@ def initialize() {
 def handleUpdates() {
     runIn(pollingInterval, handleUpdates)
     
-    getData()?.each{ it -> //iterate over all the updates in array
+    String type
+    String name
+    String units
+    def child
+    float tmpValue
+    
+    def IoTaWattData = getData()
+    IoTaWattData?.each{ it -> //iterate over all the updates in array
         //make sure we were given name and type
         if(!it.containsKey('name'))
         {
@@ -106,32 +112,36 @@ def handleUpdates() {
             log.error("'units' was not supplied")
             return
         }
-
-        def child = getChild(it.name)
-        if(child == null)
-        {
-            if (logEnable) log.debug "child with name=${it.name} does not exist."
-            def childType = (it.units == "Watts") ? "Child Power Meter" : "Child Voltage Sensor"
-            createChildDevice(it.name, childType)
-            child = getChild(it.name)
+        
+        if (it.units == "Watts") {
+            type = "Power Meter"
+            name = "power"
+            units = "W"
         }
-        else
-        {
-            if (logEnable) log.debug "child with name=${it.name} exists already."
+        else if (it.units == "Vrms") {
+            type = "Voltage Sensor"
+            name = "voltage"
+            units = "V"
         }
-
-        if(child != null) // update the child
-        {
-            try{
-                def nameValue = (it.units == "Watts") ? "power ${it.value}" : "voltage ${it.value}"
-                if (logEnable) log.debug "Calling child.parse with '${nameValue}'"
-                child.parse(nameValue)
-            }
-            catch(e){
-                log.error("Child parse call failed: ${e}")
-            }
+        else if (it.units == "Hz") {
+            type = "Voltage Sensor"
+            name = "frequency"
+            units = "Hz"
         }
+        
+        child = fetchChild(type, it.name)
+        tmpValue = Float.parseFloat(it.value)
+        tmpValue = tmpValue.round(1)
+        child.parse([[name: name, value: tmpValue, unit: units, descriptionText:"${name} is now ${tmpValue} ${units}"]])
     }
+    
+    //cleanup
+    IoTaWattData = null
+    child = null
+    tmpValue = null    
+    type = null
+    name = null
+    units = null    
 }
 
 
@@ -163,20 +173,21 @@ def getData(){
                     
                     //Format the IoTaWatt Input and Output data consistently to simplify the child device creation process
                     response?.data?.inputs?.each { input ->
-                        def tmpName = "Input_${input.channel.toString().padLeft(2,'0')}"
+                        String tmpName = "Input_${input.channel.toString().padLeft(2,'0')}"
                         if (input.Watts) {
                             //log.debug "name: ${input.channel}, units: Watts, value: ${input.Watts}, units: Pf, value: ${input.Pf}"
                             IoTaWattData << [name:tmpName, units:'Watts', value:input.Watts.toString().trim()]
                         } else if (input.Vrms) {
                             //log.debug "name: ${input.channel}, units: Vrms, value: ${input.Vrms}, units: Hz, value: ${input.Hz}"
                             IoTaWattData << [name:tmpName, units:'Vrms', value:input.Vrms.toString().trim()]
+                            IoTaWattData << [name:tmpName, units:'Hz', value:input.Hz.toString().trim()]
                         } else {
                             log.error "Unhandled case for ${input}"
                         }
                     }
 
                     response?.data?.outputs?.each { output ->
-                       def tmpName = "Output_${output.name}"
+                        String tmpName = "Output_${output.name}"
                         IoTaWattData << [name:tmpName, units:output.units, value:output.value.toString().trim()]
                     }
                     
@@ -198,38 +209,12 @@ def getData(){
     }
 }
 
-private void createChildDevice(String name, String type) {
-    log.info "Attempting to create child with name=" + name + " type=" + type;
-    
-    try {
-        addChildDevice("${type}", "${device.deviceNetworkId}_${name}",
-            [label: "${device.displayName} (${name})", 
-             isComponent: false, name: "${name}"])
-        log.info "Created child device with network id: ${device.deviceNetworkId}_${name}"
-    } 
-    catch(e) {
-        log.error "Failed to create child device with error = ${e}";
+def fetchChild(String type, String name){
+    def cd = getChildDevice("${device.id}-${type}_${name}")
+    if (!cd) {
+        cd = addChildDevice("hubitat", "Generic Component ${type}", "${device.id}-${type}_${name}", [name: "${name}", isComponent: false])
     }
-}
-
-private def getChild(String name)
-{
-    if (logEnable) log.debug "Searching for child device with network id: ${device.deviceNetworkId}_${name}"
-    def result = null
-    try {
-        childDevices.each{ it ->
-            //log.debug "child: ${it.deviceNetworkId}"
-            if(it.deviceNetworkId == "${device.deviceNetworkId}_${name}")
-            {
-                result = it;
-            }
-        }
-        return result;
-    }
-    catch(e) {
-        log.error "Failed to find child without exception: ${e}";
-        return null;
-    }
+    return cd 
 }
 
 def uninstalled() {
@@ -245,3 +230,8 @@ def deleteAllChildDevices() {
        }
 }
 
+//child device methods
+void componentRefresh(cd) {
+    log.info "received refresh request from ${cd.displayName}"
+    runIn(2, refresh)
+}

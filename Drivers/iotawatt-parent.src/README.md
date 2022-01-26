@@ -1,8 +1,16 @@
 # Hubitat IoTaWatt Driver 
 
+** v0.1.20220103 is a BREAKING CHANGE!  Please do NOT upgrade to this version as it will end up creating an entire new set of Child Devices from your IoTaWatt.  This is due to the change from custom Child Drivers to Hubitat's built-in 'Generic Component' child drivers.  I have made this change to reduce the amount of custom code required for new installations. **
+
 This driver implements the "Refresh" capability.  It is used to communicate via http to an IoTaWatt Power Monitor system and it creates child devices for Power and Voltage.  Scheduling is handled automatically via a user preference polling interval in seconds.
 
 This driver implements the "Presence" capability.  It is used to indicate good communications as "present" and lack of communications as "not present"
+
+v0.1.20220103 - Convert child devices to use Hubitat's built-in 'Generic Component' drivers. Note:  THIS IS A BREAKING CHANGE!
+
+v0.1.20201102 - Added timeout to http calls
+
+v0.1.20200516 - Improved error handling
 
 v0.1.20200508 - Ensure scheduling works properly after a hub reboot
 
@@ -15,11 +23,10 @@ v0.1.20181220 - Initial beta release
 Instructions for use
 
 **Create Hubitat Driver**
-- Open up the "iotawatt-parent.groovy" driver from this repository.  Make sure you hit the "RAW" button, then select/highlight all of the source code, and COPY everything (Ctrl-C on Windows, or right click->Copy). 
+- Open up the "iotawatt-parent.groovy" driver from this repository.  Make sure you hit the "RAW" button, then select/highlight all of the source code, and COPY everything (Ctrl-C on Windows, or right click->Copy). ALTERNATE Method: Use the URL from the RAW code page, and paste it into the new driver's IMPORT dialogue window.
 - In your Hubitat Elevation Hub's admin web page, select the "Drivers Code" section and then click the "+ New Driver" button in the top right corner.  This will open a editor window for manipulating source code.
 - Click in the editor window.  Then PASTE all of the code you copied in the first step.
 - Click the SAVE button in the editor window.
-- Repeat the above steps to install the **required** HubDuino "Child Power Meter" and "Child Voltage Sensor" Drivers.  These are avilable at https://github.com/DanielOgorchock/ST_Anything/tree/master/HubDuino/Drivers
 
 **Create the IoTaWatt Hubitat Device**
 - In your Hubitat Elevation Hub's web page, select the "Devices" section, and then click the "+ Add Virtual Device" button in the top right corner.

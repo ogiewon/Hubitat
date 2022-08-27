@@ -13,6 +13,7 @@
 *       2020-09-27 @s1godfrey            Added device name option from the message.  Encase your device name in **, e.g. "[L]*MyPhone*This is a test!"
 *       2021-11-16 @Tsaaek               Added supplementary URL.  Encase your URL in §§, e.g. "[L]§http://example.com§ ¤Example¤This is a test!"
 *       2021-11-16 @Tsaaek               Added supplementary URL Title  Encase your URL Title in ¤¤, e.g. "[L]§http://example.com§ ¤Example¤This is a test!"
+*       2022-08-26 @Seattle              Added [OPEN] and [CLOSE] text substitutions for "<" and ">" as HSM was stripping those characters out 
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -163,8 +164,14 @@ def deviceNotification(message) {
     if(message.contains("[HTML]")){ 
         html = "1"
         message = message.minus("[HTML]")
+        if(message.contains("[OPEN]")){
+            message = message.replace("[OPEN]","<")
+        }
+        if(message.contains("[CLOSE]")){
+            message = message.replace("[CLOSE]",">")
+        }
     }
- 
+    
     if((matcher = message =~ /\^(.*?)\^/)){                   
         message = message.minus("^${matcher[0][1]}^")
         message = message.trim() //trim any whitespace

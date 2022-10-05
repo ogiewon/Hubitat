@@ -13,7 +13,8 @@
 *       2020-09-27 @s1godfrey            Added device name option from the message.  Encase your device name in **, e.g. "[L]*MyPhone*This is a test!"
 *       2021-11-16 @Tsaaek               Added supplementary URL.  Encase your URL in §§, e.g. "[L]§http://example.com§ ¤Example¤This is a test!"
 *       2021-11-16 @Tsaaek               Added supplementary URL Title  Encase your URL Title in ¤¤, e.g. "[L]§http://example.com§ ¤Example¤This is a test!"
-*       2022-08-26 @Seattle              Added [OPEN] and [CLOSE] text substitutions for "<" and ">" as HSM was stripping those characters out 
+*       2022-08-26 @Seattle              Added [OPEN] and [CLOSE] text substitutions for "<" and ">" as HSM was stripping those characters out
+*       2022-10-05 Dan Ogorchock         Added option to enable/disable debug logging
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -30,7 +31,7 @@
 *
 *
 */
-def version() {"v1.0.20211116"}
+def version() {"v1.0.20221005"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
@@ -52,7 +53,13 @@ metadata {
             input("retry", "number", title: "Retry Interval in seconds:(30 minimum)", description: "Applies to Emergency Requests Only")
             input("expire", "number", title: "Auto Expire After in seconds:(10800 max)", description: "Applies to Emergency Requests Only")
         }
+        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
     }
+}
+
+def logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
 }
 
 def installed() {
@@ -60,7 +67,15 @@ def installed() {
 }
 
 def updated() {
-    initialize()   
+    initialize()
+    
+    if (logEnable) {
+        log.info "Enabling Debug Logging for 30 minutes" 
+        runIn(1800,logsOff)
+    } else {
+        unschedule(logsoff)
+    }
+
 }
 
 def initialize() {
@@ -68,8 +83,8 @@ def initialize() {
 }
 
 def getValidated(type){
-    if(type=="deviceList"){log.debug "Generating Device List..."}
-    else {log.debug "Validating Keys..."}
+    if(type=="deviceList"){if (logEnable) log.debug "Generating Device List..."}
+    else {if (logEnable) log.debug "Validating Keys..."}
     
     def validated = false
     
@@ -95,11 +110,11 @@ def getValidated(type){
                 }
                 else {
                     if(type=="deviceList"){
-                        log.debug "Device list generated"
+                        if (logEnable) log.debug "Device list generated"
                         deviceOptions = response.data.devices
                     }
                     else {
-                        log.debug "Keys validated"
+                        if (logEnable) log.debug "Keys validated"
                         validated = true
                     }
                 }
@@ -119,7 +134,7 @@ def getValidated(type){
 }
 
 def getSoundOptions() {
-    log.debug "Generating Notification List..."
+    if (logEnable) log.debug "Generating Notification List..."
     def myOptions =[]
     httpGet(uri: "https://api.pushover.net/1/sounds.json?token=${apiKey}"){response ->
         if(response.status != 200) {
@@ -127,7 +142,7 @@ def getSoundOptions() {
             log.error "Received HTTP error ${response.status}. Check your keys!"
         }
         else {
-            log.debug "Notification List Generated"
+            if (logEnable) log.debug "Notification List Generated"
             mySounds = response.data.sounds
             mySounds.each {eachSound->
             myOptions << ["${eachSound.key}":"${eachSound.value}"]
@@ -225,8 +240,8 @@ def deviceNotification(message) {
 		html: html
     ]
 
-    if (deviceName) { log.debug "Sending Message: ${message} Priority: ${priority} to Device: $deviceName"}
-    else {log.debug "Sending Message: [${message}] Priority: [${priority}] to [All Devices]"}
+    if (deviceName) { if (logEnable) log.debug "Sending Message: ${message} Priority: ${priority} to Device: $deviceName"}
+    else {if (logEnable) log.debug "Sending Message: [${message}] Priority: [${priority}] to [All Devices]"}
 
     // Prepare the package to be sent
     def params = [
@@ -243,7 +258,7 @@ def deviceNotification(message) {
                 log.error "Received HTTP error ${response.status}. Check your keys!"
             }
             else {
-                log.debug "Message Received by Pushover Server"
+                if (logEnable) log.debug "Message Received by Pushover Server"
         }
         }
     }

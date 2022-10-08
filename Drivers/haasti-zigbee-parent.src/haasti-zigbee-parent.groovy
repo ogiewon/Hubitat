@@ -19,6 +19,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2020-02-03  Dan Ogorchock  Original Creation - based on the original HaasTI Zigbee driver written by Andy Haas
+ *    2020-02-23  Dan Ogorchock  Switched to use Voltage Sensors instead of Temperature Sensors
  *	
  */
 
@@ -128,7 +129,7 @@ def parse(String description) {
                 //create button pushed event
         	    sendEvent(name: "pushed", value: index, isStateChange: true, descriptionText: "button ${index} pushed")
             } 
-            //Handle analog input (ADC) updates as temperature sensors (for now) with linear conversion to engineering units
+            //Handle analog input (ADC) updates as voltage sensors (for now) with linear conversion to engineering units
             else if(text.startsWith("0_") || text.startsWith("1_") || text.startsWith("4_") || text.startsWith("5_")) {
                 float slope
                 float offset
@@ -159,7 +160,7 @@ def parse(String description) {
                         break
                 }
                 value = slope * value + offset
-                fetchChild("Temperature Sensor", index).parse([[name:"temperature", value: value, descriptionText:"temperature set to ${value}"]])
+                fetchChild("Voltage Sensor", index).parse([[name:"voltage", value: value, descriptionText:"voltage set to ${value}"]])
             }
             
             //Update the Parent's Switch status based on the child switch statuses
@@ -275,10 +276,10 @@ def updated() {
     fetchChild("Switch", 4)    
     fetchChild("Contact Sensor", 1)
     fetchChild("Contact Sensor", 2)  
-    fetchChild("Temperature Sensor", 0)    
-    fetchChild("Temperature Sensor", 1)    
-    fetchChild("Temperature Sensor", 4)    
-    fetchChild("Temperature Sensor", 5)    
+    fetchChild("Voltage Sensor", 0)    
+    fetchChild("Voltage Sensor", 1)    
+    fetchChild("Voltage Sensor", 4)    
+    fetchChild("Voltage Sensor", 5)    
 
     //get initial values for the contact sensors and analog inputs
     cmds.add sendtodevice("getbutt1")

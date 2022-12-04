@@ -15,6 +15,7 @@
 *       2021-11-16 @Tsaaek               Added supplementary URL Title  Encase your URL Title in ¤¤, e.g. "[L]§http://example.com§ ¤Example¤This is a test!"
 *       2022-08-26 @Seattle              Added [OPEN] and [CLOSE] text substitutions for "<" and ">" as HSM was stripping those characters out
 *       2022-10-05 Dan Ogorchock         Added option to enable/disable debug logging
+*       2022-12-04 Neerav Modi           Added support for new Priority [S] for Lowest Priority (-2) see https://pushover.net/api#priority for details
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -31,7 +32,7 @@
 *
 *
 */
-def version() {"v1.0.20221005"}
+def version() {"v1.0.20221204"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
@@ -157,6 +158,10 @@ def speak(message) {
 }
 
 def deviceNotification(message) {
+    if(message.startsWith("[S]")){ 
+        customPriority = "-2"
+        message = message.minus("[S]")
+    }    
     if(message.startsWith("[L]")){ 
         customPriority = "-1"
         message = message.minus("[L]")

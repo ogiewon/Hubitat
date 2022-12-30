@@ -8,10 +8,8 @@
  *  Requirements:
  *     1) Logitech Harmony Home Hub connected to same LAN as your Hubitat Hub.  Use router
  *        DHCP Reservation to prevent IP address from changing.
- *     2) HubDuino "Child Switch" Driver is also necessary.  This is available
- *        at https://github.com/DanielOgorchock/ST_Anything/tree/master/HubDuino/Drivers
  *
- *  Copyright 2018 Dan G Ogorchock 
+ *  Copyright 2018-2022 Dan G Ogorchock 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -52,9 +50,10 @@
  *    2021-04-25  Dan Ogorchock  Corrected data type of custom attributes
  *    2021-07-02  Dan Ogorchock  Added Presence Capability to indicate whether or not the connection to the Harmony Hub is 'present' or 'not present'
  *    2021-07-25  Dan Ogorchock  Improved log.debug handling
+ *    2022-12-30  Dan Ogorchock  BREAKING CHANGE: Modified to use Hubitat built-in "Generic Component" child drivers, for HomeKit compatibility.  BREAKING CHANGE!
  */
 
-def version() {"v0.1.20210725"}
+def version() {"v0.2.20221230"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -172,7 +171,7 @@ def parse(String description) {
                 //store deviceId's in state variable
                 state.HarmonyConfig << ["id":"${it.id}", "label":"${it.label}", "VolumeActivityRole":"${volume}", "ChannelChangingActivityRole":"${channel}", "TransportBasic":"${transportBasic}", "ChannelNumbers":"${channelNumbers}"]
                 
-                //Create a Child Switch Device for each Activity if needed, default all of them to 'off' for now
+                //Create a Generic Component Switch Device for each Activity if needed, default all of them to 'off' for now
                 updateChild(tempID, "unknown", it.label)
             }
            
@@ -750,7 +749,7 @@ def updateChild(String activityId, String value, String activityName = null) {
     if(child == null) {
         if (activityName != null) {
             if (logEnable) log.debug "child with activityId = ${activityId}, activityName = ${activityName}  does not exist."
-            def childType = "Child Switch"
+            def childType = "Generic Component Switch"
             createChildDevice(activityId, activityName, childType)
             child = getChild(activityId)
         } 
@@ -766,7 +765,7 @@ def updateChild(String activityId, String value, String activityName = null) {
     if((child != null) && (value != "unknown")) {
         try {
             if (logEnable) log.debug "Calling child.parse for Activity '${child.label}' with 'switch ${value}'"
-            child.parse("switch ${value}")
+            child.parse([[name: "switch", value: value, descriptionText:"${child.label} is now ${value}"]])
         } 
         catch(e) {
             log.error("Child parse call failed: ${e}")
@@ -781,7 +780,7 @@ def getActivities() {
     
     try {
         childDevices.each{ it ->
-            activity = it.deviceNetworkId.minus("${device.deviceNetworkId}-")
+            activity = it.deviceNetworkId.minus("${device.id}-")
             name = it.name
             //log.debug "child: ${activity}:${name}"
             if (name != "PowerOff") {
@@ -800,12 +799,12 @@ def getActivities() {
 
 private def getChild(String activityId)
 {
-    //if (logEnable) log.debug "Searching for child device with network id: ${device.deviceNetworkId}-${activityId}"
+    //if (logEnable) log.debug "Searching for child device with network id: ${device.id}-${activityId}"
     def result = null
     try {
         childDevices.each{ it ->
             //log.debug "child: ${it.deviceNetworkId}"
-            if(it.deviceNetworkId == "${device.deviceNetworkId}-${activityId}")
+            if(it.deviceNetworkId == "${device.id}-${activityId}")
             {
                 result = it;
             }
@@ -822,12 +821,32 @@ private void createChildDevice(String activityId, String activityName, String ty
     log.trace "Attempting to create child with activityId = ${activityId}, activityName = ${activityName}, type = ${type}"
     
     try {
-        addChildDevice("${type}", "${device.deviceNetworkId}-${activityId}",
+        addChildDevice("hubitat", "${type}", "${device.id}-${activityId}",
             [label: "${device.displayName}-${activityName}", 
              isComponent: false, name: "${activityName}"])
-        log.trace "Created child device with network id: ${device.deviceNetworkId}-${activityId}"
+        log.trace "Created child device with network id: ${device.id}-${activityId}"
     } 
     catch(e) {
         log.error "Failed to create child device with error = ${e}"
     }
+}
+
+//child device methods
+
+void componentRefresh(cd) {
+    log.info "received refresh request from ${cd.displayName}"
+    refresh()
+}
+
+def componentOn(cd) {
+    if (logEnable)  "received on request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}"
+    def name = cd.deviceNetworkId.split("-")[-1]
+    def activityId = (name == "PowerOff") ? "-1" : "${name}"
+    startActivity(activityId)
+}
+
+def componentOff(cd) {
+    if (logEnable)  "received off request from DN = ${cd.name}, DNI = ${cd.deviceNetworkId}"
+    def name = cd.deviceNetworkId.split("-")[-1]
+    if (name != "PowerOff") stopActivity()
 }

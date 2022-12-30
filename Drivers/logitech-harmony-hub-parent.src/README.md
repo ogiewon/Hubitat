@@ -20,6 +20,10 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20201228 - Fixed Null division issue caused in the 11-23-2020 release
 - v0.1.20210425 - Corected data type of custom attributes
 - v0.1.20210702 - Added Presence Capability to indicate whether or not the connection to the Harmony Hub is 'present' or 'not present' 
+- v0.1.20210725 - Improved log.debug handling
+**- v0.1.20221230 - BREAKING CHANGE: Modified to use Hubitat built-in "Generic Component" child drivers, for HomeKit compatibility.  BREAKING CHANGE!**
+
+**WARNING - v0.1.20221230 is a BREAKING code change.  DO NOT UPGRADE to this new version unless you are willing to spend the time to start anew with your Hamony Hub integration with Hubitat.  This new version now uses Hubitat's built-in Generic Component Switch driver, which has the benefit of allowing the Child Activitiy Switch devices to show up in the new Hubitat HomeKit integration. **
 
 **Instructions For Use**
 
@@ -30,14 +34,12 @@ NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer
 - In your Hubitat Elevation Hub's admin web page, select the "Drivers Code" section and then click the "+ New Driver" button in the top right corner.  This will open a editor window for manipulating source code.
 - Click in the editor window.  Then PASTE all of the code you copied in the first step.
 - Click the SAVE button in the editor window.
-- Repeat the above setps to install the **required** HubDuino "Child Switch" Driver.  This is avilable at https://raw.githubusercontent.com/DanielOgorchock/ST_Anything/master/HubDuino/Drivers/child-switch.groovy
 
 **Create the Logitech Harmony Hub Hubitat Device**
 - In your Hubitat Elevation Hub's web page, select the "Devices" section, and then click the "+ Add Virtual Device" button in the top right corner.
-- In the window that appears, please fill in the "Device Name", "Device Label", and "Device Network Id" fields.  Make sure the Device Network Id field is UNIQUE!  For example:
-  - "Device Name" = "Family Room"
+- In the window that appears, please fill in the "Device Name" and optionally the "Device Label". For example:
+  - "Device Name" = "Family Room Harmony Hub"
   - "Device Label" = {optional}
-  - "Device Network Id" = FamilyRoomHarmonyHub  (Note:  make sure this is unique! Update: Hubitat now defaults to a unique value.)
 - In the "Type" field, scroll to the bottom of the list and select "Logitech Harmony Hub Parent"
 - Click Save
 - In the next window that appears, fill in the "Device IP Address" with values appropriate to your application.  For example:
@@ -46,8 +48,10 @@ NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer
 - Look at Live Logs (or Past Logs if you didn't have a tab open when you clicked SAVE)
 - You should see all of the Child Devices created for your Logitech Harmony Hub
 - You can now add these devices to the Hubitat Dashboard, use them in Rules, etc...
-- After the initial connection to the HArmony Hub is verified, Select a "Default Activity" that you can use via the Parent's Switch Capability and click SAVE.
+- After the initial connection to the Harmony Hub is verified, Select a "Default Activity" that you can use via the Parent's Switch Capability and click SAVE.
 - Clicking "Refresh" in the parent device will simply cause a synchronization between your Harmony Hub and your Hubitat Hub's Chile Activity Switches.  This should not be necessary very often as this driver supports INSTANT STATUS UPDATES! :) 
+- Clicking "Refresh" will also cause any new Harmony Activities to be automatically created as new Child Devices.  
+- If you remove any Harmony Activities, please manually remove the corresponding Child Activities on your Hubitat hub as well.  
 
 **Very basic VolumeUP, VolumeDown, and Mute Support**
 - If the current Activity supports volume control, then you can use the Parent's volumeUp, volumeDown, and mute commands
@@ -57,3 +61,4 @@ NOTE: You must be running Hubitat Elevation firmware version v2.0.3.114 or newer
 
 **Home Control Button Support**
 - If your remote control has the home control buttons on it, you may be able to utilize these buttons and Hubitat Pushable Buttons. To do so, you must already have these buttons mapped to devices on another platform, such as SmartThings using virtual devices.  Doing so will allow these buttons to transmit webSocket data to the Hubitat hub which can be used to create button pushed and held events.  In order to use this feature, you must determine the Harmony Device ID for each button by watching the Live Logs (with debug logging enabled in the parent device) to find the Harmony device IDs when each button on the remote is pushed.  Then, copy and paste this ID into the parent device's user preference for each button respectively.  Doing so cause the Parent Device to create button pushed and held events which can be used by any App that supports button devices.  For more details, contact @abuttino in the Hubitat Community as he added this functionality.  Nice work!
+- Another option to use the home control button found on some Harmony remotes is to connect Hubitat (HE) to Home Assistant (HA), and then expose the HE lights you'd like to "Emulated Hue" in HA.  Finally, add your HA Emulated Hue to your Harmony Hub and map the devices to the home control buttons.

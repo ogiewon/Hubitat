@@ -51,9 +51,10 @@
  *    2021-07-02  Dan Ogorchock  Added Presence Capability to indicate whether or not the connection to the Harmony Hub is 'present' or 'not present'
  *    2021-07-25  Dan Ogorchock  Improved log.debug handling
  *    2022-12-30  Dan Ogorchock  BREAKING CHANGE: Modified to use Hubitat built-in "Generic Component" child drivers, for HomeKit compatibility.  BREAKING CHANGE!
+ *    2022-12-31  Dan Ogorchock  Very minor tweak to prevent running the PowerAoff activity if everything is already off.
  */
 
-def version() {"v0.2.20221230"}
+def version() {"v0.2.20221231"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -491,8 +492,10 @@ def startActivity(String activityID) {
 
 def stopActivity() {
     if(!state.remoteId) return
-    if (logEnable) log.debug "stopActivity() called..."
-    startActivity("-1")
+    if (device.currentValue("switch") == "on") {
+        if (logEnable) log.debug "stopActivity() called..."
+        startActivity("-1")
+    }
 }
 
 def getCurrentActivity() {

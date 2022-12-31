@@ -22,6 +22,7 @@ It is used to communicate via webSockets to a Logitech Harmony Hub and it create
 - v0.1.20210702 - Added Presence Capability to indicate whether or not the connection to the Harmony Hub is 'present' or 'not present' 
 - v0.1.20210725 - Improved log.debug handling
 **- v0.1.20221230 - BREAKING CHANGE: Modified to use Hubitat built-in "Generic Component" child drivers, for HomeKit compatibility.  BREAKING CHANGE!**
+- v0.1.20221231 - Very minor tweak to prevent running the PowerAoff activity if everything is already off.
 
 **WARNING - v0.1.20221230 is a BREAKING code change.  DO NOT UPGRADE to this new version unless you are willing to spend the time to start anew with your Hamony Hub integration with Hubitat.  This new version now uses Hubitat's built-in Generic Component Switch driver, which has the benefit of allowing the Child Activitiy Switch devices to show up in the new Hubitat HomeKit integration. **
 

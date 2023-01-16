@@ -6,6 +6,8 @@ This driver implements the "Refresh" capability.  It is used to communicate via 
 
 This driver implements the "Presence" capability.  It is used to indicate good communications as "present" and lack of communications as "not present"
 
+**v0.1.20230110** - Convert Synchronous HTTP Get call to Asynchronous HTTP Get call.  Reduce timeout from 10s to 5s.
+
 v0.1.20220103 - Convert child devices to use Hubitat's built-in 'Generic Component' drivers. Note:  THIS IS A BREAKING CHANGE!
 
 v0.1.20201102 - Added timeout to http calls

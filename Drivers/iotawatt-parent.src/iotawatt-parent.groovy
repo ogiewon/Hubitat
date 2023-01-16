@@ -30,11 +30,12 @@
  *    2020-11-02  Dan Ogorchock  Added timeout to http calls
  *    2022-01-03  Dan Ogorchock  Convert child devices to use Hubitat's built-in 'Generic Component' drivers.
  *                               Note:  THIS IS A BREAKING CHANGE!
+ *    2023-01-10  Dan Ogorchock  Convert Synchronous HTTP Get call to Asynchronous HTTP Get call.  Reduce timeout from 10s to 5s.
  *
  *
  */
 
- def version() {"v1.0.20220103"}
+ def version() {"v1.0.20230110"}
 
 metadata {
     definition (name: "IoTaWatt Parent", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy") {
@@ -70,6 +71,7 @@ def updated() {
     unschedule()
     if (logEnable) runIn(1800,logsOff)
     initialize()
+
 }
 
 def initialize() {
@@ -86,126 +88,121 @@ def initialize() {
 }
 
 def handleUpdates() {
-    runIn(pollingInterval, handleUpdates)
-    
-    String type
-    String name
-    String units
-    def child
-    float tmpValue
-    
-    def IoTaWattData = getData()
-    IoTaWattData?.each{ it -> //iterate over all the updates in array
-        //make sure we were given name and type
-        if(!it.containsKey('name'))
-        {
-            log.error("'name' was not supplied")
-            return
-        }
-        if(!it.containsKey('value'))
-        {
-            log.error("'value' was not supplied")
-            return
-        }
-        if(!it.containsKey('units'))
-        {
-            log.error("'units' was not supplied")
-            return
-        }
-        
-        if (it.units == "Watts") {
-            type = "Power Meter"
-            name = "power"
-            units = "W"
-        }
-        else if (it.units == "Vrms") {
-            type = "Voltage Sensor"
-            name = "voltage"
-            units = "V"
-        }
-        else if (it.units == "Hz") {
-            type = "Voltage Sensor"
-            name = "frequency"
-            units = "Hz"
-        }
-        
-        child = fetchChild(type, it.name)
-        tmpValue = Float.parseFloat(it.value)
-        tmpValue = tmpValue.round(1)
-        child.parse([[name: name, value: tmpValue, unit: units, descriptionText:"${name} is now ${tmpValue} ${units}"]])
-    }
-    
-    //cleanup
-    IoTaWattData = null
-    child = null
-    tmpValue = null    
-    type = null
-    name = null
-    units = null    
-}
+    //log.trace "handleUpdates() called.  timeout = ${pollingInterval}"
+    runIn(pollingInterval, 'handleUpdates')
 
-
-def getData(){
-   
     def params = [
         uri: "http://${deviceIP}/status?inputs=yes&outputs=yes",
         contentType: "application/json",
         requestContentType: "application/json",
-        timeout: 10
+        timeout: 5
     ]
     
     if (deviceIP) {
         try{
-            httpGet(params){response ->
-                if(response.status != 200) {
-                    if (device.currentValue("presence") != "not present") {
-                        sendEvent(name: "presence", value: "not present", isStateChange: true, descriptionText: "Error trying to communicate with IoTaWatt device")
-                    }
-                    log.error "Received HTTP error ${response.status}. Check your IP Address and IoTaWatt!"
-                } else {
-                    if (device.currentValue("presence") != "present") {
-                        sendEvent(name: "presence", value: "present", isStateChange: true, descriptionText: "New update received from IoTaWatt device")
-                    }
-                    //log.debug "Response from IoTaWatt = ${response.data}"
-                    def inputs = response.data.inputs
-                    def outputs = response.data.outputs             
-                    def IoTaWattData = []
-                    
-                    //Format the IoTaWatt Input and Output data consistently to simplify the child device creation process
-                    response?.data?.inputs?.each { input ->
-                        String tmpName = "Input_${input.channel.toString().padLeft(2,'0')}"
-                        if (input.Watts) {
-                            //log.debug "name: ${input.channel}, units: Watts, value: ${input.Watts}, units: Pf, value: ${input.Pf}"
-                            IoTaWattData << [name:tmpName, units:'Watts', value:input.Watts.toString().trim()]
-                        } else if (input.Vrms) {
-                            //log.debug "name: ${input.channel}, units: Vrms, value: ${input.Vrms}, units: Hz, value: ${input.Hz}"
-                            IoTaWattData << [name:tmpName, units:'Vrms', value:input.Vrms.toString().trim()]
-                            IoTaWattData << [name:tmpName, units:'Hz', value:input.Hz.toString().trim()]
-                        } else {
-                            log.error "Unhandled case for ${input}"
-                        }
-                    }
-
-                    response?.data?.outputs?.each { output ->
-                        String tmpName = "Output_${output.name}"
-                        IoTaWattData << [name:tmpName, units:output.units, value:output.value.toString().trim()]
-                    }
-                    
-                    return IoTaWattData
-                }
-            }
+            //log.trace "Calling asynchttpGet() to IoTaWatt device."
+            asynchttpGet('handleIoTaWattResponse', params)
         } catch (Exception e) {
             if (device.currentValue("presence") != "not present") {
                 sendEvent(name: "presence", value: "not present", isStateChange: true, descriptionText: "Error trying to communicate with IoTaWatt device")
             }
-            log.warn "IoTaWatt Server Returned: ${e}"
-            if (e == "java.net.NoRouteToHostException: No route to host (Host unreachable)") {
-                //Give the IoTaWatt extra time to recover
-                runIn((pollingInterval * 2), handleUpdates)
-            }
-        } 
+            log.error "IoTaWatt Server Returned: ${e}"
+       }
     } else {
-        log.error "IP Address '${deviceIP}' is not properly formatted!"
+        log.error "IP Address '${deviceIP}' is not properly formatted!  Please enter the IoTaWatt's IP address and press SAVE."
+    }
+    
+
+}
+
+def handleIoTaWattResponse(response, data) {
+    if (logEnable) log.debug "response.getStatus() = ${response.getStatus()}"
+
+    if(response.getStatus() != 200) {
+        if (device.currentValue("presence") != "not present") {
+            sendEvent(name: "presence", value: "not present", isStateChange: true, descriptionText: "Error trying to communicate with IoTaWatt device")
+        }
+        log.error "Received HTTP error ${response.status}. Please check the IP Address and IoTaWatt device."
+    } else {
+        if (device.currentValue("presence") != "present") {
+            sendEvent(name: "presence", value: "present", isStateChange: true, descriptionText: "New update received from IoTaWatt device")
+        }
+        
+        if (logEnable) log.debug "Response from IoTaWatt = ${response.getJson()}"
+
+        def IoTaWattData = []
+        
+        //Format the IoTaWatt Input and Output data consistently to simplify the child device creation process
+        response?.getJson().inputs?.each { input ->
+            String tmpName = "Input_${input.channel.toString().padLeft(2,'0')}"
+            if (input.Watts) {
+                //log.debug "name: ${input.channel}, units: Watts, value: ${input.Watts}, units: Pf, value: ${input.Pf}"
+                IoTaWattData << [name:tmpName, units:'Watts', value:input.Watts.toString().trim()]
+            } else if (input.Vrms) {
+                //log.debug "name: ${input.channel}, units: Vrms, value: ${input.Vrms}, units: Hz, value: ${input.Hz}"
+                IoTaWattData << [name:tmpName, units:'Vrms', value:input.Vrms.toString().trim()]
+                IoTaWattData << [name:tmpName, units:'Hz', value:input.Hz.toString().trim()]
+            } else {
+                log.error "Unhandled case for ${input}"
+            }
+        }
+
+        response?.getJson().outputs?.each { output ->
+            String tmpName = "Output_${output.name}"
+            IoTaWattData << [name:tmpName, units:output.units, value:output.value.toString().trim()]
+        }
+        
+        String type
+        String name
+        String units
+        def child
+        float tmpValue
+        
+        //iterate through all the updates in array
+        IoTaWattData?.each{ it -> 
+            //make sure we were given name, value, and units
+            if(!it.containsKey('name')){
+                log.error("'name' was not supplied")
+               return
+            }
+            if(!it.containsKey('value')){
+                log.error("'value' was not supplied")
+                return
+            }
+            if(!it.containsKey('units')){
+                log.error("'units' was not supplied")
+                return
+            }
+
+            if (it.units == "Watts") {
+                type = "Power Meter"
+                name = "power"
+                units = "W"
+            }
+            else if (it.units == "Vrms") {
+                type = "Voltage Sensor"
+                name = "voltage"
+                units = "V"
+            }
+            else if (it.units == "Hz") {
+                type = "Voltage Sensor"
+                name = "frequency"
+                units = "Hz"
+            }
+
+            tmpValue = Float.parseFloat(it.value)
+            tmpValue = tmpValue.round(1)
+            child = fetchChild(type, it.name)
+            child.parse([[name: name, value: tmpValue, unit: units, descriptionText:"${name} is now ${tmpValue} ${units}"]])
+        }
+
+        //cleanup
+        IoTaWattData = null
+        child = null
+        tmpValue = null    
+        type = null
+        name = null
+        units = null 
     }
 }
 
@@ -232,6 +229,6 @@ def deleteAllChildDevices() {
 
 //child device methods
 void componentRefresh(cd) {
-    log.info "received refresh request from ${cd.displayName}"
-    runIn(2, refresh)
+    if (logEnable) log.debug "received refresh request from ${cd.displayName}"
+    runIn(2, 'refresh')  //use runIn() to prevent slamming the IoTaWatt device as each child is created. Only last one will run.
 }

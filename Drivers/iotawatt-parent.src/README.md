@@ -1,12 +1,8 @@
 # Hubitat IoTaWatt Driver 
 
-**v0.1.20220103 is a BREAKING CHANGE!  Please do NOT blindly upgrade to this version as it will end up creating an entire new set of Child Devices from your IoTaWatt.  This is due to the change from custom Child Drivers to Hubitat's built-in 'Generic Component' child drivers.  I have made this change to reduce the amount of custom code required for new installations.**
-
-This driver implements the "Refresh" capability.  It is used to communicate via http to an IoTaWatt Power Monitor system and it creates child devices for Power and Voltage.  Scheduling is handled automatically via a user preference polling interval in seconds.
-
-This driver implements the "Presence" capability.  It is used to indicate good communications as "present" and lack of communications as "not present"
-
 **v0.1.20230110** - Convert Synchronous HTTP Get call to Asynchronous HTTP Get call.  Reduce timeout from 10s to 5s.
+
+**v0.1.20220103 is a BREAKING CHANGE!  Please do NOT blindly upgrade to this version as it will end up creating an entire new set of Child Devices from your IoTaWatt.  This is due to the change from custom Child Drivers to Hubitat's built-in 'Generic Component' child drivers.  I have made this change to reduce the amount of custom code required for new installations.**
 
 v0.1.20220103 - Convert child devices to use Hubitat's built-in 'Generic Component' drivers. Note:  THIS IS A BREAKING CHANGE!
 
@@ -23,6 +19,11 @@ v0.1.20190915 - Added Capability Presence to indicate communications issue with 
 v0.1.20181220 - Initial beta release
 
 Instructions for use
+
+This driver implements the "Refresh" capability.  It is used to communicate via http to an IoTaWatt Power Monitor system and it creates child devices for Power and Voltage.  Scheduling is handled automatically via a user preference polling interval in seconds.
+
+This driver implements the "Presence" capability.  It is used to indicate good communications as "present" and lack of communications as "not present"
+
 
 **Create Hubitat Driver**
 - Open up the "iotawatt-parent.groovy" driver from this repository.  Make sure you hit the "RAW" button, then select/highlight all of the source code, and COPY everything (Ctrl-C on Windows, or right click->Copy). ALTERNATE Method: Use the URL from the RAW code page, and paste it into the new driver's IMPORT dialogue window.

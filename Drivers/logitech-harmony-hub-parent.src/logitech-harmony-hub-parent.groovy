@@ -52,9 +52,10 @@
  *    2021-07-25  Dan Ogorchock  Improved log.debug handling
  *    2022-12-30  Dan Ogorchock  BREAKING CHANGE: Modified to use Hubitat built-in "Generic Component" child drivers, for HomeKit compatibility.  BREAKING CHANGE!
  *    2022-12-31  Dan Ogorchock  Very minor tweak to prevent running the PowerAoff activity if everything is already off.
+ *    2023-03-11  Dan Ogorchock  Added missing manual push() and hold() command routines, to allow testing of button events from the parent device page.
  */
 
-def version() {"v0.2.20221231"}
+def version() {"v0.2.20230311"}
 
 import hubitat.helper.InterfaceUtils
 
@@ -510,6 +511,16 @@ def sendMsg(String s) {
 
 def deviceCommand(command, deviceID) {
     sendMsg('{"hubId":"' + state.remoteId + '","timeout":30,"hbus":{"cmd":"vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction","id": "0", "params":{"status": "pressrelease","timestamp": "0","verb": "render", "action": "{\\"command\\": \\"' + command + '\\", \\"type\\":\\"IRCommand\\", \\"deviceId\\": \\"' + deviceID + '\\"}"}}}')
+}
+
+def push(button) {
+    if (logEnable) log.debug "Manual Button ${button} was 'pushed'"
+    sendEvent(name:"pushed", value: button, descriptionText: "Button ${button} was pushed", isStateChange: true)
+}
+
+def hold(button) {
+    if (logEnable) log.debug "Manual Button ${button} was 'held'"
+    sendEvent(name:"held", value: button, descriptionText: "Button ${button} was held", isStateChange: true)
 }
 
 def mute() {

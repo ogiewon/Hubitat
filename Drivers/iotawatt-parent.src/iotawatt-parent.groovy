@@ -31,11 +31,13 @@
  *    2022-01-03  Dan Ogorchock  Convert child devices to use Hubitat's built-in 'Generic Component' drivers.
  *                               Note:  THIS IS A BREAKING CHANGE!
  *    2023-01-10  Dan Ogorchock  Convert Synchronous HTTP Get call to Asynchronous HTTP Get call.  Reduce timeout from 10s to 5s.
+ *    2023-07-23  Dan Ogorchock  Implement reconnect logic that reduces the frequency of connection attempts (max delay = 600s), 
+ *                               to reduce load on the Hubitat hub during a communications failure with the IoTaWatt
  *
  *
  */
 
- def version() {"v1.0.20230110"}
+ def version() {"v1.0.20230723"}
 
 metadata {
     definition (name: "IoTaWatt Parent", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy") {
@@ -77,6 +79,10 @@ def updated() {
 def initialize() {
     state.version = version()
     log.info "initialize() called"
+
+    //reset reconnectDelay
+    state.reconnectDelay = pollingInterval
+    
     if (deviceIP) {
         handleUpdates()
     }
@@ -88,8 +94,8 @@ def initialize() {
 }
 
 def handleUpdates() {
-    //log.trace "handleUpdates() called.  timeout = ${pollingInterval}"
-    runIn(pollingInterval, 'handleUpdates')
+    //log.trace "handleUpdates() called.  timeout = ${state.reconnectDelay}"
+    runIn(state.reconnectDelay, 'handleUpdates')
 
     def params = [
         uri: "http://${deviceIP}/status?inputs=yes&outputs=yes",
@@ -119,11 +125,18 @@ def handleIoTaWattResponse(response, data) {
     if (logEnable) log.debug "response.getStatus() = ${response.getStatus()}"
 
     if(response.getStatus() != 200) {
+        // first delay is double normal pollingInterval, doubles every time
+        state.reconnectDelay = (state.reconnectDelay ?: pollingInterval) * 2
+        // don't let delay get too crazy, max it out at 10 minutes
+        if(state.reconnectDelay > 600) state.reconnectDelay = 600
+
         if (device.currentValue("presence") != "not present") {
             sendEvent(name: "presence", value: "not present", isStateChange: true, descriptionText: "Error trying to communicate with IoTaWatt device")
         }
         log.error "Received HTTP error ${response.status}. Please check the IP Address and IoTaWatt device."
     } else {
+        //reset reconnectDelay
+        state.reconnectDelay = pollingInterval
         if (device.currentValue("presence") != "present") {
             sendEvent(name: "presence", value: "present", isStateChange: true, descriptionText: "New update received from IoTaWatt device")
         }

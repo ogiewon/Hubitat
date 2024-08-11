@@ -16,6 +16,7 @@
 *       2022-08-26 @Seattle              Added [OPEN] and [CLOSE] text substitutions for "<" and ">" as HSM was stripping those characters out
 *       2022-10-05 Dan Ogorchock         Added option to enable/disable debug logging
 *       2022-12-04 Neerav Modi           Added support for new Priority [S] for Lowest Priority (-2) see https://pushover.net/api#priority for details
+*       2024-07-29 @woodsby              Added image URL support - based on code posted by @younes.  Encase your URL in ¨¨, e.g. "¨http://example.com/example.jpeg¨"
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -32,7 +33,7 @@
 *
 *
 */
-def version() {"v1.0.20221204"}
+def version() {"v1.0.20240729"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
@@ -229,33 +230,85 @@ def deviceNotification(message) {
     }
     if(customUrlTitle){ urlTitle = customUrlTitle}    
     
-    // Define the initial postBody keys and values for all messages
-    def postBody = [
-        token: "$apiKey",
-        user: "$userKey",
-        message: "${message}",
-        title: title,
-        priority: priority,
-        sound: sound,
-        url: url,
-        device: deviceName,
-        url_title: urlTitle,
-        retry: retry,
-        expire: expire,
-		html: html
-    ]
+    if((matcher = message =~ /\¨(.*?)\¨/)){               
+        message = message.minus("¨${matcher[0][1]}¨")      
+        message = message.trim() //trim any whitespace
+        customImageUrl = matcher[0][1]   
+    }
+    if(customImageUrl){ imageUrl = customImageUrl }
 
-    if (deviceName) { if (logEnable) log.debug "Sending Message: ${message} Priority: ${priority} to Device: $deviceName"}
-    else {if (logEnable) log.debug "Sending Message: [${message}] Priority: [${priority}] to [All Devices]"}
+    if (imageUrl) {
+        log.debug "Getting Notification Image"
+        httpGet("${imageUrl}")  //modify as needed for authentication header
+        { response ->
+            imageData = response.data
+            log.debug "Notification Image Received (${imageData.available()})"
+        }
+    }
+    
+    //Top Part of the POST request Body
+    def postBodyTop = """----d29vZHNieQ==\r\nContent-Disposition: form-data; name="user"\r\n\r\n$userKey\r\n----d29vZHNieQ==\r\nContent-Disposition: form-data; name="token"\r\n\r\n$apiKey\r\n----d29vZHNieQ==\r\n"""
+    if (title) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="title"\r\n\r\n${title}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (url) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="url"\r\n\r\n${url}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (urlTitle) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="url_title"\r\n\r\n${urlTitle}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (deviceName) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="device"\r\n\r\n${DeviceName}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (sound) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="sound"\r\n\r\n${sound}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (priority) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="priority"\r\n\r\n${priority}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (retry) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="retry"\r\n\r\n${retry}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (expire) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="expire"\r\n\r\n${expire}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (html) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="html"\r\n\r\n${html}\r\n----d29vZHNieQ==\r\n"""
+    }
+    if (message == ""){ message = Character.toString ((char) 128) }
+    postBodyTop = postBodyTop + """Content-Disposition: form-data; name="message"\r\n\r\n${message}\r\n----d29vZHNieQ==\r\n"""
+    if (imageData) {
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="attachment"; filename="image.jpg"\r\nContent-Type: image/jpeg\r\n\r\n"""
+    } else {
+        postBodyTop = postBodyTop + """\r\n"""
+    }
 
-    // Prepare the package to be sent
+    //Bottom Part of the POST request Body
+    def postBodyBottom = """\r\n----d29vZHNieQ==--"""
+
+    byte[] postBodyTopArr = postBodyTop.getBytes("UTF-8")
+    byte[] postBodyBottomArr = postBodyBottom.getBytes("UTF-8")
+
+    //Combine different parts of the POST request body
+    ByteArrayOutputStream postBodyOutputStream = new ByteArrayOutputStream();
+
+    postBodyOutputStream.write(postBodyTopArr);
+    if (imageData) {
+        def bSize = imageData.available()
+        byte[] imageArr = new byte[bSize]
+        imageData.read(imageArr, 0, bSize)
+        postBodyOutputStream.write(imageArr);
+    }
+    postBodyOutputStream.write(postBodyBottomArr);
+    byte[] postBody = postBodyOutputStream.toByteArray();
+
+    //Build HTTP Request Parameters
     def params = [
-        uri: "https://api.pushover.net/1/messages.json",
-        contentType: "application/json",
-        requestContentType: "application/x-www-form-urlencoded",
-        body: postBody
+	    requestContentType: "application/octet-stream",
+    	headers: ["content-type": "multipart/form-data; boundary=--d29vZHNieQ=="],
+    	uri: "https://api.pushover.net/1/messages.json",
+    	body: postBody
     ]
-
     if ((apiKey =~ /[A-Za-z0-9]{30}/) && (userKey =~ /[A-Za-z0-9]{30}/)) {
         httpPost(params){response ->
             if(response.status != 200) {

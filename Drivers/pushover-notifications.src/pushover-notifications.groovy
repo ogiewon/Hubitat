@@ -17,6 +17,7 @@
 *       2022-10-05 Dan Ogorchock         Added option to enable/disable debug logging
 *       2022-12-04 Neerav Modi           Added support for new Priority [S] for Lowest Priority (-2) see https://pushover.net/api#priority for details
 *       2024-07-29 @woodsby              Added image URL support - based on code posted by @younes.  Encase your URL in ¨¨, e.g. "¨http://example.com/example.jpeg¨"
+*       2024-08-16 Dan Ogorchock         Fixed typo for 'deviceName' found in the 20240729 version
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -33,7 +34,7 @@
 *
 *
 */
-def version() {"v1.0.20240729"}
+def version() {"v1.0.20240816"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
@@ -258,7 +259,7 @@ def deviceNotification(message) {
         postBodyTop = postBodyTop + """Content-Disposition: form-data; name="url_title"\r\n\r\n${urlTitle}\r\n----d29vZHNieQ==\r\n"""
     }
     if (deviceName) {
-        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="device"\r\n\r\n${DeviceName}\r\n----d29vZHNieQ==\r\n"""
+        postBodyTop = postBodyTop + """Content-Disposition: form-data; name="device"\r\n\r\n${deviceName}\r\n----d29vZHNieQ==\r\n"""
     }
     if (sound) {
         postBodyTop = postBodyTop + """Content-Disposition: form-data; name="sound"\r\n\r\n${sound}\r\n----d29vZHNieQ==\r\n"""

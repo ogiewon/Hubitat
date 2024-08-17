@@ -1,6 +1,6 @@
 /**
 *   
-*   File: Pushover_Driver.groovy
+*   File: pushover-notifications.groovy
 *   Platform: Hubitat
 *   Modification History:
 *       Date       Who                   What
@@ -18,6 +18,7 @@
 *       2022-12-04 Neerav Modi           Added support for new Priority [S] for Lowest Priority (-2) see https://pushover.net/api#priority for details
 *       2024-07-29 @woodsby              Added image URL support - based on code posted by @younes.  Encase your URL in ¨¨, e.g. "¨http://example.com/example.jpeg¨"
 *       2024-08-16 Dan Ogorchock         Fixed typo for 'deviceName' found in the 20240729 version
+*       2024-08-17 Dan Ogorchock         Corrected function prototype for 'speak()' command to avoid runtime error when optional args are submitted
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -34,7 +35,7 @@
 *
 *
 */
-def version() {"v1.0.20240816"}
+def version() {return "v1.0.20240817"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
@@ -52,7 +53,6 @@ metadata {
             input("sound", "enum", title: "Notification Sound (Blank = App Default):", description: "", options: getSoundOptions())
             input("url", "text", title: "Supplementary URL:", description: "")
             input("urlTitle", "text", title: "URL Title:", description: "")
-            input("Message Title", "text", title: "Message Title:", description: "Choose a message title (Blank = Hubitat)")
             input("retry", "number", title: "Retry Interval in seconds:(30 minimum)", description: "Applies to Emergency Requests Only")
             input("expire", "number", title: "Auto Expire After in seconds:(10800 max)", description: "Applies to Emergency Requests Only")
         }
@@ -155,7 +155,7 @@ def getSoundOptions() {
     return myOptions
 }
 
-def speak(message) {
+def speak(message, volume = null, voice = null) {
     deviceNotification(message)
 }
 

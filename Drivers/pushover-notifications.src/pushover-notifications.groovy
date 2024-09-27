@@ -19,6 +19,7 @@
 *       2024-07-29 @woodsby              Added image URL support - based on code posted by @younes.  Encase your URL in ¨¨, e.g. "¨http://example.com/example.jpeg¨"
 *       2024-08-16 Dan Ogorchock         Fixed typo for 'deviceName' found in the 20240729 version
 *       2024-08-17 Dan Ogorchock         Corrected function prototype for 'speak()' command to avoid runtime error when optional args are submitted
+*       2024-09-27 @ritchierich          Added support for carriage returns by entering '\n' within the message
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -235,6 +236,10 @@ def deviceNotification(message) {
         message = message.minus("¨${matcher[0][1]}¨")      
         message = message.trim() //trim any whitespace
         customImageUrl = matcher[0][1]   
+    }
+    if (message.indexOf("\\n") > -1) {
+        message = message.replace("\\n", "<br>")
+        html = "1"
     }
     if(customImageUrl){ imageUrl = customImageUrl }
 

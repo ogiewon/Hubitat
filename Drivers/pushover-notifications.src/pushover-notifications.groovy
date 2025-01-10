@@ -20,6 +20,7 @@
 *       2024-08-16 Dan Ogorchock         Fixed typo for 'deviceName' found in the 20240729 version
 *       2024-08-17 Dan Ogorchock         Corrected function prototype for 'speak()' command to avoid runtime error when optional args are submitted
 *       2024-09-27 @ritchierich          Added support for carriage returns by entering '\n' within the message
+*       2025-01-10 @garz                 Added ability to include Emergency RETRY Interval (&...&) and EXPIRE timeout (%...%) embedded in the message.
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -36,7 +37,7 @@
 *
 *
 */
-def version() {return "v1.0.20240817"}
+def version() {return "v1.0.20250110"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
@@ -237,6 +238,31 @@ def deviceNotification(message) {
         message = message.trim() //trim any whitespace
         customImageUrl = matcher[0][1]   
     }
+
+    // New Retry and Expire Code
+    if((matcher = message =~ /\&(.*?)\&/)){
+        message = message.minus("&${matcher[0][1]}&")
+        message = message.trim()
+        customRetry = matcher[0][1]
+    }
+    if(customRetry){ 
+        retry = customRetry
+        if (retry.toInteger() < 30){ retry = 30 }
+    }
+    
+    if((matcher = message =~ /\%(.*?)\%/)){
+        message = message.minus("%${matcher[0][1]}%")
+        message = message.trim()
+        customExpire = matcher[0][1]
+    }
+    if(customExpire){  
+        expire = customExpire
+        if (expire.toInteger() < 30){ expire = 30 }
+        if (expire.toInteger() > 10800){ expire = 10800 }
+    }
+ 
+    // End new code
+    
     if (message.indexOf("\\n") > -1) {
         message = message.replace("\\n", "<br>")
         html = "1"

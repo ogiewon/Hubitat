@@ -21,7 +21,7 @@
 *       2024-08-17 Dan Ogorchock         Corrected function prototype for 'speak()' command to avoid runtime error when optional args are submitted
 *       2024-09-27 @ritchierich          Added support for carriage returns by entering '\n' within the message
 *       2025-01-10 @garz                 Added ability to include Emergency RETRY Interval (&...&) and EXPIRE timeout (%...%) embedded in the message.
-*       2024-01-12 Dan Ogorchock         Changed embeeded character as follows - Emergency RETRY Interval (©...©) and EXPIRE timeout (™...™) - to prevent conflicts in Rule Machine
+*       2025-01-12 Dan Ogorchock         Changed embeeded character as follows - Emergency RETRY Interval (©...©) and EXPIRE timeout (™...™) - to prevent conflicts in Rule Machine
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *

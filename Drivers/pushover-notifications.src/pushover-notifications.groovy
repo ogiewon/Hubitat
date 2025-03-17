@@ -1,5 +1,5 @@
-/**
-*   
+/*
+*
 *   File: pushover-notifications.groovy
 *   Platform: Hubitat
 *   Modification History:
@@ -22,6 +22,7 @@
 *       2024-09-27 @ritchierich          Added support for carriage returns by entering '\n' within the message
 *       2025-01-10 @garz                 Added ability to include Emergency RETRY Interval (&...&) and EXPIRE timeout (%...%) embedded in the message.
 *       2025-01-12 Dan Ogorchock         Changed embeeded character as follows - Emergency RETRY Interval (©...©) and EXPIRE timeout (™...™) - to prevent conflicts in Rule Machine
+*       2025-03-17 @hubitrep             Rearchitected use of Pushover API to prevent throttling - implemented caching of Pushover Devices and Sounds lists
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -38,29 +39,35 @@
 *
 *
 */
-def version() {return "v1.0.20250112"}
+def version() {return "v1.0.20250317"}
 
 metadata {
-    definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy") {
+    definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {
         capability "Notification"
         capability "Actuator"
         capability "Speech Synthesis"
     }
-    
+
     preferences {
-        input("apiKey", "text", title: "API Key:", description: "Pushover API Key")
-        input("userKey", "text", title: "User Key:", description: "Pushover User Key")
-        if(getValidated()){
-            input("deviceName", "enum", title: "Device Name (Blank = All Devices):", description: "", multiple: true, required: false, options: getValidated("deviceList"))
-            input("priority", "enum", title: "Default Message Priority (Blank = NORMAL):", description: "", defaultValue: "0", options:[["-1":"LOW"], ["0":"NORMAL"], ["1":"HIGH"]])
-            input("sound", "enum", title: "Notification Sound (Blank = App Default):", description: "", options: getSoundOptions())
-            input("url", "text", title: "Supplementary URL:", description: "")
-            input("urlTitle", "text", title: "URL Title:", description: "")
-            input("retry", "number", title: "Retry Interval in seconds:(30 minimum)", description: "Applies to Emergency Requests Only")
-            input("expire", "number", title: "Auto Expire After in seconds:(10800 max)", description: "Applies to Emergency Requests Only")
-        }
-        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
-    }
+        input name: "apiKey", type: "text", title: "API Key:", description: "Pushover API Key", required: true
+        input name: "userKey", type: "text", title: "User Key:", description: "Pushover User Key", required: true
+        input name: "cacheRefreshInterval", type: "number", title: "Set cache refresh interval (seconds)", description: "Must be high enough to avoid throttling by Pushover API server", required: true, range: "30..10800", defaultValue: 30
+       	if (keyFormatIsValid()) {
+            def deviceOptions = getCachedDeviceOptions()
+            if (deviceOptions) {
+                input name: "deviceName", type: "enum", title: "Device Name (Blank = All Devices):", description: "", multiple: true, required: false, options: deviceOptions
+                input name: "priority", type: "enum", title: "Default Message Priority (Blank = NORMAL):", description: "", defaultValue: "0", options:[["-1":"LOW"], ["0":"NORMAL"], ["1":"HIGH"]]
+                def soundOptions = getCachedSoundOptions()
+                input name: "sound", type: "enum", title: "Notification Sound (Blank = App Default):", description: "", options: soundOptions
+                input name: "url", type: "text", title: "Supplementary URL:", description: ""
+                input name: "urlTitle", type: "text", title: "URL Title:", description: ""
+                input name: "retry", type: "number", title: "Retry Interval in seconds:(30 minimum)", description: "Applies to Emergency Requests Only"
+                input name: "expire", type: "number", title: "Auto Expire After in seconds:(10800 max)", description: "Applies to Emergency Requests Only"
+            }
+    	}
+		input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
+
+	}
 }
 
 def logsOff(){
@@ -74,88 +81,183 @@ def installed() {
 
 def updated() {
     initialize()
-    
+
     if (logEnable) {
-        log.info "Enabling Debug Logging for 30 minutes" 
+        log.info "Enabling Debug Logging for 30 minutes"
         runIn(1800,logsOff)
     } else {
         unschedule(logsoff)
     }
-
 }
 
 def initialize() {
     state.version = version()
+
+    // key tracking
+    atomicState.lastApiKey = ""
+    atomicState.lastUserKey = ""
+
+    // Separate timestamps and caches for each method
+    atomicState.lastDeviceOptionsFetch = 0
+    atomicState.lastSoundOptionsFetch = 0
+    atomicState.cachedDeviceOptions = null
+    atomicState.cachedSoundOptions = null
 }
 
-def getValidated(type){
-    if(type=="deviceList"){if (logEnable) log.debug "Generating Device List..."}
-    else {if (logEnable) log.debug "Validating Keys..."}
-    
-    def validated = false
-    
-    def postBody = [
-        token: "$apiKey",
-        user: "$userKey",
-        device: ""
-    ]
-    
-    def params = [
-        uri: "https://api.pushover.net/1/users/validate.json",
-        contentType: "application/json",
-        requestContentType: "application/x-www-form-urlencoded",
-        body: postBody
-    ]
-    
-    if ((apiKey =~ /[A-Za-z0-9]{30}/) && (userKey =~ /[A-Za-z0-9]{30}/)) {
+private boolean keyFormatIsValid() {
+    if (apiKey?.matches('[A-Za-z0-9]{30}') && userKey?.matches('[A-Za-z0-9]{30}')) {
+        return true
+    }
+    else {
+        log.warn "API key '${apiKey}' or USER key '${userKey}' is not properly formatted!"
+        return false
+    }
+}
+
+// Check if keys have changed and handle invalidation of all caches if they have
+private boolean checkAndHandleKeyChanges() {
+    if (atomicState.lastApiKey != apiKey || atomicState.lastUserKey != userKey) {
+        if (logEnable) log.debug "API keys have changed, invalidating all caches"
+
+        // Update the stored keys
+        atomicState.lastApiKey = apiKey
+        atomicState.lastUserKey = userKey
+
+        // Explicitly invalidate all caches
+        atomicState.cachedDeviceOptions = null
+        atomicState.cachedSoundOptions = null
+        atomicState.lastDeviceOptionsFetch = 0
+        atomicState.lastSoundOptionsFetch = 0
+
+        return true
+    }
+    return false
+}
+
+def getDeviceOptions(){
+    if (logEnable) log.debug "Validating Keys and Generating Device List..."
+
+    def deviceOptions = null
+
+    if (keyFormatIsValid()) {
+        def postBody = [
+            token: "$apiKey",
+            user: "$userKey",
+            device: ""
+        ]
+
+        def params = [
+            uri: "https://api.pushover.net/1/users/validate.json",
+            contentType: "application/json",
+            requestContentType: "application/x-www-form-urlencoded",
+            body: postBody
+        ]
+
         try{
             httpPost(params){response ->
                 if(response.status != 200) {
-                    sendPush("ERROR: 'Pushover Me When' received HTTP error ${response.status}. Check your keys!")
                     log.error "Received HTTP error ${response.status}. Check your keys!"
                 }
                 else {
-                    if(type=="deviceList"){
-                        if (logEnable) log.debug "Device list generated"
-                        deviceOptions = response.data.devices
-                    }
-                    else {
-                        if (logEnable) log.debug "Keys validated"
-                        validated = true
-                    }
+                    if (logEnable) log.debug "Device list generated: ${response.data.devices}"
+                    deviceOptions = response.data.devices
                 }
             }
         }
         catch (Exception e) {
-            log.error "An invalid key was probably entered. PushOver Server Returned: ${e}"
-        } 
+            log.error "PushOver Server Returned: ${e}"
+        }
     }
     else {
-        // Do not sendPush() here, the user may have intentionally set up bad keys for testing.
         log.error "API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
     }
-    if(type=="deviceList") return deviceOptions
-    return validated
-    
+
+    return deviceOptions
+}
+
+// Create a cached wrapper for getDeviceOptions()
+def getCachedDeviceOptions() {
+    // First check if keys have changed (will invalidate all caches if they have)
+    checkAndHandleKeyChanges()
+
+    def currentTime = now()
+    def cacheTimeout = 30 * 1000   //default needed for initial device creation execution of this code
+    if (cacheRefreshInterval != null) cacheTimeout = cacheRefreshInterval * 1000 // in milliseconds
+
+    // Now check if our specific cache needs refreshing
+    if (atomicState.cachedDeviceOptions == null ||
+        (currentTime - atomicState.lastDeviceOptionsFetch) > cacheTimeout) {
+
+        if (logEnable) log.debug "Device options cache expired, fetching fresh data..."
+
+        // Update our cache
+        atomicState.cachedDeviceOptions = getDeviceOptions()
+        atomicState.lastDeviceOptionsFetch = currentTime
+
+        if (logEnable) log.debug "Cache updated with new device options"
+	} else {
+        if (logEnable) log.debug "Using cached device options (age=${currentTime - atomicState.lastDeviceOptionsFetch})"
+    }
+
+    return atomicState.cachedDeviceOptions
 }
 
 def getSoundOptions() {
     if (logEnable) log.debug "Generating Notification List..."
     def myOptions =[]
-    httpGet(uri: "https://api.pushover.net/1/sounds.json?token=${apiKey}"){response ->
-        if(response.status != 200) {
-            sendPush("ERROR: 'Pushover Me When' received HTTP error ${response.status}. Check your keys!")
-            log.error "Received HTTP error ${response.status}. Check your keys!"
-        }
-        else {
-            if (logEnable) log.debug "Notification List Generated"
-            mySounds = response.data.sounds
-            mySounds.each {eachSound->
-            myOptions << ["${eachSound.key}":"${eachSound.value}"]
+    if (keyFormatIsValid()) {
+        try{
+            httpGet(uri: "https://api.pushover.net/1/sounds.json?token=${apiKey}"){response ->
+                if(response.status != 200) {
+                    log.error "Received HTTP error ${response.status}. Check your keys!"
+                }
+                else {
+                    if (logEnable) log.debug "Notification List Generated: ${response.data.sounds}"
+                    mySounds = response.data.sounds
+                    mySounds.each {eachSound->
+                    myOptions << ["${eachSound.key}":"${eachSound.value}"]
+                    }
+                }
             }
         }
-   	}   
+        catch (Exception e) {
+            log.error "PushOver Server Returned: ${e}"
+        }
+    }
+    else {
+        log.error "API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+    }
+
     return myOptions
+}
+
+def getCachedSoundOptions() {
+    // First check if keys have changed (will invalidate all caches if they have)
+    checkAndHandleKeyChanges()
+
+    def currentTime = now()
+    def cacheTimeout = 30 * 1000   //default needed for initial device creation execution of this code
+    if (cacheRefreshInterval != null) cacheTimeout = cacheRefreshInterval * 1000 // in milliseconds
+
+    // Now check if our specific cache needs refreshing
+    if (atomicState.cachedSoundOptions == null ||
+        (currentTime - atomicState.lastSoundOptionsFetch) > cacheTimeout) {
+
+        if (logEnable) log.debug "Sound options cache expired, fetching fresh data..."
+
+        // Get fresh sound options
+        def soundOptions = getSoundOptions()
+
+        // Update our cache atomically
+        atomicState.cachedSoundOptions = soundOptions
+        atomicState.lastSoundOptionsFetch = currentTime
+
+        if (logEnable) log.debug "Cache updated with new sound options"
+    } else {
+        if (logEnable) log.debug "Using cached sound options (age=${currentTime - atomicState.lastSoundOptionsFetch})"
+    }
+
+    return atomicState.cachedSoundOptions
 }
 
 def speak(message, volume = null, voice = null) {
@@ -163,15 +265,15 @@ def speak(message, volume = null, voice = null) {
 }
 
 def deviceNotification(message) {
-    if(message.startsWith("[S]")){ 
+    if(message.startsWith("[S]")){
         customPriority = "-2"
         message = message.minus("[S]")
-    }    
-    if(message.startsWith("[L]")){ 
+    }
+    if(message.startsWith("[L]")){
         customPriority = "-1"
         message = message.minus("[L]")
     }
-    if(message.startsWith("[N]")){ 
+    if(message.startsWith("[N]")){
         customPriority = "0"
         message = message.minus("[N]")
     }
@@ -184,9 +286,9 @@ def deviceNotification(message) {
         message = message.minus("[E]")
     }
     if(customPriority){ priority = customPriority}
- 
-    def html = "0"    
-    if(message.contains("[HTML]")){ 
+
+    def html = "0"
+    if(message.contains("[HTML]")){
         html = "1"
         message = message.minus("[HTML]")
         if(message.contains("[OPEN]")){
@@ -196,48 +298,48 @@ def deviceNotification(message) {
             message = message.replace("[CLOSE]",">")
         }
     }
-    
-    if((matcher = message =~ /\^(.*?)\^/)){                   
+
+    if((matcher = message =~ /\^(.*?)\^/)){
         message = message.minus("^${matcher[0][1]}^")
         message = message.trim() //trim any whitespace
         customTitle = matcher[0][1]
     }
     if(customTitle){ title = customTitle}
-        
-    if((matcher = message =~ /\#(.*?)\#/)){               
-        message = message.minus("#${matcher[0][1]}#")      
+
+    if((matcher = message =~ /\#(.*?)\#/)){
+        message = message.minus("#${matcher[0][1]}#")
         message = message.trim() //trim any whitespace
         customSound = matcher[0][1]
         customSound = customSound.toLowerCase()
     }
     if(customSound){ sound = customSound}
 
-    if((matcher = message =~ /\*(.*?)\*/)){               
-        message = message.minus("*${matcher[0][1]}*")      
+    if((matcher = message =~ /\*(.*?)\*/)){
+        message = message.minus("*${matcher[0][1]}*")
         message = message.trim() //trim any whitespace
         customDevice = matcher[0][1]
-        customDevice = customDevice.toLowerCase()      
+        customDevice = customDevice.toLowerCase()
     }
     if(customDevice){ deviceName = customDevice}
-    
-    if((matcher = message =~ /\§(.*?)\§/)){               
-        message = message.minus("§${matcher[0][1]}§")      
+
+    if((matcher = message =~ /\§(.*?)\§/)){
+        message = message.minus("§${matcher[0][1]}§")
         message = message.trim() //trim any whitespace
         customUrl = matcher[0][1]
     }
     if(customUrl){ url = customUrl}
 
-    if((matcher = message =~ /\¤(.*?)\¤/)){               
-        message = message.minus("¤${matcher[0][1]}¤")      
+    if((matcher = message =~ /\¤(.*?)\¤/)){
+        message = message.minus("¤${matcher[0][1]}¤")
         message = message.trim() //trim any whitespace
-        customUrlTitle = matcher[0][1]   
+        customUrlTitle = matcher[0][1]
     }
-    if(customUrlTitle){ urlTitle = customUrlTitle}    
-    
-    if((matcher = message =~ /\¨(.*?)\¨/)){               
-        message = message.minus("¨${matcher[0][1]}¨")      
+    if(customUrlTitle){ urlTitle = customUrlTitle}
+
+    if((matcher = message =~ /\¨(.*?)\¨/)){
+        message = message.minus("¨${matcher[0][1]}¨")
         message = message.trim() //trim any whitespace
-        customImageUrl = matcher[0][1]   
+        customImageUrl = matcher[0][1]
     }
 
     // New Retry and Expire Code
@@ -246,24 +348,24 @@ def deviceNotification(message) {
         message = message.trim()
         customRetry = matcher[0][1]
     }
-    if(customRetry){ 
+    if(customRetry){
         retry = customRetry
         if (retry.toInteger() < 30){ retry = 30 }
     }
-    
+
     if((matcher = message =~ /\™(.*?)\™/)){
         message = message.minus("™${matcher[0][1]}™")
         message = message.trim()
         customExpire = matcher[0][1]
     }
-    if(customExpire){  
+    if(customExpire){
         expire = customExpire
         if (expire.toInteger() < 30){ expire = 30 }
         if (expire.toInteger() > 10800){ expire = 10800 }
     }
- 
+
     // End new code
-    
+
     if (message.indexOf("\\n") > -1) {
         message = message.replace("\\n", "<br>")
         html = "1"
@@ -278,7 +380,7 @@ def deviceNotification(message) {
             log.debug "Notification Image Received (${imageData.available()})"
         }
     }
-    
+
     //Top Part of the POST request Body
     def postBodyTop = """----d29vZHNieQ==\r\nContent-Disposition: form-data; name="user"\r\n\r\n$userKey\r\n----d29vZHNieQ==\r\nContent-Disposition: form-data; name="token"\r\n\r\n$apiKey\r\n----d29vZHNieQ==\r\n"""
     if (title) {
@@ -342,19 +444,24 @@ def deviceNotification(message) {
     	uri: "https://api.pushover.net/1/messages.json",
     	body: postBody
     ]
-    if ((apiKey =~ /[A-Za-z0-9]{30}/) && (userKey =~ /[A-Za-z0-9]{30}/)) {
-        httpPost(params){response ->
-            if(response.status != 200) {
-                sendPush("ERROR: 'Pushover Me When' received HTTP error ${response.status}. Check your keys!")
-                log.error "Received HTTP error ${response.status}. Check your keys!"
+
+    if (keyFormatIsValid()) {
+        try {
+            httpPost(params) { response ->
+                if(response.status != 200) {
+                    log.error "Received HTTP error ${response.status}. Check your keys!"
+                }
+                else {
+                    if (logEnable) log.debug "Message Received by Pushover Server"
+                }
             }
-            else {
-                if (logEnable) log.debug "Message Received by Pushover Server"
         }
-        }
+        catch (Exception e) {
+            log.error "PushOver Server Returned: ${e}"
+	    }
     }
     else {
-        // Do not sendPush() here, the user may have intentionally set up bad keys for testing.
         log.error "API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+		return
     }
 }

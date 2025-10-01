@@ -5,6 +5,7 @@
  *
  *  2014-12-17: Modified by Barry A. Burke to maintain decimal precision for both Celsius and Fahrenheit value (was rounding down prematurely)
  *  2025-09-30: Modified by Dan Ogorchock to work on Hubitat Elevation Platform
+ *  2025-10-01: Modified by Dan Ogorchock to allow for decimal temperature and humidity offsets + minor tweaks
  *
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -18,7 +19,7 @@
  *
  */
 metadata {
-	definition (name: "Centralite 3310 Temp/Humidity Sensor",namespace: "ogiewon", author: "ogiewon") {
+	definition (name: "Centralite 3310 Temp/Humidity Sensor",namespace: "ogiewon", author: "ogiewon", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/centralite-3310-temperature-humidity-zigbee-sensor.src/centralite-3310-temperature-humidity-zigbee-sensor.groovy") {
 		capability "Configuration"
 		capability "Battery"
 		capability "Refresh"
@@ -32,7 +33,7 @@ metadata {
  
 	preferences {
 		input name: "tempOffset", type: "number", title: "Temperature Offset", description: "Adjust temperature by this many degrees", range: "*..*", defaultValue: 0
-		input name: "humidOffset", type: "number", title: "Humidity Offset", description: "Adjust humidity by this many %", range: "*..*", defaultValue: 0
+		input name: "humidOffset", type: "number", title: "Humidity Offset", description: "Adjust humidity by this percentage", range: "*..*", defaultValue: 0
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
     }
 }
@@ -63,8 +64,6 @@ def parse(String description) {
  
 	if (logEnable) log.debug "PARSE RETURNED $map"
 	return map ? map : null
-//    return map ? createEvent(map) : null
-
 }
  
 private Map parseCatchAllMessage(String description) {
@@ -75,18 +74,16 @@ private Map parseCatchAllMessage(String description) {
             case 0x0001:
             	resultMap = getBatteryResult(cluster.data.last())
                 break
-
             case 0x0402:
-                if (logEnable) log.debug "***parseCatchAll: temperature cluster.data = ${cluster.data}"
+                if (logEnable) log.debug "parseCatchAll: temperature cluster.data = ${cluster.data}"
                 // temp is last 2 data values. reverse to swap endian
                 String temp = cluster.data[-2..-1].reverse().collect { cluster.hex1(it) }.join()
                 if (logEnable) log.debug "***parseCatchAll: temperature = ${temp}"
                 def value = getTemperature(temp)
                 resultMap = getTemperatureResult(value)
                 break
-
 			case 0xFC45:
-                if (logEnable) log.debug "***parseCatchAll: humidity cluster.data = ${cluster.data}"
+                if (logEnable) log.debug "parseCatchAll: humidity cluster.data = ${cluster.data}"
 //                String pctStr = cluster.data[-1..-2].collect { Integer.toHexString(it) }.join('')
 //                String humid = Math.round(Integer.valueOf(pctStr, 16) / 100)
 //                log.debug "***parseCatchAll: humid = ${humid}"
@@ -94,7 +91,7 @@ private Map parseCatchAllMessage(String description) {
                 break
         }
     }
-
+    
     return resultMap
 }
 
@@ -113,13 +110,13 @@ private Map parseReportAttributeMessage(String description) {
 		def nameAndValue = param.split(":")
 		map += [(nameAndValue[0].trim()):nameAndValue[1].trim()]
 	}
-//	if (logEnable) log.debug "parseReportAttributeMessage: descMap: $descMap"
+	if (logEnable) log.debug "parseReportAttributeMessage: descMap: $descMap"
  
 	Map resultMap = [:]
 	if (descMap.cluster == "0402" && descMap.attrId == "0000") {
-//        if (logEnable) log.debug "parseReportAttributeMessage: TEMP descMap.value = ${descMap.value}"
+        if (logEnable) log.debug "parseReportAttributeMessage: TEMP descMap.value = ${descMap.value}"
         String temp = swapEndianHex(descMap.value)
-//        if (logEnable) log.debug "parseReportAttributeMessage: TEMP temp = ${temp}"
+        if (logEnable) log.debug "parseReportAttributeMessage: TEMP temp = ${temp}"
         descMap.value = temp
 		def value = getTemperature(descMap.value)
 		resultMap = getTemperatureResult(value)
@@ -128,9 +125,9 @@ private Map parseReportAttributeMessage(String description) {
 		resultMap = getBatteryResult(Integer.parseInt(descMap.value, 16))
 	}
 	else if (descMap.cluster == "FC45" && descMap.attrId == "0000") {
-//        if (logEnable) log.debug "parseReportAttributeMessage: HUMID descMap.value = ${descMap.value}"
+        if (logEnable) log.debug "parseReportAttributeMessage: HUMID descMap.value = ${descMap.value}"
         String humid = swapEndianHex(descMap.value)
-//        if (logEnable) log.debug "parseReportAttributeMessage: HUMID humid = ${humid}"
+        if (logEnable) log.debug "parseReportAttributeMessage: HUMID humid = ${humid}"
         descMap.value = humid
 		
         def value = getReportAttributeHumidity(descMap.value)
@@ -148,8 +145,6 @@ private Map parseReportAttributeMessage(String description) {
 private Map parseCustomMessage(String description) {
 	Map resultMap = [:]
 	if (description?.startsWith('temperature: ')) {
-//		Float value = zigbee.parseHATemperatureValue(description, "temperature: ", getTemperatureScale()).toFloat()
-//		def value = zigbee.parseHATemperatureValue(description, "temperature: ", getTemperatureScale()).toFloat()
 		def value = (description - "temperature: ").trim()
         if (logEnable) log.debug "parseCustomMessage: temperature value = ${value}"
         if (value.isNumber() && (value.toString() != "0.00"))  {
@@ -172,9 +167,28 @@ private Map parseCustomMessage(String description) {
 			log.warn "invalid humidity: ${pct}"
 		}
 	}
+    
 	return resultMap
 }
- 
+
+private Map getBatteryResult(rawValue) {
+    if (logEnable) log.debug "Battery rawValue = ${rawValue}"
+	float volts = rawValue / 10
+    if (logEnable) log.debug "Battery volts = ${volts}"
+	float minVolts = 2.1
+    float maxVolts = 3.0
+	float pct = (volts - minVolts) / (maxVolts - minVolts)
+	def value = Math.min(100, (int) (pct * 100))
+    if (logEnable) log.debug "Battery value = ${value}%"
+	def descriptionText = "${device.displayName} Battery is ${value}%"
+    return [
+		name: 'battery',
+		value: value,
+        unit: 'V',
+		descriptionText: descriptionText
+	]
+}
+
 def getTemperature(value) {
     if (logEnable) log.debug "getTemperature value = ${value}"
 	float celsius = (Integer.parseInt(value, 16).shortValue()) / 100
@@ -187,49 +201,20 @@ def getTemperature(value) {
 	}
 }
 
-private Map getBatteryResult(rawValue) {
-    if (logEnable) log.debug "Battery rawValue = ${rawValue}"
-	def linkText = getLinkText(device)
-    
-    def result = [
-    	name: 'battery'
-    ]
-    
-	float volts = rawValue / 10
-    if (logEnable) log.debug "Battery volts = ${volts}"
-	def descriptionText
-	if (volts > 3.5) {
-		result.descriptionText = "${linkText} battery has too much power (${volts} volts)."
-	}
-	else {
-		float minVolts = 2.1
-    	float maxVolts = 3.0
-		float pct = (volts - minVolts) / (maxVolts - minVolts)
-		result.value = Math.min(100, (int) (pct * 100))
-        if (logEnable) log.debug "Battery result.value = ${result.value}"
-		result.descriptionText = "${linkText} Battery is ${result.value}%"
-	}
-
-	return result
-}
-
 private Map getTemperatureResult(value) {
 	if (logEnable) log.debug "getTemperatureResult: original value = ${value}°"
-	def linkText = getLinkText(device)
+    float tmpValue = value.toFloat()
     def temperatureScale = getTemperatureScale()
-	if (tempOffset) {
-		def offset = tempOffset as int
-		float v = value as float
-		value = (v + offset) as float
-	}
-    float nv = Math.round( (value as float) * 10.0 ) / 10	// Need at least one decimal point
-    value = nv as float
-    if (logEnable) log.debug "getTemperatureResult: adjusted temperature = ${value}°"
-	def descriptionText = "${linkText} Temperature is ${value}°${temperatureScale}"
+    if (tempOffset) {
+        tmpValue = tmpValue + tempOffset.toFloat()
+    }
+    tmpValue = tmpValue.round(2)
+    if (logEnable) log.debug "getTemperatureResult: adjusted temperature = ${tmpValue}°"
+	def descriptionText = "${device.displayName} Temperature is ${value}°${temperatureScale}"
 	return [
 		name: 'temperature',
-		value: value,
-        unit: temperatureScale,
+		value: tmpValue,
+        unit: "°" + temperatureScale,
 		descriptionText: descriptionText
 	]
 }
@@ -250,20 +235,17 @@ def getReportAttributeHumidity(String value) {
 }
 
 private Map getHumidityResult(value) {
-	//if (logEnable) log.debug 'Humidity'
+	if (logEnable) log.debug "getHumidityResult: original value = ${value}%"
+    float tmpValue = value.toFloat()
 	if (humidOffset) {
-		def offset = humidOffset as int
-//		def v = value as int
-		float v = value as float
-		value = (v + offset) as float
+		tmpValue = tmpValue + humidOffset.toFloat()
 	}
-
-	def linkText = device.displayName
-    def descriptionText = "${linkText} Humidity is ${value}%"
+    tmpValue = tmpValue.round(0)
+    def descriptionText = "${device.displayName} Humidity is ${tmpValue}%"
 	return [
 		name: 'humidity',
-		value: value,
-		unit: '%',
+		value: tmpValue.toInteger(),
+		unit: '%RH',
         descriptionText: descriptionText
 	]
 }
@@ -279,8 +261,9 @@ def refresh() {
 
 def configure() {
 	if (logEnable) log.debug "Configuring Reporting and Bindings."
-
-	// temperature minReportTime 30 seconds, maxReportTime 5 min. Reporting interval if no activity
+    
+    // humidity minReportTime 30s, maxReportTime 60min (i.e. 3600s). Reporting interval if no activity
+	// temperature minReportTime 30s, maxReportTime 60min (i.e. 3600s). Reporting interval if no activity
 	// battery minReport 30 seconds, maxReportTime 6 hrs by default
 	
 	return refresh() +

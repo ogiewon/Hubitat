@@ -58,7 +58,8 @@
 *      ≤b≥ and ≤/b≥ -- for bold
 *      ≤i≥ and ≤/i≥ -- for italics
 *      ≤u≥ and ≤/u≥ -- for underline
-*      ≤font color="FF0000"≥ and ≤/font≥ -- for red colored text
+*      ≤font color="#FF0000"≥ and ≤/font≥ -- for red colored text
+*
 *      There is a preference called Testing. Turning this on does all of the formatting above, but does not send the message as HTML. Useful for troubleshooting, testing, or code examples.
 *      
 *      There is a command to get messaging limits and when the limit resets. Can be used in a Rule. The results are stored in custom attributes and are also accessible in Rules.

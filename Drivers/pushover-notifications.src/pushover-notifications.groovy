@@ -25,6 +25,7 @@
 *       2025-03-17 @hubitrep             Rearchitected use of Pushover API to prevent throttling - implemented caching of Pushover Devices and Sounds lists
 *       2025-08-05 @neerav.modi          Fix Emergency retry/expire and TTL, added new style of embedding options
 *       2026-01-21 Dan Ogorchock         Minor code cleanup, update version number, minor bug fixes, added usage to the comments section
+*       2026-01-26 Dan Ogorchock         Added "ALL" to list of Pushover Devices, since there is no way to unselect a device once selected
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -67,7 +68,7 @@
 
 import java.text.SimpleDateFormat
 
-def version() {return "v1.0.20260121"}
+def version() {return "v1.0.20260126"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {
@@ -94,7 +95,7 @@ metadata {
        	if (keyFormatIsValid()) {
             def deviceOptions = getCachedDeviceOptions()
             if (deviceOptions) {
-                input name: "deviceName", type: "enum", title: "Device Name (Blank = All Devices):", description: "", multiple: true, required: false, options: deviceOptions
+                input name: "deviceName", type: "enum", title: "Device Name:", description: "Select ALL to send to all Pushover devices", defaultValue: "ALL", multiple: true, required: false, options: deviceOptions
                 input name: "priority", type: "enum", title: "Default Message Priority (Blank = NORMAL):", description: "", defaultValue: "0", options:[["-1":"LOW"], ["0":"NORMAL"], ["1":"HIGH"]]
                 def soundOptions = getCachedSoundOptions()
                 input name: "sound", type: "enum", title: "Notification Sound (Blank = App Default):", description: "", options: soundOptions
@@ -165,7 +166,7 @@ private boolean keyFormatIsValid() {
         return true
     }
     else {
-        log.warn "API key '${apiKey}' or USER key '${userKey}' is not properly formatted!"
+        log.warn "keyFormatIsValid() - API key '${apiKey}' or USER key '${userKey}' is not properly formatted!"
         return false
     }
 }
@@ -193,7 +194,7 @@ private boolean checkAndHandleKeyChanges() {
 def getDeviceOptions(){
     if (logEnable) log.debug "Validating Keys and Generating Device List..."
 
-    def deviceOptions = null
+    def deviceOptions = []
 
     if (keyFormatIsValid()) {
         def postBody = [
@@ -216,7 +217,12 @@ def getDeviceOptions(){
                 }
                 else {
                     if (logEnable) log.debug "Device list generated: ${response.data.devices}"
-                    deviceOptions = response.data.devices
+                    //deviceOptions = response.data.devices
+                    deviceOptions.add("ALL")
+                    response.data.devices.each {eachDevice->
+                        deviceOptions.add("${eachDevice}")
+                    }
+                    if (logEnable) log.debug "deviceOptions = ${deviceOptions}"
                 }
             }
         }
@@ -225,7 +231,7 @@ def getDeviceOptions(){
         }
     }
     else {
-        log.error "API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+        log.error "GetDeviceOptions() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
     }
 
     return deviceOptions
@@ -281,7 +287,7 @@ def getSoundOptions() {
         }
     }
     else {
-        log.error "API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+        log.error "GetSoundsOptions() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
     }
 
     return myOptions
@@ -515,6 +521,7 @@ def deviceNotification(message) {
     if (urlTitle) {
         postBodyTop = postBodyTop + """Content-Disposition: form-data; name="url_title"\r\n\r\n${urlTitle}\r\n----d29vZHNieQ==\r\n"""
     }
+    if (deviceName == "ALL") { deviceName = null }
     if (deviceName) {
         postBodyTop = postBodyTop + """Content-Disposition: form-data; name="device"\r\n\r\n${deviceName}\r\n----d29vZHNieQ==\r\n"""
     }
@@ -593,7 +600,7 @@ def deviceNotification(message) {
 	    }
     }
     else {
-        log.error "API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+        log.error "deviceNotification() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
 		return
     }
 }

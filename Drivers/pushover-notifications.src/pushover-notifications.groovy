@@ -593,7 +593,7 @@ def deviceNotification(message) {
                 }
                 else {
                     if (logEnable) log.debug "Message Received by Pushover Server"
-                    sendEvent(name:"notificationText",vvalue:message, descriptionText:"message was received by Pushover server")
+                    sendEvent(name:"notificationText",vvalue:message, descriptionText:"message was received by Pushover server", isStateChange: true)
                 }
             }
         }

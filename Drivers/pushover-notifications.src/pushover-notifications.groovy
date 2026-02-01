@@ -415,7 +415,7 @@ def deviceNotification(message) {
         customDevice = customDevice.toLowerCase()
     }
     if(customDevice){ deviceName = customDevice}
-    if (logEnable && device != null) log.debug "Pushover processed device (${deviceName}): " + message
+    if (logEnable && deviceName != null) log.debug "Pushover processed device (${deviceName}): " + message
 
     // URL
     if((matcher = message =~ /((\§|\[URL=)(.*?)(\§|\]))/ )){

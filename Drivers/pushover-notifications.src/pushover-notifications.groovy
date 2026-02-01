@@ -461,7 +461,7 @@ def deviceNotification(message) {
     // New Retry and Expire Code
     if (priority == "2") {
         // Emergency retry interval
-        if((matcher = message =~ /((\©|\[EM.RETRY=)(.*?)(\©|\]))/ )){
+        if((matcher = message =~ /((\©|\[EM.RETRY=)(\d+)(\©|\]))/ )){
             message = message.minus("${matcher[0][1]}")
             message = message.trim()
             customRetry = matcher[0][3]
@@ -473,7 +473,7 @@ def deviceNotification(message) {
         }
 
         // Emergency message expiration
-        if((matcher = message =~ /((\™|\[EM.EXPIRE=)(.*?)(\™|\]))/ )){
+        if((matcher = message =~ /((\™|\[EM.EXPIRE=)(\d+)(\™|\]))/ )){
             message = message.minus("${matcher[0][1]}")
             message = message.trim()
             customExpire = matcher[0][3]

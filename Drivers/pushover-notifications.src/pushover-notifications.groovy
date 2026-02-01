@@ -27,6 +27,7 @@
 *       2026-01-21 Dan Ogorchock         Minor code cleanup, update version number, minor bug fixes, added usage to the comments section
 *       2026-01-26 Dan Ogorchock         Added "ALL" to list of Pushover Devices, since there is no way to unselect a device once selected
 *       2026-02-01 @hubitrep             Call sendEvent() when message is sent to Pushover, allowing other automations to pick it up from this device.
+*       2026-02-02 @hubitrep             Various minor bug fixes
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -69,7 +70,7 @@
 
 import java.text.SimpleDateFormat
 
-def version() {return "v1.0.20260201"}
+def version() {return "v1.0.20260202"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {

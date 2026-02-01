@@ -612,7 +612,7 @@ def deviceNotification(message) {
 def getMsgLimits() {
     if (logEnable) log.debug "Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${state.lastApiKey?.substring(25,30)}"
    
-	uri = "https://api.pushover.net/1/apps/limits.json?token=${state.lastApiKey}"
+	def uri = "https://api.pushover.net/1/apps/limits.json?token=${state.lastApiKey}"
 	
     try {
         httpGet(uri) { response ->
@@ -628,7 +628,7 @@ def getMsgLimits() {
                 epoch = (long) response.data.reset*1000
                 rDate = new Date(epoch)
                 sendEvent(name:"limitResetDate", value: sdf.format(rDate))
-                sendEvent(name:"limitLastUpdated", value: sdf.format(now()))
+                sendEvent(name:"limitLastUpdated", value: sdf.format(new Date()))
             }
         }
     } catch (Exception e) {

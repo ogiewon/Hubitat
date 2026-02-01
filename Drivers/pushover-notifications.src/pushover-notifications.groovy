@@ -79,7 +79,8 @@ metadata {
 		command "getMsgLimits", [
             [name: "Get Messaging Limits", description: "Update the message limits information"]
         ]
-        
+
+        attribute "notificationText","String"
         attribute "messageLimit","Number"
         attribute "messagesRemaining","Number"
         attribute "limitReset","Number"
@@ -592,6 +593,7 @@ def deviceNotification(message) {
                 }
                 else {
                     if (logEnable) log.debug "Message Received by Pushover Server"
+                    sendEvent(name:"notificationText",vvalue:message, descriptionText:"message was received by Pushover server")
                 }
             }
         }

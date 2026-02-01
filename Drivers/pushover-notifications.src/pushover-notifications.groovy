@@ -162,14 +162,15 @@ def initialize() {
 }
 
 private boolean keyFormatIsValid() {
-    if (apiKey?.matches('[A-Za-z0-9]{30}') && userKey?.matches('[A-Za-z0-9]{30}')) {
-        return true
-    }
-    else {
+    if (apiKey?.matches('[A-Za-z0-9]{30}') && userKey?.matches('[A-Za-z0-9]{30}')) {                                                              
+        return true                                                                                                                               
+    }                                                                                                                                             
+
+    if (apiKey != null && userKey != null) {                                                                                                  
         log.warn "keyFormatIsValid() - API key '${apiKey}' or USER key '${userKey}' is not properly formatted!"
-        return false
-    }
-}
+    }                                                                                                                                         
+    return false                                                                                                                              
+}                                                                                                                                                 
 
 // Check if keys have changed and handle invalidation of all caches if they have
 private boolean checkAndHandleKeyChanges() {

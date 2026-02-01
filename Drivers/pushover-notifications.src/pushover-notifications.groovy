@@ -275,7 +275,7 @@ def getSoundOptions() {
                 }
                 else {
                     if (logEnable) log.debug "Notification List Generated: ${response.data.sounds}"
-                    mySounds = response.data.sounds
+                    def mySounds = response.data.sounds
                     mySounds.each {eachSound->
                     myOptions << ["${eachSound.key}":"${eachSound.value}"]
                     }
@@ -446,12 +446,12 @@ def deviceNotification(message) {
 
     // Retrieve image
     if (imageUrl) {
-        log.debug "Getting Notification Image"
+        if (logEnable) log.debug "Getting Notification Image"
         try {
             httpGet("${imageUrl}")  //modify as needed for authentication header
             { response ->
-                imageData = response.data
-                log.debug "Notification Image Received (${imageData.available()})"
+                def imageData = response.data
+                if (logEnable) log.debug "Notification Image Received (${imageData.available()})"
             }
         } catch (Exception e) {
             log.warn "Error retrieving notification image: ${e.message}"

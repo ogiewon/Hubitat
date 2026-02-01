@@ -445,12 +445,13 @@ def deviceNotification(message) {
     if (logEnable && imageUrl != null) log.debug "Pushover processed image (${imageUrl}): " + message
 
     // Retrieve image
+    def imageData
     if (imageUrl) {
         if (logEnable) log.debug "Getting Notification Image"
         try {
             httpGet("${imageUrl}")  //modify as needed for authentication header
             { response ->
-                def imageData = response.data
+                imageData = response.data
                 if (logEnable) log.debug "Notification Image Received (${imageData.available()})"
             }
         } catch (Exception e) {

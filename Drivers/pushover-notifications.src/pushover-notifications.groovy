@@ -283,7 +283,7 @@ def getSoundOptions() {
             }
         }
         catch (Exception e) {
-            log.error "PushOver Server Returned: ${e}"
+            log.error "Error retrieving sound options - PushOver Server Returned: ${e}"
         }
     }
     else {
@@ -415,6 +415,7 @@ def deviceNotification(message) {
         customDevice = customDevice.toLowerCase()
     }
     if(customDevice){ deviceName = customDevice}
+    if (logEnable && device != null) log.debug "Pushover processed device (${deviceName}): " + message
 
     // URL
     if((matcher = message =~ /((\§|\[URL=)(.*?)(\§|\]))/ )){
@@ -446,10 +447,14 @@ def deviceNotification(message) {
     // Retrieve image
     if (imageUrl) {
         log.debug "Getting Notification Image"
-        httpGet("${imageUrl}")  //modify as needed for authentication header
-        { response ->
-            imageData = response.data
-            log.debug "Notification Image Received (${imageData.available()})"
+        try {
+            httpGet("${imageUrl}")  //modify as needed for authentication header
+            { response ->
+                imageData = response.data
+                log.debug "Notification Image Received (${imageData.available()})"
+            }
+        } catch (Exception e) {
+            log.warn "Error retrieving notification image: ${e.message}"
         }
     }
 
@@ -624,6 +629,6 @@ def getMsgLimits() {
              }
         }
     } catch (Exception e) {
-        log.warn "Call to on failed: ${e.message}"
+        log.warn "Error retrieving message limits failed: ${e.message}"
     }
 }

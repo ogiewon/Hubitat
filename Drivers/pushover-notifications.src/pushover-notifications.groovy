@@ -616,7 +616,10 @@ def getMsgLimits() {
 	
     try {
         httpGet(uri) { response ->
-            if (response.status) {
+            if(response.status != 200) {
+                log.error "Received HTTP error ${response.status}. Check your keys!"
+            }
+            else {
             	if (logEnable) log.debug "${response.data}"
             	sendEvent(name:"messageLimit", value: "${response.data.limit}")
             	sendEvent(name:"messagesRemaining", value: "${response.data.remaining}")
@@ -626,7 +629,7 @@ def getMsgLimits() {
                 rDate = new Date(epoch)
                 sendEvent(name:"limitResetDate", value: sdf.format(rDate))
                 sendEvent(name:"limitLastUpdated", value: sdf.format(now()))
-             }
+            }
         }
     } catch (Exception e) {
         log.warn "Error retrieving message limits failed: ${e.message}"

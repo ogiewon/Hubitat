@@ -26,6 +26,7 @@
 *       2025-08-05 @neerav.modi          Fix Emergency retry/expire and TTL, added new style of embedding options
 *       2026-01-21 Dan Ogorchock         Minor code cleanup, update version number, minor bug fixes, added usage to the comments section
 *       2026-01-26 Dan Ogorchock         Added "ALL" to list of Pushover Devices, since there is no way to unselect a device once selected
+*       2026-02-01 @hubitrep             Call sendEvent() when message is sent to Pushover, allowing other automations to pick it up from this device.
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -53,22 +54,22 @@
 *      [EM.EXPIRE=y] -- for emergency priority, when should repeating stop in y seconds, even if not acknowledged (equivalent to ™expirelength™)
 *      [SELFDESTRUCT=z] -- auto delete message in z seconds (no equivalent)
 *      \n -- line breaks in HTML messages. can also use ≤br≥ using the custom HTML characters feature below.
-*      
+*
 *      Set the custom HTML open and close characters to use additional HTML formatting. The default character is ≤ and ≥ (equivalent to [OPEN] and [CLOSE])
-*      
+*
 *      ≤b≥ and ≤/b≥ -- for bold
 *      ≤i≥ and ≤/i≥ -- for italics
 *      ≤u≥ and ≤/u≥ -- for underline
 *      ≤font color="#FF0000"≥ and ≤/font≥ -- for red colored text
 *
 *      There is a preference called Testing. Turning this on does all of the formatting above, but does not send the message as HTML. Useful for troubleshooting, testing, or code examples.
-*      
+*
 *      There is a command to get messaging limits and when the limit resets. Can be used in a Rule. The results are stored in custom attributes and are also accessible in Rules.
 */
 
 import java.text.SimpleDateFormat
 
-def version() {return "v1.0.20260126"}
+def version() {return "v1.0.20260201"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {
@@ -79,13 +80,14 @@ metadata {
 		command "getMsgLimits", [
             [name: "Get Messaging Limits", description: "Update the message limits information"]
         ]
-        
+
+        attribute "notificationText","String"
         attribute "messageLimit","Number"
         attribute "messagesRemaining","Number"
         attribute "limitReset","Number"
-        attribute "limitResetDate","String"  
-        attribute "limitLastUpdated","String"  
-             
+        attribute "limitResetDate","String"
+        attribute "limitLastUpdated","String"
+
     }
 
     preferences {
@@ -150,11 +152,11 @@ def initialize() {
     atomicState.lastSoundOptionsFetch = 0
     atomicState.cachedDeviceOptions = null
     atomicState.cachedSoundOptions = null
-    
-    //  Needs more input cleansing. 
-    if (htmlOpen == null || htmlClose == null 
-        || htmlOpen == '' || htmlClose == '' 
-        || htmlOpen =~ /[\s\[\]\\]/ || htmlClose =~ /[\s\[\]\\]/ 
+
+    //  Needs more input cleansing.
+    if (htmlOpen == null || htmlClose == null
+        || htmlOpen == '' || htmlClose == ''
+        || htmlOpen =~ /[\s\[\]\\]/ || htmlClose =~ /[\s\[\]\\]/
     ) {
     	htmlOpen = "≤"
     	htmlClose = "≥"
@@ -353,7 +355,7 @@ def deviceNotification(message) {
         customPriority = "2"
         message = message.minus("[E]")
     }
-    if(customPriority){ 
+    if(customPriority){
     	priority = customPriority
     	if (logEnable) log.debug "Pushover processed priority (${priority}): " + message
     }
@@ -397,13 +399,13 @@ def deviceNotification(message) {
         message = message.minus("${matcher[0][1]}")
         message = message.trim() //trim any whitespace
         customSound = matcher[0][2]
-        customSound = customSound.toLowerCase()    
+        customSound = customSound.toLowerCase()
     } else if ((matcher = message =~ /(\[SOUND=(.*?)\])/ )) {
         message = message.minus("${matcher[0][1]}")
         message = message.trim() //trim any whitespace
         customSound = matcher[0][2]
         customSound = customSound.toLowerCase()
-    } 
+    }
     if(customSound){ sound = customSound}
 	if (logEnable && sound != null) log.debug "Pushover processed sound (${sound}): " + message
 
@@ -480,7 +482,7 @@ def deviceNotification(message) {
             if (expire.toInteger() > 10800){ expire = 10800 }
             if (logEnable) log.debug "Pushover processed emergency expire (${expire}): " + message
         }
-	
+
     }
     // End new code
 
@@ -506,7 +508,7 @@ def deviceNotification(message) {
     }
 
     // Send message as plain text instead of HTML
-    if (testingEnable) { html = "0" 
+    if (testingEnable) { html = "0"
         if (logEnable) log.debug "Testing mode is ON.  Message and any HTML tags will be sent in plain text."
     }
 
@@ -558,7 +560,7 @@ def deviceNotification(message) {
         //log.debug "Pushover message top: " + message
         log.debug "Pushover final message: " + message
         //log.debug "Pushover message bottom: " + message
-    }			
+    }
 
     byte[] postBodyTopArr = postBodyTop.getBytes("UTF-8")
     byte[] postBodyBottomArr = postBodyBottom.getBytes("UTF-8")
@@ -592,6 +594,7 @@ def deviceNotification(message) {
                 }
                 else {
                     if (logEnable) log.debug "Message Received by Pushover Server"
+                    sendEvent(name:"notificationText", value:message, descriptionText:"message was received by Pushover server", isStateChange: true)
                 }
             }
         }
@@ -607,9 +610,9 @@ def deviceNotification(message) {
 
 def getMsgLimits() {
     if (logEnable) log.debug "Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${state.lastApiKey.substring(25,30)}"
-   
+
 	uri = "https://api.pushover.net/1/apps/limits.json?token=${state.lastApiKey}"
-	
+
     try {
         httpGet(uri) { response ->
             if (response.status) {

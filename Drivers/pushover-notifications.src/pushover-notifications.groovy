@@ -165,15 +165,17 @@ def initialize() {
 }
 
 private boolean keyFormatIsValid() {
-    if (apiKey?.matches('[A-Za-z0-9]{30}') && userKey?.matches('[A-Za-z0-9]{30}')) {                                                              
-        return true                                                                                                                               
-    }                                                                                                                                             
+    if (apiKey?.matches('[A-Za-z0-9]{30}') && userKey?.matches('[A-Za-z0-9]{30}')) {
+        return true
+    }
 
-    if (apiKey != null && userKey != null) {                                                                                                  
+    // Avoid logging a warning if the keys are not set (device page UI renders before device context is available).
+    if (apiKey != null && userKey != null) {
         log.warn "keyFormatIsValid() - API key '${apiKey}' or USER key '${userKey}' is not properly formatted!"
-    }                                                                                                                                         
-    return false                                                                                                                              
-}                                                                                                                                                 
+    }
+
+    return false
+}
 
 // Check if keys have changed and handle invalidation of all caches if they have
 private boolean checkAndHandleKeyChanges() {
@@ -617,7 +619,7 @@ def deviceNotification(message) {
 
 def getMsgLimits() {
     if (logEnable) log.debug "Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${apiKey?.substring(25,30)}"
-   
+
 	def uri = "https://api.pushover.net/1/apps/limits.json?token=${apiKey}"
 
     try {

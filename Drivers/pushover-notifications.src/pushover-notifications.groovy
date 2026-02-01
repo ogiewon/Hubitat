@@ -130,7 +130,7 @@ def updated() {
         log.info "Enabling Debug Logging for 30 minutes"
         runIn(1800,logsOff)
     } else {
-        unschedule(logsoff)
+        unschedule(logsOff)
     }
 
     if (testingEnable) {

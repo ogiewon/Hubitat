@@ -625,8 +625,8 @@ def getMsgLimits() {
             	sendEvent(name:"messagesRemaining", value: "${response.data.remaining}")
             	sendEvent(name:"limitReset", value: "${response.data.reset}")
             	SimpleDateFormat sdf = new SimpleDateFormat("dd MMM YYYY, HH:mm a")
-                epoch = (long) response.data.reset*1000
-                rDate = new Date(epoch)
+                def epoch = (long) response.data.reset*1000
+                def rDate = new Date(epoch)
                 sendEvent(name:"limitResetDate", value: sdf.format(rDate))
                 sendEvent(name:"limitLastUpdated", value: sdf.format(new Date()))
             }

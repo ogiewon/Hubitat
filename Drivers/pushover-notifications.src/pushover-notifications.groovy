@@ -611,9 +611,9 @@ def deviceNotification(message) {
 }
 
 def getMsgLimits() {
-    if (logEnable) log.debug "Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${state.lastApiKey?.substring(25,30)}"
+    if (logEnable) log.debug "Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${apiKey?.substring(25,30)}"
    
-	def uri = "https://api.pushover.net/1/apps/limits.json?token=${state.lastApiKey}"
+	def uri = "https://api.pushover.net/1/apps/limits.json?token=${apiKey}"
 	
     try {
         httpGet(uri) { response ->

@@ -622,6 +622,7 @@ def deviceNotification(message) {
 }
 
 def getMsgLimits() {
+    
     if (keyFormatIsValid()) {
  
         if (logEnable) log.debug "getMsgLimits() - Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${apiKey.substring(25,30)}"

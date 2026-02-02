@@ -28,7 +28,7 @@
 *       2026-01-26 Dan Ogorchock         Added "ALL" to list of Pushover Devices, since there is no way to unselect a device once selected
 *       2026-02-01 @hubitrep             Call sendEvent() when message is sent to Pushover, allowing other automations to pick it up from this device.
 *       2026-02-02 Dan Ogorchock         Minor code cleanup and logic improvements
-*       2026-02-03 @hubitrep             Various minor bug fixes
+*       2026-02-03 @hubitrep             Various minor code fixes
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *

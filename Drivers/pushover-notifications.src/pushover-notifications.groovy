@@ -27,6 +27,7 @@
 *       2026-01-21 Dan Ogorchock         Minor code cleanup, update version number, minor bug fixes, added usage to the comments section
 *       2026-01-26 Dan Ogorchock         Added "ALL" to list of Pushover Devices, since there is no way to unselect a device once selected
 *       2026-02-01 @hubitrep             Call sendEvent() when message is sent to Pushover, allowing other automations to pick it up from this device.
+*       2026-02-02 Dan Ogorchock         Minor code cleanup and logic improvements
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -69,7 +70,7 @@
 
 import java.text.SimpleDateFormat
 
-def version() {return "v1.0.20260201"}
+def version() {return "v1.0.20260202"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {
@@ -132,7 +133,7 @@ def updated() {
         log.info "Enabling Debug Logging for 30 minutes"
         runIn(1800,logsOff)
     } else {
-        unschedule(logsoff)
+        unschedule(logsOff)
     }
 
     if (testingEnable) {
@@ -330,6 +331,19 @@ def speak(message, volume = null, voice = null) {
 
 def deviceNotification(message) {
 
+    def customPriority = null
+    def customTitle = null
+    def customSound = null
+    def customDevice = null
+    def customUrl = null
+    def customUrlTitle = null
+    def customImageUrl = null
+    def customRetry = null
+    def customExpire = null
+    def customTTL = null
+    def imageData = null
+    def html = "0"
+    
     if (logEnable){
         log.debug "Pushover driver raw message: " + message
     }
@@ -360,7 +374,7 @@ def deviceNotification(message) {
     	if (logEnable) log.debug "Pushover processed priority (${priority}): " + message
     }
 
-    def html = "0"
+
     // Uncomment both of the following lines to override Preferences
     //def htmlOpen = "«"
     //def htmlClose = "»"
@@ -417,7 +431,7 @@ def deviceNotification(message) {
         customDevice = customDevice.toLowerCase()
     }
     if(customDevice){ deviceName = customDevice}
-    if (logEnable && device != null) log.debug "Pushover processed device (${device}): " + message
+    if (logEnable && deviceName != null) log.debug "Pushover processed device (${deviceName}): " + message
 
     // URL
     if((matcher = message =~ /((\§|\[URL=)(.*?)(\§|\]))/ )){
@@ -491,10 +505,10 @@ def deviceNotification(message) {
         if((matcher = message =~ /(\[SELFDESTRUCT=(\d+)\])/ )){
             message = message.minus("${matcher[0][1]}")
             message = message.trim()
-            customTtl = matcher[0][2]
+            customTTL = matcher[0][2]
         }
-        if(customTtl){
-            ttl = customTtl
+        if(customTTL){
+            ttl = customTTL
             if (ttl.toInteger() < 0){ ttl = 0 }
             if (logEnable) log.debug "Pushover processed TTL (${ttl}): " + message
         }
@@ -542,7 +556,7 @@ def deviceNotification(message) {
     if (ttl) {
         postBodyTop = postBodyTop + """Content-Disposition: form-data; name="ttl"\r\n\r\n${ttl}\r\n----d29vZHNieQ==\r\n"""
     }
-    if (html) {
+    if (html == "1") {
         postBodyTop = postBodyTop + """Content-Disposition: form-data; name="html"\r\n\r\n${html}\r\n----d29vZHNieQ==\r\n"""
     }
     if (message == ""){ message = Character.toString ((char) 128) }
@@ -593,13 +607,13 @@ def deviceNotification(message) {
                     log.error "Received HTTP error ${response.status}. Check your keys!"
                 }
                 else {
-                    if (logEnable) log.debug "Message Received by Pushover Server"
+                    if (logEnable) log.debug "Msg sent to Pushover server"
                     sendEvent(name:"notificationText", value: message, descriptionText:"Msg sent to Pushover server", isStateChange: true)
                 }
             }
         }
         catch (Exception e) {
-            log.error "PushOver Server Returned: ${e}"
+            log.error "deviceNotification() - PushOver Server Returned: ${e}"
 	    }
     }
     else {
@@ -609,25 +623,33 @@ def deviceNotification(message) {
 }
 
 def getMsgLimits() {
-    if (logEnable) log.debug "Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${state.lastApiKey.substring(25,30)}"
+    
+    if (keyFormatIsValid()) {
+ 
+        if (logEnable) log.debug "getMsgLimits() - Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${apiKey.substring(25,30)}"
 
-	uri = "https://api.pushover.net/1/apps/limits.json?token=${state.lastApiKey}"
+	    uri = "https://api.pushover.net/1/apps/limits.json?token=${apiKey}"
 
-    try {
-        httpGet(uri) { response ->
-            if (response.status) {
-            	if (logEnable) log.debug "${response.data}"
-            	sendEvent(name:"messageLimit", value: "${response.data.limit}")
-            	sendEvent(name:"messagesRemaining", value: "${response.data.remaining}")
-            	sendEvent(name:"limitReset", value: "${response.data.reset}")
-            	SimpleDateFormat sdf = new SimpleDateFormat("dd MMM YYYY, HH:mm a")
-                epoch = (long) response.data.reset*1000
-                rDate = new Date(epoch)
-                sendEvent(name:"limitResetDate", value: sdf.format(rDate))
-                sendEvent(name:"limitLastUpdated", value: sdf.format(now()))
-             }
+        try {
+            httpGet(uri) { response ->
+                if (response.status) {
+            	    if (logEnable) log.debug "${response.data}"
+            	    sendEvent(name:"messageLimit", value: "${response.data.limit}")
+            	    sendEvent(name:"messagesRemaining", value: "${response.data.remaining}")
+            	    sendEvent(name:"limitReset", value: "${response.data.reset}")
+            	    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, HH:mm a")
+                    epoch = (long) response.data.reset*1000
+                    rDate = new Date(epoch)
+                    sendEvent(name:"limitResetDate", value: sdf.format(rDate))
+                    sendEvent(name:"limitLastUpdated", value: sdf.format(now()))
+                 }
+            }
+        } catch (Exception e) {
+            log.error "getMsgLimits() - PushOver Server Returned: ${e}"
         }
-    } catch (Exception e) {
-        log.warn "Call to on failed: ${e.message}"
+    }
+    else {
+        log.error "getMsgLimits() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+		return
     }
 }

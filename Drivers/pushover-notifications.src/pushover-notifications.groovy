@@ -465,7 +465,6 @@ def deviceNotification(message) {
     if (logEnable && imageUrl != null) log.debug "Pushover processed image (${imageUrl}): " + message
 
     // Retrieve image
-    def imageData
     if (imageUrl) {
         if (logEnable) log.debug "Getting Notification Image"
         try {

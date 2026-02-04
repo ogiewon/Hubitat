@@ -611,9 +611,10 @@ def deviceNotification(message) {
                 }
             }
         }
-        catch (Exception e) {
-            log.error "deviceNotification() - PushOver Server Returned: ${e}"
-	    }
+        catch (groovyx.net.http.HttpResponseException e) {
+            log.error "deviceNotification() - PushOver Server Returned: ${e.message}"
+            log.error "deviceNotification() - Response body: ${e.response?.data.errors}"
+        }
     }
     else {
         log.error "deviceNotification() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"

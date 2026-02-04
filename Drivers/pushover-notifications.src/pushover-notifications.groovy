@@ -338,9 +338,10 @@ def deviceNotification(message) {
     def customTTL = null
     def imageData = null
     def html = "0"
+    def rawMessage = message
     
     if (logEnable){
-        log.debug "Pushover driver raw message: " + message
+        log.debug "Pushover driver raw message: " + rawMessage
     }
 
     // Message priority
@@ -607,7 +608,7 @@ def deviceNotification(message) {
                 }
                 else {
                     if (logEnable) log.debug "Msg sent to Pushover server"
-                    sendEvent(name:"notificationText", value: message, descriptionText:"Msg sent to Pushover server", isStateChange: true)
+                    sendEvent(name:"notificationText", value: rawMessage, descriptionText:"Msg sent to Pushover server", isStateChange: true)
                 }
             }
         }

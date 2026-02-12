@@ -581,17 +581,28 @@ def deviceNotification(message) {
     if (priority) {
         postBodyBuilder.append("""Content-Disposition: form-data; name="priority"\r\n\r\n${priority}\r\n----d29vZHNieQ==\r\n""")
     }
-    if (retry) {
-        postBodyBuilder.append("""Content-Disposition: form-data; name="retry"\r\n\r\n${retry}\r\n----d29vZHNieQ==\r\n""")
-    }
-    if (expire) {
-        postBodyBuilder.append("""Content-Disposition: form-data; name="expire"\r\n\r\n${expire}\r\n----d29vZHNieQ==\r\n""")
-    }
-    if (emCallbackUrl) {
-        postBodyBuilder.append("""Content-Disposition: form-data; name="callback"\r\n\r\n${emCallbackUrl}\r\n----d29vZHNieQ==\r\n""")
-    }
-    if (ttl) {
-        postBodyBuilder.append("""Content-Disposition: form-data; name="ttl"\r\n\r\n${ttl}\r\n----d29vZHNieQ==\r\n""")
+    // Emergency-only parameters: retry, expire, callback
+    if (priority == "2") {
+        if (retry) {
+            postBodyBuilder.append("""Content-Disposition: form-data; name="retry"\r\n\r\n${retry}\r\n----d29vZHNieQ==\r\n""")
+        }
+        if (expire) {
+            postBodyBuilder.append("""Content-Disposition: form-data; name="expire"\r\n\r\n${expire}\r\n----d29vZHNieQ==\r\n""")
+        }
+        if (emCallbackUrl) {
+            postBodyBuilder.append("""Content-Disposition: form-data; name="callback"\r\n\r\n${emCallbackUrl}\r\n----d29vZHNieQ==\r\n""")
+        }
+        if (ttl) {
+            log.warn "deviceNotification() - TTL/SELFDESTRUCT ignored for Emergency priority messages"
+        }
+    } else {
+        // Non-emergency parameter: ttl
+        if (ttl) {
+            postBodyBuilder.append("""Content-Disposition: form-data; name="ttl"\r\n\r\n${ttl}\r\n----d29vZHNieQ==\r\n""")
+        }
+        if (emCallbackUrl) {
+            log.warn "deviceNotification() - Callback URL ignored for non-Emergency priority messages"
+        }
     }
     if (html == "1") {
         postBodyBuilder.append("""Content-Disposition: form-data; name="html"\r\n\r\n${html}\r\n----d29vZHNieQ==\r\n""")

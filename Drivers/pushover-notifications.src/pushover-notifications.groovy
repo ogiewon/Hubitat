@@ -230,8 +230,8 @@ def getDeviceOptions(){
 
     if (keyFormatIsValid()) {
         def postBody = [
-            token: "$apiKey",
-            user: "$userKey",
+            token: apiKey,
+            user: userKey,
             device: ""
         ]
 

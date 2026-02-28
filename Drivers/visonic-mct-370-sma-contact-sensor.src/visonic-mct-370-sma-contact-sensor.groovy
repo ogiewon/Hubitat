@@ -30,7 +30,7 @@ import hubitat.zigbee.clusters.iaszone.ZoneStatus
 import hubitat.zigbee.zcl.DataType
 
 metadata {
-    definition( name: "Visonic MCT-370 Zigbee Contact Sensor", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "" ) {
+    definition( name: "Visonic MCT-370 Zigbee Contact Sensor", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/visonic-mct-370-sma-contact-sensor.src/visonic-mct-370-sma-contact-sensor.groovy" ) {
         capability "Battery"
         capability "Configuration"
         capability "Contact Sensor"
@@ -49,49 +49,18 @@ metadata {
     }
 
     preferences {
-        input name: "tempOffset",
-              type: "decimal",
-              title: "Temperature Offset (°${getTemperatureScale()})",
-              description: "Adjust reported temperature by this amount (e.g. -1.5 or +2.0)",
-              defaultValue: 0,
-              range: "-10..10"
-
-        input name: "tempReportMinutes",
-              type: "number",
-              title: "Temperature Report Interval (minutes)",
-              description: "How often to request a temperature report (1-60 min, default 10)",
-              defaultValue: 10,
-              range: "1..60"
-
-        input name: "batteryReportHours",
-              type: "number",
-              title: "Battery Report Interval (hours)",
-              description: "How often to request a battery report (1-24 hrs, default 12)",
-              defaultValue: 12,
-              range: "1..24"
-
-        input name: "invertContact",
-              type: "bool",
-              title: "Invert Contact Logic",
-              description: "Enable if open/closed is reported backwards",
-              defaultValue: false
-
-        input name: "logEnable",
-              type: "bool",
-              title: "Enable Debug Logging",
-              defaultValue: true
-
-        input name: "txtEnable",
-              type: "bool",
-              title: "Enable Descriptive Text Logging",
-              defaultValue: true
+        input name: "tempOffset", type: "decimal", title: "Temperature Offset (°${getTemperatureScale()})", description: "Adjust reported temperature by this amount (e.g. -1.5 or +2.0)", defaultValue: 0, range: "-10..10"
+        input name: "tempReportMinutes", type: "number", title: "Temperature Report Interval (minutes)", description: "How often to request a temperature report (1-60 min, default 10)", defaultValue: 10, range: "1..60"
+        input name: "batteryReportHours", type: "number", title: "Battery Report Interval (hours)", description: "How often to request a battery report (1-24 hrs, default 12)", defaultValue: 12, range: "1..24"
+        input name: "invertContact", type: "bool", title: "Invert Contact Logic", description: "Enable if open/closed is reported backwards", defaultValue: false
+        input name: "logEnable", type: "bool", title: "Enable Debug Logging", defaultValue: true
+        input name: "txtEnable", type: "bool", title: "Enable Descriptive Text Logging", defaultValue: true
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  L I F E C Y C L E
 // ─────────────────────────────────────────────────────────────────────────────
-
 def installed() {
     logDebug "installed()"
     runIn(1800, logsOff)
@@ -107,7 +76,6 @@ def updated() {
 // ─────────────────────────────────────────────────────────────────────────────
 //  C O N F I G U R A T I O N
 // ─────────────────────────────────────────────────────────────────────────────
-
 def configure() {
     logDebug "configure()"
 
@@ -117,28 +85,17 @@ def configure() {
 
     List<String> cmds = []
 
-    // 1.  IAS Zone – write hub IEEE address as IAS CIE (attribute 0x0010).
-    //     Hubitat's zigbeeEui is big-endian; the attribute requires little-endian.
-/*
-    String euiBE = device.hub.zigbeeEui
-    byte[] euiBytes = euiBE.decodeHex()
-    List euiList = euiBytes as List
-    euiList = euiList.reverse()
-    String euiLE = euiList.collect { String.format("%02X", it & 0xFF) }.join()
-    cmds += zigbee.writeAttribute(0x0500, 0x0010, DataType.IEEE_ADDRESS, euiLE)
-*/
+    // IAS Zone – write hub IEEE address as IAS CIE (attribute 0x0010).
+    // Hubitat's zigbeeEui is big-endian; the attribute requires little-endian.
     cmds += zigbee.writeAttribute(0x0500, 0x0010, DataType.IEEE_ADDRESS, getHubEuiLittleEndian())
     
-    // 2.  Battery – configure reporting for both voltage (0x0020) and percentage (0x0021).
-    //     parseBattery() prefers 0x0021; 0x0020 is a fallback only.
+    // Battery – configure reporting for both voltage (0x0020) and percentage (0x0021).
+    // parseBattery() prefers 0x0021; 0x0020 is a fallback only.
     cmds += zigbee.configureReporting(0x0001, 0x0020, DataType.UINT8,  30, battMaxSec, 1)
     cmds += zigbee.configureReporting(0x0001, 0x0021, DataType.UINT8,  30, battMaxSec, 1)
 
-    // 3.  Temperature – 0.01 °C units, delta 10 = 0.10 °C
+    // Temperature – 0.01 °C units, delta 10 = 0.10 °C
     cmds += zigbee.configureReporting(0x0402, 0x0000, DataType.INT16, tempMinSec, tempMaxSec, 10)  //Seems to always report on 1°C changes. Device may just ignore this setting.
-
-    // 4.  IAS Zone status change reporting
-//    cmds += zigbee.configureReporting(0x0500, 0x0002, DataType.BITMAP16, 0, 3600, 1)  // ChatGPT says this is not necessary - test to find out - Looks like it is not necessary
 
     cmds += zigbee.enrollResponse()
     
@@ -154,7 +111,6 @@ private String getHubEuiLittleEndian() {
 // ─────────────────────────────────────────────────────────────────────────────
 //  R E F R E S H
 // ─────────────────────────────────────────────────────────────────────────────
-
 def refresh() {                          // From initial testing, not sure that this device supports ad-hoc attribute reads
     logDebug "refresh()"
     List<String> cmds = []
@@ -170,7 +126,6 @@ def refresh() {                          // From initial testing, not sure that 
 // ─────────────────────────────────────────────────────────────────────────────
 //  M E S S A G E   P A R S I N G
 // ─────────────────────────────────────────────────────────────────────────────
-
 def parse(String description) {
     logDebug "parse() – description: ${description}"
 
@@ -225,7 +180,6 @@ def parse(String description) {
 }
 
 // ── IAS Zone – cluster 0x0500 attribute/catchall ──────────────────────────────
-
 private void parseIasZoneCluster(Map descMap) {
     if (descMap.attrInt == 0x0002 && descMap.value) {
         // Attribute report – parse the raw bitmap directly; no ZoneStatus object needed
@@ -238,7 +192,6 @@ private void parseIasZoneCluster(Map descMap) {
 }
 
 // ── IAS Zone – handle ZoneStatus object (from text-form notifications) ────────
-
 private void handleZoneStatus(ZoneStatus zs, String description) {
     // Extract the raw bitmap from the description text rather than from the ZoneStatus
     // object, because Hubitat's ZoneStatus class exposes neither .value nor .zoneStatus.
@@ -258,7 +211,6 @@ private void handleZoneStatus(ZoneStatus zs, String description) {
 */
 
 // ── IAS Zone – common handler using raw bitmap ────────────────────────────────
-
 private void handleZoneStatusRaw(int raw, ZoneStatus zs = null) {
     // Use ZoneStatus helper methods when available, otherwise decode the bitmap directly.
     // Bit 0 – Alarm1 → contact open
@@ -273,7 +225,6 @@ private void handleZoneStatusRaw(int raw, ZoneStatus zs = null) {
 }
 
 // ── Battery ────────────────────────────────────────────────────────────────────
-
 private void parseBattery(Map descMap) {
     if (!descMap.value) return
 
@@ -302,11 +253,11 @@ private void parseBattery(Map descMap) {
             // Battery voltage in 100 mV units (e.g. 0x1E = 30 = 3.0 V).
             BigDecimal volts = raw / 10.0
             sendVoltageEvent(volts)
-            // Only fall back to voltage if percentage (0x0021) has never been received.  // The problem with this is that it only works one time!!!
-            //if (device.currentValue("battery") == null) {
+            // Only fall back to voltage if percentage (0x0021) has never been received.  
+            //if (device.currentValue("battery") == null) {                 // The problem with this is that it only works one time!!!
                 // Li primary cell: ~3.0 V full → ~2.0 V empty                
-                int pct = Math.round(((volts - 2.0) / (3.0 - 2.0)) * 100)   // Claude's recommendation
-                pct = Math.min(100, Math.max(0, pct))                       // Claude's recommendation
+                int pct = Math.round(((volts - 2.0) / (3.0 - 2.0)) * 100)
+                pct = Math.min(100, Math.max(0, pct))
                 logDebug "case 0x0020: battery pct = ${pct}"
                 sendBatteryEvent(pct)
             //}
@@ -315,7 +266,6 @@ private void parseBattery(Map descMap) {
 }
 
 // ── Temperature ────────────────────────────────────────────────────────────────
-
 private void parseTemperature(Map descMap) {
     if (descMap.attrInt != 0x0000) return
     // 0x8000 = invalid/unreported per ZCL spec
@@ -345,7 +295,6 @@ private void parseTemperature(Map descMap) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  I A S   E N R O L L   R E S P O N S E
 // ─────────────────────────────────────────────────────────────────────────────
-
 def enrollResponse() {
     logDebug "enrollResponse()"
     // Zone Enroll Response command: enroll success (0x00), zone ID 0x01
@@ -357,7 +306,6 @@ def enrollResponse() {
 // ─────────────────────────────────────────────────────────────────────────────
 //  H E L P E R S
 // ─────────────────────────────────────────────────────────────────────────────
-
 private void sendContactEvent(String value) {
     String descText = "${device.displayName} contact is ${value}"
     sendEvent(name: "contact", value: value, descriptionText: descText)

@@ -635,7 +635,7 @@ void refresh() {
 // ════════════════════════════════════════════════════════════════════════════
 
 void updated() {
-    logDebug "updated()"
+    log.info "${device.displayName} updated() called."
     checkDriverVersion()
     
     if (logEnable) runIn(1800, "logsOff", [overwrite: true, misfire: "ignore"])  //Enable the debug logging for 30 minutes (i.e. 1800 seconds)
@@ -791,7 +791,6 @@ void configure() {
 
 void initialize() {
     log.info "${device.displayName} initialize() called"
-    //configure(true)
     state.pirState   = device.currentValue("pirDetection") == "active"  ? 1 : 0
     state.mmwaveState = device.currentValue("roomState")   == "occupied" ? 1 : 0
 }
@@ -861,7 +860,6 @@ void sendHealthStatusEvent(String value) {
 
 void fp300BlackMagic() {
     List<String> cmds = []
-    // Bind temperature, humidity, and illuminance clusters
     
     // Bind temperature cluster (0x0402)
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0402 {${device.zigbeeId}} {}", "delay 50"]
@@ -875,10 +873,8 @@ void fp300BlackMagic() {
     // Bind manufacturer cluster and read initial values
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0xFCC0 {${device.zigbeeId}} {}"]
     
+    // Call routine to send the Zigbee commands
     sendZigbeeCommands(cmds)
-    
-    // Read initial state shortly after binding
-//    runIn(10, "refresh")
 }
 
 // ════════════════════════════════════════════════════════════════════════════

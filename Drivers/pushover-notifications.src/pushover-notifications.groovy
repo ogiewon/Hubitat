@@ -30,7 +30,7 @@
 *       2026-02-02 Dan Ogorchock         Minor code cleanup and logic improvements
 *       2026-02-03 @hubitrep             Various minor code fixes
 *       2026-02-07 Dan Ogorchock         Code optimized: Pre-compiled regex patterns for faster message processing, StringBuilder for HTTP body construction, Optimized string operations, Reduced redundant method calls
-*       2026-02-XX @hubitrep             Added Emergency acknowledgement receipt polling and callback URL features
+*       2026-03-04 @hubitrep             Added Emergency acknowledgement receipt polling and callback URL features
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -78,7 +78,7 @@ import java.text.SimpleDateFormat
 import groovyx.net.http.HttpResponseException
 import groovy.transform.Field
 
-def version() {return "v1.0.202602XX"}
+def version() {return "v1.0.20260304"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {

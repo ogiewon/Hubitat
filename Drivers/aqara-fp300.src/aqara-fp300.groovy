@@ -525,7 +525,7 @@ void voltageAndBatteryEvents(def rawVolts) {
     def minV = 2.85; def maxV = 3.0
     def pct  = Math.min(100, Math.max(0, Math.round(((rawVolts - minV) / (maxV - minV)) * 100)))
     sendEvent(name: "voltage", value: rawVolts, unit: "V")
-    sendEvent(name: "battery",        value: pct,      unit: "%")
+    sendEvent(name: "battery", value: pct,      unit: "%")
     logInfo "battery is ${pct}% (${rawVolts}V)"
 }
 

@@ -12,11 +12,12 @@
  *  1.0.0    2026-02-25    Dan Ogorchock    First release of streamlined driver code
  *  1.0.1    2026-03-01    Dan Ogorchock    Improved Temperature, Humidity, and Illuminance Zigbee reporting for battery life
  *  1.0.2    2026-03-02    Dan Ogorchock    Removed unnecessary configureReporting for Temperature, Humidity, and Illuminace.  The FP300 has special custom handling for these already.
+ *  1.0.3    2026-03-02    Dan Ogorchock    Added Import URL
  *
  */
 
-static String version()   { "1.0.2" }
-static String timeStamp() { "2026/03/02 20:30" }
+static String version()   { "1.0.3" }
+static String timeStamp() { "2026/03/02 20:58" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
@@ -29,7 +30,7 @@ import java.math.RoundingMode
 @Field static final Integer DEFAULT_POLLING_INTERVAL  = 21600  //deviceHealthCheck polling interval
 
 metadata {
-    definition( name: "Aqara FP300 Presence Multi-Sensor", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "", singleThreaded: true) {
+    definition( name: "Aqara FP300 Presence Multi-Sensor", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/aqara-fp300.src/aqara-fp300.groovy", singleThreaded: true) {
         capability "Sensor"
         capability "Motion Sensor"
         capability "Illuminance Measurement"

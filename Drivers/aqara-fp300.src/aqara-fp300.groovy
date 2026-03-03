@@ -13,11 +13,12 @@
  *  1.0.1    2026-03-01    Dan Ogorchock    Improved Temperature, Humidity, and Illuminance Zigbee reporting for battery life
  *  1.0.2    2026-03-02    Dan Ogorchock    Removed unnecessary configureReporting for Temperature, Humidity, and Illuminace.  The FP300 has special custom handling for these already.
  *  1.0.3    2026-03-02    Dan Ogorchock    Added Import URL
+ *  1.0.4    2026-03-02    Dan Ogorchock    Additional code cleanup
  *
  */
 
-static String version()   { "1.0.3" }
-static String timeStamp() { "2026/03/02 20:58" }
+static String version()   { "1.0.4" }
+static String timeStamp() { "2026/03/02 22:16" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
@@ -65,10 +66,10 @@ metadata {
         // ── Basic parameters ──────────────────────────────────────────────────
         input name: "presenceDetectionMode", type: "enum", title: "<b>Presence Detection Mode</b>", description: "Both - recommended", options: ["both": "Both mmWave+PIR", "mmwave": "mmWave only", "pir": "PIR only"], defaultValue: "both"
         if (presenceDetectionMode == "pir") {
-            input name: "pirDetectionInterval", type: "number", title: "<b>PIR Detection Interval (2-300 s)</b>", description: "The interval duration in seconds for triggering infrared detection.", range: 2..300,  defaultValue: 30
+            input name: "pirDetectionInterval", type: "number", title: "<b>PIR Detection Interval (2-300 s)</b>", description: "The interval duration in seconds for triggering infrared detection.", range: 2..300,  defaultValue: 10
         } else {
             input name: "motionSensitivity", type: "enum", title: "<b>Presence Detection Sensitivity</b>", description: "High - Suitable for bedrooms, small offices, studies, etc..<br>Medium - Sutiable for rooms like bathrooms, small conference rooms, etc..<br>Low - Suitable for complicated rooms with large area, which have plants and curtains.", options: ["1": "low", "2": "medium", "3": "high"], defaultValue: "2"
-            input name: "absenceDelayTimer", type: "number", title: "<b>Absence Confirmation Period (10-300 s)</b>", description: "Used for accurate determination of 'no person' status, avoiding false alarms caused by personnel temporarily leaving or slight movements.", range: 10..300, defaultValue: 30
+            input name: "absenceDelayTimer", type: "number", title: "<b>Absence Confirmation Period (10-300 s)</b>", description: "Used for accurate determination of 'no person' status, avoiding false alarms caused by personnel temporarily leaving or slight movements.", range: 10..300, defaultValue: 10
             input name: "detectionRangeZones", type: "string", title: "<b>Detection Range Zones</b>", description: "Comma-separated ranges in 0.25 m steps, e.g. '0.5-2.0' or '0.25-1.5,3.0-5.0'. Leave blank for all zones (0-6 m)."
         } 
         input name: "aiInterferenceIdentification", type: "bool", title: "<b>AI Interference Identification</b>", defaultValue: false
@@ -689,17 +690,6 @@ void updated() {
     if (hasParamChanged("tempHumiditySamplingFrequency", settings?.tempHumiditySamplingFrequency) && settings?.tempHumiditySamplingFrequency != null) {
         int val = safeToInt(settings.tempHumiditySamplingFrequency)
         cmds += zigbee.writeAttribute(0xFCC0, 0x0170, 0x20, val, [mfgCode: 0x115F], delay=200)
-/*        
-        if (settings?.tempHumiditySamplingFrequency == "0") {
-            // Disable temperature/humidity reporting if sampling frequency is "Off"
-            cmds += zigbee.configureReporting(0x0402, 0x0000, 0x29, 0, 0xFFFF, 0, [:], delay=200)  // Temperature disabled
-            cmds += zigbee.configureReporting(0x0405, 0x0000, 0x21, 0, 0xFFFF, 0, [:], delay=200)  // Humidity disabled
-        } else {
-            // Enable temperature/humidity reporting if sampling frequency is NOT "Off"
-            cmds += zigbee.configureReporting(0x0402, 0x0000, 0x29, 30, 14400, 10, [:], delay=100) // min 30s, max 14400s, delta 0.1°C
-            cmds += zigbee.configureReporting(0x0405, 0x0000, 0x21, 30, 14400, 100, [:], delay=100) // min 30s, max 14400s, delta 1%
-        }
-*/
     }
         
     if (tempHumiditySamplingFrequency == "4") {
@@ -736,15 +726,6 @@ void updated() {
     if (hasParamChanged("lightSamplingFrequency", settings?.lightSamplingFrequency) && settings?.lightSamplingFrequency != null) {
         int val = safeToInt(settings.lightSamplingFrequency)
         cmds += zigbee.writeAttribute(0xFCC0, 0x0192, 0x20, val, [mfgCode: 0x115F], delay=200)
-/*        
-        if (settings?.lightSamplingFrequency == "0") {
-            // Disable illuminance reporting if sampling frequency is "Off"
-            cmds += zigbee.configureReporting(0x0400, 0x0000, 0x21, 0, 0xFFFF, 0, [:], delay=200)  // Illuminance disabled
-        } else {
-            // Enable illuminance reporting if sampling frequency is NOT "Off"
-            cmds += zigbee.configureReporting(0x0400, 0x0000, 0x21, 30, 14400, 50, [:], delay=100) // min 30s, max 14400s, delta 50 lux
-        }
-*/
     }
     
     if (lightSamplingFrequency == "4") {
@@ -791,16 +772,17 @@ void updated() {
 // ════════════════════════════════════════════════════════════════════════════
 
 void installed() {
-    log.info "${device.displayName} installed() – FP300 driver v${version()}"
+    log.info "${device.displayName} installed() called. FP300 driver v${version()}"
     sendHealthStatusEvent("unknown")
-    runIn(4, "fp300BlackMagic")
+    initializeVars(true)
+    initialize()
 }
 
-void configure(boolean fullInit = false) {
-    log.info "${device.displayName} configure() fullInit=${fullInit}"
+void configure() {
+    log.info "${device.displayName} configure() called"
     unschedule()
     if (logEnable) runIn(1800, "logsOff", [overwrite: true, misfire: "ignore"])  //Enable the debug logging for 30 minutes (i.e. 1800 seconds)
-    initializeVars(fullInit)
+    initializeVars(false)
     runIn(DEFAULT_POLLING_INTERVAL, "deviceHealthCheck", [overwrite: true, misfire: "ignore"])
     runIn(5, "fp300BlackMagic")
     runIn(15, "updated")
@@ -825,18 +807,16 @@ void initializeVars(boolean fullInit = false) {
     if (fullInit || settings?.txtEnable  == null) device.updateSetting("txtEnable",  true)
 
     if (fullInit || settings?.presenceDetectionMode == null)    device.updateSetting("presenceDetectionMode", "both")
-    if (fullInit || settings?.absenceDelayTimer == null)        device.updateSetting("absenceDelayTimer", [value: 30, type: "number"])
+    if (fullInit || settings?.absenceDelayTimer == null)        device.updateSetting("absenceDelayTimer", [value: 10, type: "number"])
     if (fullInit || settings?.pirDetectionInterval == null)     device.updateSetting("pirDetectionInterval", [value: 10, type: "number"])
     if (fullInit || settings?.aiInterferenceIdentification == null) device.updateSetting("aiInterferenceIdentification", false)
     if (fullInit || settings?.aiSensitivityAdaptive == null)    device.updateSetting("aiSensitivityAdaptive", false)
     if (fullInit || settings?.tempOffset == null)               device.updateSetting("tempOffset", 0)
     if (fullInit || settings?.humidityOffset == null)           device.updateSetting("humidityOffset", 0)
 
-    //ToDo: Add other user preferences to the above list
+    //ToDo: Add other user preferences to the above list as necessary
     
-    if (fullInit) {
-        state.driverVersion = driverVersionAndTimeStamp()
-    }
+    state.driverVersion = driverVersionAndTimeStamp()
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -885,15 +865,12 @@ void fp300BlackMagic() {
     
     // Bind temperature cluster (0x0402)
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0402 {${device.zigbeeId}} {}", "delay 50"]
-//    cmds += zigbee.configureReporting(0x0402, 0x0000, 0x29, 30, 14400, 10, [:], delay=100) // min 30s, max 14400s, delta 0.1°C    // Unnecessary for the FP300
     
     // Bind humidity cluster (0x0405)
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0405 {${device.zigbeeId}} {}", "delay 50"]
-//    cmds += zigbee.configureReporting(0x0405, 0x0000, 0x21, 30, 14400, 100, [:], delay=100) // min 30s, max 14400s, delta 1%      // Unnecessary for the FP300
     
     // Bind  illuminance cluster (0x0400)
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay 50"]
-//    cmds += zigbee.configureReporting(0x0400, 0x0000, 0x21, 30, 14400, 50, [:], delay=100) // min 30s, max 14400s, delta 50 lux   // Unnecessary for the FP300
     
     // Bind manufacturer cluster and read initial values
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0xFCC0 {${device.zigbeeId}} {}"]
@@ -901,7 +878,7 @@ void fp300BlackMagic() {
     sendZigbeeCommands(cmds)
     
     // Read initial state shortly after binding
-    runIn(10, "refresh")
+//    runIn(10, "refresh")
 }
 
 // ════════════════════════════════════════════════════════════════════════════

@@ -8,12 +8,15 @@
  *
  *  Licensed under the Apache License, Version 2.0
  *
- *  History:
- *  1.0.0 2026-02-25    Dan Ogorchock    First release of streamlined driver code
+ *  Version  Date          Who              What
+ *  1.0.0    2026-02-25    Dan Ogorchock    First release of streamlined driver code
+ *  1.0.1    2026-03-01    Dan Ogorchock    Improved Temperature, Humidity, and Illuminance Zigbee reporting for battery life
+ *  1.0.2    2026-03-02    Dan Ogorchock    Removed unnecessary configureReporting for Temperature, Humidity, and Illuminace.  The FP300 has special custom handling for these already.
+ *
  */
 
-static String version()   { "1.0.0" }
-static String timeStamp() { "2026/02/25 15:04" }
+static String version()   { "1.0.2" }
+static String timeStamp() { "2026/03/02 20:30" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
@@ -166,8 +169,12 @@ private void parseAttribute(String description, Map descMap, Map it) {
             if (it.attrId == "0000") humidityEvent(Integer.parseInt(it.value, 16) / 100.0)
             break
         case "0001":    // Battery
-            if (it.attrId == "0020" && it.value != "00")
+            if (it.attrId == "0020" && it.value != "00") {
+                //logDebug "parseAttribute 0x0001 - battery percentage: ${Integer.parseInt(it.value, 16)}%"
                 voltageAndBatteryEvents(Integer.parseInt(it.value, 16) / 10.0)
+            } else {
+                logWarn "parseAttribute FP300 unknown report (cluster=0x${it.cluster} attrId=0x${it.attrId} value=0x${it.value})"
+            }
             break
         case "0000":
             if (it.attrId == "0001") sendRttEvent()
@@ -190,7 +197,8 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
     int value = safeToInt(it.value)
     switch (it.attrId) {
         case "0005":
-            logDebug "Device button pressed"
+            //logDebug "Device button pressed"
+            logDebug "parseAqaraClusterFCC0 - Device button pressed"
             break
         case "0016" : // FP300 unknown report
             logDebug "<b>Received FP300 unknown report</b> (cluster=0x${it.cluster} attrId=0x${it.attrId} value=0x${it.value})"
@@ -253,8 +261,8 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
             break
         case "015F":    // Target distance (cm)
             value = Integer.parseInt(it.value, 16)
-            logDebug "(0x015F) received FP300 target_distance report: ${value} (cluster=0x${it.cluster} attrId=0x${it.attrId} value=0x${it.value})"
             targetDistanceEvent(value)
+            logDebug "(0x015F) received FP300 target_distance report: ${value} (cluster=0x${it.cluster} attrId=0x${it.attrId} value=0x${it.value})"
             break
         case "0162":    // Temp/humidity sampling period (ms)
             storeParamValue("tempHumiditySamplingPeriod", (Integer.parseInt(it.value, 16) / 1000) as Integer, "number", false)
@@ -422,7 +430,7 @@ void decodeAqaraStruct(String description) {
                 switch (tag) {
                     case 0x18: sendBatteryEvent(rawValue); break
                     case 0x64: logDebug "FP300 presence tag 0x64: ${rawValue}"; break
-                    default:   logDebug "AqaraStruct 1B tag=0x${valueHex[(i+0)..(i+1)]} type=0x${valueHex[(i+2)..(i+3)]} val=${rawValue}"
+                    default:   logDebug "decodeAqaraStruct 1B unhandled tag=0x${valueHex[(i+0)..(i+1)]} type=0x${valueHex[(i+2)..(i+3)]} val=${rawValue}"
                 }
                 i += 6; break
             case 0x21:
@@ -430,7 +438,7 @@ void decodeAqaraStruct(String description) {
                 switch (tag) {
                     case 0x01: voltageAndBatteryEvents(rawValue / 1000.0); break
                     case 0x17: sendVoltageEvent(rawValue / 1000.0); break
-                    default:   logDebug "AqaraStruct 2B tag=0x${valueHex[(i+0)..(i+1)]} val=${rawValue}"
+                    default:   logDebug "decodeAqaraStruct 2B unhandled tag=0x${valueHex[(i+0)..(i+1)]} val=${rawValue}"
                 }
                 i += 8; break
             case 0x0B: case 0x1B: case 0x23: case 0x2B:
@@ -438,7 +446,7 @@ void decodeAqaraStruct(String description) {
             case 0x24:
                 i += 14; break
             default:
-                logDebug "AqaraStruct unknown dataType=0x${valueHex[(i+2)..(i+3)]} at i=${i}"
+                logDebug "decodeAqaraStruct unknown dataType=0x${valueHex[(i+2)..(i+3)]} at i=${i}"
                 // WARNING: unknown data type size; incrementing by 2 may mis-parse remaining struct data.
                 i += 2; break
         }
@@ -680,6 +688,17 @@ void updated() {
     if (hasParamChanged("tempHumiditySamplingFrequency", settings?.tempHumiditySamplingFrequency) && settings?.tempHumiditySamplingFrequency != null) {
         int val = safeToInt(settings.tempHumiditySamplingFrequency)
         cmds += zigbee.writeAttribute(0xFCC0, 0x0170, 0x20, val, [mfgCode: 0x115F], delay=200)
+/*        
+        if (settings?.tempHumiditySamplingFrequency == "0") {
+            // Disable temperature/humidity reporting if sampling frequency is "Off"
+            cmds += zigbee.configureReporting(0x0402, 0x0000, 0x29, 0, 0xFFFF, 0, [:], delay=200)  // Temperature disabled
+            cmds += zigbee.configureReporting(0x0405, 0x0000, 0x21, 0, 0xFFFF, 0, [:], delay=200)  // Humidity disabled
+        } else {
+            // Enable temperature/humidity reporting if sampling frequency is NOT "Off"
+            cmds += zigbee.configureReporting(0x0402, 0x0000, 0x29, 30, 14400, 10, [:], delay=100) // min 30s, max 14400s, delta 0.1°C
+            cmds += zigbee.configureReporting(0x0405, 0x0000, 0x21, 30, 14400, 100, [:], delay=100) // min 30s, max 14400s, delta 1%
+        }
+*/
     }
         
     if (tempHumiditySamplingFrequency == "4") {
@@ -716,6 +735,15 @@ void updated() {
     if (hasParamChanged("lightSamplingFrequency", settings?.lightSamplingFrequency) && settings?.lightSamplingFrequency != null) {
         int val = safeToInt(settings.lightSamplingFrequency)
         cmds += zigbee.writeAttribute(0xFCC0, 0x0192, 0x20, val, [mfgCode: 0x115F], delay=200)
+/*        
+        if (settings?.lightSamplingFrequency == "0") {
+            // Disable illuminance reporting if sampling frequency is "Off"
+            cmds += zigbee.configureReporting(0x0400, 0x0000, 0x21, 0, 0xFFFF, 0, [:], delay=200)  // Illuminance disabled
+        } else {
+            // Enable illuminance reporting if sampling frequency is NOT "Off"
+            cmds += zigbee.configureReporting(0x0400, 0x0000, 0x21, 30, 14400, 50, [:], delay=100) // min 30s, max 14400s, delta 50 lux
+        }
+*/
     }
     
     if (lightSamplingFrequency == "4") {
@@ -753,6 +781,8 @@ void updated() {
 
     if (cmds) sendZigbeeCommands(cmds)
     else logInfo "No parameter changes requiring device commands."
+    
+    runIn(5, "refresh")
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -850,22 +880,23 @@ void sendHealthStatusEvent(String value) {
 
 void fp300BlackMagic() {
     List<String> cmds = []
-    // Bind and configure temperature, humidity, and illuminance clusters
+    // Bind temperature, humidity, and illuminance clusters
     
-    // Bind and configure temperature cluster (0x0402)
+    // Bind temperature cluster (0x0402)
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0402 {${device.zigbeeId}} {}", "delay 50"]
-    cmds += zigbee.configureReporting(0x0402, 0x0000, 0x29, 30, 600, 10, [:], delay=100) // min 30s, max 600s, delta 0.1°C
+//    cmds += zigbee.configureReporting(0x0402, 0x0000, 0x29, 30, 14400, 10, [:], delay=100) // min 30s, max 14400s, delta 0.1°C    // Unnecessary for the FP300
     
-    // Bind and configure humidity cluster (0x0405)
+    // Bind humidity cluster (0x0405)
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0405 {${device.zigbeeId}} {}", "delay 50"]
-    cmds += zigbee.configureReporting(0x0405, 0x0000, 0x21, 30, 600, 100, [:], delay=100) // min 30s, max 600s, delta 1%
+//    cmds += zigbee.configureReporting(0x0405, 0x0000, 0x21, 30, 14400, 100, [:], delay=100) // min 30s, max 14400s, delta 1%      // Unnecessary for the FP300
     
-    // Bind and configure illuminance cluster (0x0400)
+    // Bind  illuminance cluster (0x0400)
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay 50"]
-    cmds += zigbee.configureReporting(0x0400, 0x0000, 0x21, 30, 600, 50, [:], delay=100) // min 30s, max 600s, delta 50 lux
+//    cmds += zigbee.configureReporting(0x0400, 0x0000, 0x21, 30, 14400, 50, [:], delay=100) // min 30s, max 14400s, delta 50 lux   // Unnecessary for the FP300
     
     // Bind manufacturer cluster and read initial values
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0xFCC0 {${device.zigbeeId}} {}"]
+    
     sendZigbeeCommands(cmds)
     
     // Read initial state shortly after binding

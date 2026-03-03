@@ -30,6 +30,7 @@
 *       2026-02-02 Dan Ogorchock         Minor code cleanup and logic improvements
 *       2026-02-03 @hubitrep             Various minor code fixes
 *       2026-02-07 Dan Ogorchock         Code optimized: Pre-compiled regex patterns for faster message processing, StringBuilder for HTTP body construction, Optimized string operations, Reduced redundant method calls
+*       2026-03-04 @hubitrep             Added Emergency acknowledgement receipt polling and callback URL features
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -55,6 +56,9 @@
 *      [IMAGE=imageurl] -- url and path to replacement notification icon (equivalent to ¨imageurl¨)
 *      [EM.RETRY=x] -- for emergency priority, how often does it get "sent" in x seconds (equivalent to ©retryinterval©)
 *      [EM.EXPIRE=y] -- for emergency priority, when should repeating stop in y seconds, even if not acknowledged (equivalent to ™expirelength™)
+*      [EM.POLL=n] -- for emergency priority, poll for acknowledgement every n seconds (default: 30, no equivalent)
+*      [EM.CALLBACK=url] -- for emergency priority, URL that Pushover will POST to when acknowledged (no equivalent)
+*                           Tip: Use Maker API to create a callback endpoint (e.g. turn on a virtual switch)
 *      [SELFDESTRUCT=z] -- auto delete message in z seconds (no equivalent)
 *      \n -- line breaks in HTML messages. can also use ≤br≥ using the custom HTML characters feature below.
 *
@@ -71,9 +75,10 @@
 */
 
 import java.text.SimpleDateFormat
+import groovyx.net.http.HttpResponseException
 import groovy.transform.Field
 
-def version() {return "v1.0.20260207"}
+def version() {return "v1.0.20260304"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {
@@ -84,7 +89,11 @@ metadata {
 		command "getMsgLimits", [
             [name: "Get Messaging Limits", description: "Update the message limits information"]
         ]
+		command "cancelEmergencyMessage", [
+            [name: "Cancel Emergency Message", description: "Cancel the current emergency message using its receipt"]
+        ]
 
+        attribute "emergencyAck","String"
         attribute "notificationText","String"
         attribute "messageLimit","Number"
         attribute "messagesRemaining","Number"
@@ -109,6 +118,8 @@ metadata {
                 input name: "ttl", type: "number", title: "Message Auto Delete After, in seconds", description: "Number of seconds message will live, before being deleted automatically.  Applies ONLY to Non-Emergency messages."
                 input name: "retry", type: "number", title: "Emergency Retry Interval in seconds:(minimum: 30)", description: "Applies to Emergency Requests Only", defaultValue: 60
                 input name: "expire", type: "number", title: "Emergency Auto Expire After in seconds:(maximum: 10800)", description: "Applies to Emergency Requests Only", defaultValue: 900
+                input name: "emPollInterval", type: "number", title: "Emergency Ack Poll Interval in seconds:(minimum: 30, 0 = disabled)", description: "How often to poll Pushover for Emergency message acknowledgement. Set to 0 to disable polling.", defaultValue: 0, range: "0..300"
+                input name: "emCallbackUrl", type: "text", title: "Emergency Callback URL:", description: "URL that Pushover will POST to when emergency is acknowledged. Use Maker API to create endpoint (e.g. turn on a virtual switch). Leave blank to disable."
             }
     	}
 		input name: "htmlOpen", type: "text", title: "HTML tag < character: ", description: "HE cleanses < and > characters from text input boxes.  Use this character or sequence as a substitute. (default: ≤) Ensure this is different from what is defined as >", defaultValue: "≤"
@@ -122,16 +133,20 @@ metadata {
 // PRE-COMPILED REGEX PATTERNS (OPTIMIZATION)
 // Using @Field for Hubitat compatibility
 // ========================================
-@Field static final java.util.regex.Pattern TITLE_PATTERN = ~/((\^|\[TITLE=)(.*?)(\^|\]))/
-@Field static final java.util.regex.Pattern SOUND_PATTERN = ~/\#([A-Za-z0-9_\-]{1,20})\#/
-@Field static final java.util.regex.Pattern SOUND_BRACKET_PATTERN = ~/\[SOUND=(.*?)\]/
-@Field static final java.util.regex.Pattern DEVICE_PATTERN = ~/((\*|\[DEVICE=)(.*?)(\*|\]))/
-@Field static final java.util.regex.Pattern URL_PATTERN = ~/((\§|\[URL=)(.*?)(\§|\]))/
-@Field static final java.util.regex.Pattern URLTITLE_PATTERN = ~/((\¤|\[URLTITLE=)(.*?)(\¤|\]))/
-@Field static final java.util.regex.Pattern IMAGE_PATTERN = ~/((\¨|\[IMAGE=)(.*?)(\¨|\]))/
-@Field static final java.util.regex.Pattern RETRY_PATTERN = ~/((\©|\[EM\.RETRY=)(\d+)(\©|\]))/
-@Field static final java.util.regex.Pattern EXPIRE_PATTERN = ~/((\™|\[EM\.EXPIRE=)(\d+)(\™|\]))/
-@Field static final java.util.regex.Pattern TTL_PATTERN = ~/(\[SELFDESTRUCT=(\d+)\])/
+import java.util.regex.Pattern
+
+@Field static final Pattern TITLE_PATTERN = ~/((\^|\[TITLE=)(.*?)(\^|\]))/
+@Field static final Pattern SOUND_PATTERN = ~/\#([A-Za-z0-9_\-]{1,20})\#/
+@Field static final Pattern SOUND_BRACKET_PATTERN = ~/\[SOUND=(.*?)\]/
+@Field static final Pattern DEVICE_PATTERN = ~/((\*|\[DEVICE=)(.*?)(\*|\]))/
+@Field static final Pattern URL_PATTERN = ~/((\§|\[URL=)(.*?)(\§|\]))/
+@Field static final Pattern URLTITLE_PATTERN = ~/((\¤|\[URLTITLE=)(.*?)(\¤|\]))/
+@Field static final Pattern IMAGE_PATTERN = ~/((\¨|\[IMAGE=)(.*?)(\¨|\]))/
+@Field static final Pattern RETRY_PATTERN = ~/((\©|\[EM\.RETRY=)(\d+)(\©|\]))/
+@Field static final Pattern EM_EXPIRE_PATTERN = ~/((\™|\[EM\.EXPIRE=)(\d+)(\™|\]))/
+@Field static final Pattern EM_POLL_PATTERN = ~/(\[EM.POLL=(\d+)\])/
+@Field static final Pattern EM_CALLBACK_PATTERN = ~/(\[EM.CALLBACK=(.*?)\])/
+@Field static final Pattern TTL_PATTERN = ~/(\[SELFDESTRUCT=(\d+)\])/
 
 // Constants
 @Field static final int MIN_RETRY_SECONDS = 30
@@ -175,13 +190,12 @@ def initialize() {
     atomicState.cachedDeviceOptions = null
     atomicState.cachedSoundOptions = null
 
-    //  Needs more input cleansing.
-    if (htmlOpen == null || htmlClose == null
-        || htmlOpen == '' || htmlClose == ''
-        || htmlOpen =~ /[\s\[\]\\]/ || htmlClose =~ /[\s\[\]\\]/
-    ) {
-    	htmlOpen = "≤"
-    	htmlClose = "≥"
+    // Reset invalid HTML open/close characters to defaults
+    if (htmlOpen == null || htmlOpen == '' || htmlOpen =~ /[\s\[\]\\]/) {
+        device.updateSetting("htmlOpen", [value: "≤", type: "text"])
+    }
+    if (htmlClose == null || htmlClose == '' || htmlClose =~ /[\s\[\]\\]/) {
+        device.updateSetting("htmlClose", [value: "≥", type: "text"])
     }
 }
 
@@ -216,8 +230,8 @@ def getDeviceOptions(){
 
     if (keyFormatIsValid()) {
         def postBody = [
-            token: "$apiKey",
-            user: "$userKey",
+            token: apiKey,
+            user: userKey,
             device: ""
         ]
 
@@ -239,12 +253,13 @@ def getDeviceOptions(){
                 }
             }
         }
-        catch (Exception e) {
-            log.error "PushOver Server Returned: ${e}"
+        catch (HttpResponseException e) {
+            log.error "getDeviceOptions() - PushOver Server Returned: ${e.message}"
+            log.error "getDeviceOptions() - Response body: ${e.response?.data?.errors}"
         }
     }
     else {
-        log.error "GetDeviceOptions() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+        log.error "getDeviceOptions() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
     }
 
     return deviceOptions
@@ -294,12 +309,13 @@ def getSoundOptions() {
                 }
             }
         }
-        catch (Exception e) {
-            log.error "Error retrieving sound options - PushOver Server Returned: ${e}"
+        catch (HttpResponseException e) {
+            log.error "getSoundOptions() - PushOver Server Returned: ${e.message}"
+            log.error "getSoundOptions() - Response body: ${e.response?.data?.errors}"
         }
     }
     else {
-        log.error "GetSoundsOptions() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+        log.error "getSoundOptions() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
     }
 
     return myOptions
@@ -346,10 +362,12 @@ def deviceNotification(message) {
     def customRetry = null
     def customExpire = null
     def customTTL = null
+    def customEmPollInterval = null
+    def customEmCallbackUrl = null
     def imageData = null
     def html = "0"
     def rawMessage = message
-    
+
     if (logEnable) log.debug "Pushover driver raw message: ${rawMessage}"
 
     // Message priority
@@ -405,7 +423,7 @@ def deviceNotification(message) {
     // Sound - two patterns for different formats to protect against greedy matches when using
     // a font color AND a sound, resulting in the cutting off a message
     if((matcher = SOUND_PATTERN.matcher(message)).find()){
-        log.debug "matcher = ${matcher}"
+        if (logEnable) log.debug "matcher = ${matcher}"
         message = message.minus(matcher.group(0)).trim()
         customSound = matcher.group(1).toLowerCase()
     } else if ((matcher = SOUND_BRACKET_PATTERN.matcher(message)).find()) {
@@ -482,7 +500,7 @@ def deviceNotification(message) {
             }
         }
 
-        if((matcher = EXPIRE_PATTERN.matcher(message)).find()){
+        if((matcher = EM_EXPIRE_PATTERN.matcher(message)).find()){
             message = message.minus(matcher.group(1)).trim()
             customExpire = matcher.group(3)
             if(customExpire){
@@ -490,6 +508,27 @@ def deviceNotification(message) {
                 if (expire.toInteger() < MIN_RETRY_SECONDS) expire = MIN_RETRY_SECONDS
                 if (expire.toInteger() > MAX_EXPIRE_SECONDS) expire = MAX_EXPIRE_SECONDS
                 if (logEnable) log.debug "Pushover processed emergency expire (${expire}): ${message}"
+            }
+        }
+
+        // Emergency acknowledgement poll interval override
+        if((matcher = EM_POLL_PATTERN.matcher(message)).find()){
+            message = message.minus("${matcher[0][1]}").trim()
+            customEmPollInterval = matcher[0][2]
+            if(customEmPollInterval){
+                emPollInterval = customEmPollInterval.toInteger()
+                if (emPollInterval > 0 && emPollInterval < 30){ emPollInterval = 30 }
+                if (logEnable) log.debug "Pushover processed emergency poll interval (${emPollInterval}): " + message
+            }
+        }
+
+        // Emergency acknowledgement callback URL override
+        if((matcher = EM_CALLBACK_PATTERN.matcher(message)).find()){
+            message = message.minus("${matcher[0][1]}").trim()
+            customEmCallbackUrl = matcher[0][2]
+            if(customEmCallbackUrl){
+                emCallbackUrl = customEmCallbackUrl
+                if (logEnable) log.debug "Pushover processed emergency callback URL (${emCallbackUrl}): " + message
             }
         }
     }
@@ -522,7 +561,7 @@ def deviceNotification(message) {
 
     // OPTIMIZATION: Use StringBuilder for HTTP body construction
     def postBodyBuilder = new StringBuilder("""----d29vZHNieQ==\r\nContent-Disposition: form-data; name="user"\r\n\r\n$userKey\r\n----d29vZHNieQ==\r\nContent-Disposition: form-data; name="token"\r\n\r\n$apiKey\r\n----d29vZHNieQ==\r\n""")
-    
+
     if (title) {
         postBodyBuilder.append("""Content-Disposition: form-data; name="title"\r\n\r\n${title}\r\n----d29vZHNieQ==\r\n""")
     }
@@ -542,22 +581,36 @@ def deviceNotification(message) {
     if (priority) {
         postBodyBuilder.append("""Content-Disposition: form-data; name="priority"\r\n\r\n${priority}\r\n----d29vZHNieQ==\r\n""")
     }
-    if (retry) {
-        postBodyBuilder.append("""Content-Disposition: form-data; name="retry"\r\n\r\n${retry}\r\n----d29vZHNieQ==\r\n""")
-    }
-    if (expire) {
-        postBodyBuilder.append("""Content-Disposition: form-data; name="expire"\r\n\r\n${expire}\r\n----d29vZHNieQ==\r\n""")
-    }
-    if (ttl) {
-        postBodyBuilder.append("""Content-Disposition: form-data; name="ttl"\r\n\r\n${ttl}\r\n----d29vZHNieQ==\r\n""")
+    // Emergency-only parameters: retry, expire, callback
+    if (priority == "2") {
+        if (retry) {
+            postBodyBuilder.append("""Content-Disposition: form-data; name="retry"\r\n\r\n${retry}\r\n----d29vZHNieQ==\r\n""")
+        }
+        if (expire) {
+            postBodyBuilder.append("""Content-Disposition: form-data; name="expire"\r\n\r\n${expire}\r\n----d29vZHNieQ==\r\n""")
+        }
+        if (emCallbackUrl) {
+            postBodyBuilder.append("""Content-Disposition: form-data; name="callback"\r\n\r\n${emCallbackUrl}\r\n----d29vZHNieQ==\r\n""")
+        }
+        if (ttl) {
+            log.warn "deviceNotification() - TTL/SELFDESTRUCT ignored for Emergency priority messages"
+        }
+    } else {
+        // Non-emergency parameter: ttl
+        if (ttl) {
+            postBodyBuilder.append("""Content-Disposition: form-data; name="ttl"\r\n\r\n${ttl}\r\n----d29vZHNieQ==\r\n""")
+        }
+        if (emCallbackUrl) {
+            log.warn "deviceNotification() - Callback URL ignored for non-Emergency priority messages"
+        }
     }
     if (html == "1") {
         postBodyBuilder.append("""Content-Disposition: form-data; name="html"\r\n\r\n${html}\r\n----d29vZHNieQ==\r\n""")
     }
     if (message == "") message = Character.toString((char) 128)
-    
+
     postBodyBuilder.append("""Content-Disposition: form-data; name="message"\r\n\r\n${message}\r\n----d29vZHNieQ==\r\n""")
-    
+
     if (imageData) {
         postBodyBuilder.append("""Content-Disposition: form-data; name="attachment"; filename="image.jpg"\r\nContent-Type: image/jpeg\r\n\r\n""")
     } else {
@@ -574,14 +627,14 @@ def deviceNotification(message) {
 
     ByteArrayOutputStream postBodyOutputStream = new ByteArrayOutputStream()
     postBodyOutputStream.write(postBodyTopArr)
-    
+
     if (imageData) {
         def bSize = imageData.available()
         byte[] imageArr = new byte[bSize]
         imageData.read(imageArr, 0, bSize)
         postBodyOutputStream.write(imageArr)
     }
-    
+
     postBodyOutputStream.write(postBodyBottomArr)
     byte[] postBody = postBodyOutputStream.toByteArray()
 
@@ -591,7 +644,7 @@ def deviceNotification(message) {
     	uri: "https://api.pushover.net/1/messages.json",
     	body: postBody
     ]
-    
+
     if (keyFormatIsValid()) {
         try {
             httpPost(params) { response ->
@@ -600,13 +653,35 @@ def deviceNotification(message) {
                 }
                 else {
                     if (logEnable) log.debug "Msg sent to Pushover server"
+
                     sendEvent(name:"notificationText", value: rawMessage, descriptionText:"Msg sent to Pushover server", isStateChange: true)
+
+                    // For Emergency messages, always capture receipt; optionally start polling
+                    if (priority == "2" && response.data.receipt) {
+                        if (state.emergencyReceipt) {
+                            log.warn "New Emergency message sent while still tracking receipt ${state.emergencyReceipt} — replacing"
+                            unschedule("checkEmergencyReceipt")
+                        }
+                        state.emergencyReceipt = response.data.receipt
+                        sendEvent(name:"emergencyAck", value: "pending", descriptionText:"Emergency message sent, awaiting acknowledgement", isStateChange: true)
+                        if (logEnable) log.debug "Emergency receipt: ${response.data.receipt}"
+
+                        def pollInterval = emPollInterval != null ? emPollInterval.toInteger() : 0
+                        if (pollInterval > 0) {
+                            if (pollInterval < 30) pollInterval = 30
+                            state.emergencyPollInterval = pollInterval
+                            if (logEnable) log.debug "Polling for acknowledgement every ${pollInterval}s"
+                            runIn(pollInterval, "checkEmergencyReceipt")
+                        } else {
+                            state.emergencyPollInterval = null
+                        }
+                    }
                 }
             }
         }
-        catch (groovyx.net.http.HttpResponseException e) {
+        catch (HttpResponseException e) {
             log.error "deviceNotification() - PushOver Server Returned: ${e.message}"
-            log.error "deviceNotification() - Response body: ${e.response?.data.errors}"
+            log.error "deviceNotification() - Response body: ${e.response?.data?.errors}"
         }
     }
     else {
@@ -616,12 +691,12 @@ def deviceNotification(message) {
 }
 
 def getMsgLimits() {
-    
+
     if (keyFormatIsValid()) {
- 
+
         if (logEnable) log.debug "getMsgLimits() - Sending GET request: https://api.pushover.net/1/apps/limits.json?token=...${apiKey.substring(25,30)}"
 
-	    uri = "https://api.pushover.net/1/apps/limits.json?token=${apiKey}"
+	    def uri = "https://api.pushover.net/1/apps/limits.json?token=${apiKey}"
 
         try {
             httpGet(uri) { response ->
@@ -634,18 +709,111 @@ def getMsgLimits() {
         	        sendEvent(name:"messagesRemaining", value: "${response.data.remaining}")
         	        sendEvent(name:"limitReset", value: "${response.data.reset}")
         	        SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, HH:mm a")
-                    def epoch = (long) response.data.reset*1000
-                    def rDate = new Date(epoch)
+                    long epoch = (long) response.data.reset*1000
+                    Date rDate = new Date(epoch)
                     sendEvent(name:"limitResetDate", value: sdf.format(rDate))
                     sendEvent(name:"limitLastUpdated", value: sdf.format(new Date()))
                 }
             }
-        } catch (Exception e) {
-            log.error "getMsgLimits() - PushOver Server Returned: ${e}"
+        } catch (HttpResponseException e) {
+            log.error "getMsgLimits() - PushOver Server Returned: ${e.message}"
+            log.error "getMsgLimits() - Response body: ${e.response?.data?.errors}"
         }
     }
     else {
         log.error "getMsgLimits() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
 		return
+    }
+}
+
+def checkEmergencyReceipt() {
+    def receipt = state.emergencyReceipt
+    if (!receipt) {
+        if (logEnable) log.debug "checkEmergencyReceipt() - No receipt to check"
+        return
+    }
+
+    def uri = "https://api.pushover.net/1/receipts/${receipt}.json?token=${apiKey}"
+
+    try {
+        httpGet(uri) { response ->
+            if (response.status != 200) {
+                log.error "checkEmergencyReceipt() - Received HTTP error ${response.status}"
+                return
+            }
+
+            def data = response.data
+            if (logEnable) log.debug "checkEmergencyReceipt() - Response: acknowledged=${data.acknowledged}, expired=${data.expired}"
+
+            if (data.acknowledged == 1) {
+                def ackBy = data.acknowledged_by_device ?: "unknown device"
+                if (logEnable) log.debug "Emergency message acknowledged by ${ackBy}"
+                sendEvent(name:"emergencyAck", value: "acknowledged", descriptionText:"Emergency acknowledged by ${ackBy}", isStateChange: true)
+                state.emergencyReceipt = null
+                state.emergencyPollInterval = null
+                unschedule("checkEmergencyReceipt")
+                return
+            }
+
+            if (data.expired == 1) {
+                if (logEnable) log.debug "Emergency message expired without acknowledgement"
+                sendEvent(name:"emergencyAck", value: "expired", descriptionText:"Emergency expired without acknowledgement", isStateChange: true)
+                state.emergencyReceipt = null
+                state.emergencyPollInterval = null
+                unschedule("checkEmergencyReceipt")
+                return
+            }
+
+            // Still waiting — schedule next poll using stored interval
+            def pollInterval = state.emergencyPollInterval ?: 30
+            if (pollInterval < 30) pollInterval = 30
+            if (logEnable) log.debug "Emergency not yet acknowledged, polling again in ${pollInterval}s"
+            runIn(pollInterval, "checkEmergencyReceipt")
+        }
+    } catch (HttpResponseException e) {
+        log.error "checkEmergencyReceipt() - PushOver Server Returned: ${e.message}"
+        log.error "checkEmergencyReceipt() - Response body: ${e.response?.data?.errors}"
+        state.emergencyReceipt = null
+        state.emergencyPollInterval = null
+        unschedule("checkEmergencyReceipt")
+    }
+}
+
+def cancelEmergencyMessage() {
+    def receipt = state.emergencyReceipt
+    if (!receipt) {
+        log.warn "cancelEmergencyMessage() - No emergency receipt found in state"
+        return
+    }
+
+    if (!keyFormatIsValid()) {
+        log.error "cancelEmergencyMessage() - API key '${apiKey}' or User key '${userKey}' is not properly formatted!"
+        return
+    }
+
+    def postBody = [token: apiKey]
+
+    def params = [
+        uri: "https://api.pushover.net/1/receipts/${receipt}/cancel.json",
+        contentType: "application/json",
+        requestContentType: "application/x-www-form-urlencoded",
+        body: postBody
+    ]
+
+    try {
+        httpPost(params) { response ->
+            if (response.status != 200) {
+                log.error "cancelEmergencyMessage() - Received HTTP error ${response.status}"
+                return
+            }
+            if (logEnable) log.debug "cancelEmergencyMessage() - Emergency message cancelled successfully (receipt: ${receipt})"
+            sendEvent(name:"emergencyAck", value: "cancelled", descriptionText:"Emergency message cancelled by user", isStateChange: true)
+            state.emergencyReceipt = null
+            state.emergencyPollInterval = null
+            unschedule("checkEmergencyReceipt")
+        }
+    } catch (HttpResponseException e) {
+        log.error "cancelEmergencyMessage() - PushOver Server Returned: ${e.message}"
+        log.error "cancelEmergencyMessage() - Response body: ${e.response?.data?.errors}"
     }
 }

@@ -14,21 +14,26 @@
  *  1.0.2    2026-03-02    Dan Ogorchock    Removed unnecessary configureReporting for Temperature, Humidity, and Illuminace.  The FP300 has special custom handling for these already.
  *  1.0.3    2026-03-02    Dan Ogorchock    Added Import URL
  *  1.0.4    2026-03-02    Dan Ogorchock    Additional code cleanup
+ *  1.0.5    2026-03-06    Dan Ogorchock    Improved efficiency
  *
  */
 
-static String version()   { "1.0.4" }
-static String timeStamp() { "2026/03/02 22:16" }
+static String version()   { "1.0.5" }
+static String timeStamp() { "2026/03/06 12:00" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
 import hubitat.zigbee.zcl.DataType
 import java.math.RoundingMode
+import java.util.concurrent.ConcurrentHashMap
 
 @Field static final Integer INFO_AUTO_CLEAR_PERIOD    = 60
 @Field static final Integer COMMAND_TIMEOUT           = 10
 @Field static final Integer PRESENCE_COUNT_THRESHOLD  = 3      //deviceHealthCheck presence count threshold
 @Field static final Integer DEFAULT_POLLING_INTERVAL  = 21600  //deviceHealthCheck polling interval
+
+@Field static ConcurrentHashMap<Long, Integer> pirState = new ConcurrentHashMap<Long, Integer>()
+@Field static ConcurrentHashMap<Long, Integer> mmwaveState = new ConcurrentHashMap<Long, Integer>()
 
 metadata {
     definition( name: "Aqara FP300 Presence Multi-Sensor", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/aqara-fp300.src/aqara-fp300.groovy", singleThreaded: true) {
@@ -234,13 +239,13 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
             logDebug "Motion sensitivity: ${value}"
             break    
         case "0142":    // Room state / presence
-            state.mmwaveState = value
+            mmwaveState[device.idAsLong] = value
             updateMotionState("mmwave")
             roomStateEvent(value)
             logDebug "(attr. 0x0142) roomState (mmWave 'presence') is ${value ? 'occupied' : 'unoccupied'} (${value})"
             break
         case "014D":    // PIR detection state
-            state.pirState = value
+            pirState[device.idAsLong] = value
             updateMotionState("pir")
             pirDetectionEvent(value)
             logDebug "(attr. 0x014D) pirDetection is ${value ? 'active' : 'inactive'} (${value})"
@@ -460,8 +465,9 @@ void decodeAqaraStruct(String description) {
 // ════════════════════════════════════════════════════════════════════════════
 
 void updateMotionState(String source = null) {
-    boolean mmwave = state.mmwaveState == 1
-    boolean pir    = state.pirState == 1
+    
+    boolean mmwave = mmwaveState[device.idAsLong] == 1
+    boolean pir    = pirState[device.idAsLong] == 1
     
     String mode = settings?.presenceDetectionMode ?: "both"
 
@@ -791,8 +797,8 @@ void configure() {
 
 void initialize() {
     log.info "${device.displayName} initialize() called"
-    state.pirState   = device.currentValue("pirDetection") == "active"  ? 1 : 0
-    state.mmwaveState = device.currentValue("roomState")   == "occupied" ? 1 : 0
+    pirState[device.idAsLong]    = device.currentValue("pirDetection") == "active"  ? 1 : 0
+    mmwaveState[device.idAsLong] = device.currentValue("roomState")   == "occupied" ? 1 : 0
 }
 
 void initializeVars(boolean fullInit = false) {

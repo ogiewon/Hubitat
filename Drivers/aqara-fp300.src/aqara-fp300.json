@@ -6,6 +6,7 @@
     "minimumHEVersion": "2.4.4.133",
     "dateReleased": "2026-03-10",
     "releaseNotes": "1.0.5 2026-03-10 Initial relase via HPM",
+    "communityLink": "https://community.hubitat.com/t/release-dedicated-aqara-fp300-presence-multi-sensor-zigbee-driver/162353?u=ogiewon",
     "drivers": [
         {
             "name": "Aqara FP300 Presence Multi-Sensor",

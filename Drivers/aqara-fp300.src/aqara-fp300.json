@@ -2,7 +2,7 @@
     "packageName": "Aqara FP300 Presence Multi-Sensor",
     "author": "Dan Ogorchock",
     "version": "1.0.5",
-    "category": "Utility",
+    "category": "Control",
     "minimumHEVersion": "2.4.4.133",
     "dateReleased": "2026-03-10",
     "drivers": [

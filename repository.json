@@ -2,5 +2,13 @@
     "author": "Dan Ogorchock",
     "gitHubUrl": "https://github.com/ogiewon/Hubitat",
     "payPalUrl": "",
-    "packages": []
+    "packages": [
+        {
+            "name": "Aqara FP300",
+            "category": "Utility",
+            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/aqara-fp300.src/aqara-fp300.json",
+            "description": ""
+        }
+    ]
 }
+

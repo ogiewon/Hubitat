@@ -11,7 +11,7 @@
  *  Version  Date          Who              What
  *  1.0.0    2026-02-25    Dan Ogorchock    First release of streamlined driver code
  *  1.0.1    2026-03-01    Dan Ogorchock    Improved Temperature, Humidity, and Illuminance Zigbee reporting for battery life
- *  1.0.2    2026-03-02    Dan Ogorchock    Removed unnecessary configureReporting for Temperature, Humidity, and Illuminace.  The FP300 has special custom handling for these already.
+ *  1.0.2    2026-03-02    Dan Ogorchock    Removed unnecessary configureReporting for Temperature, Humidity, and Illuminance.  The FP300 has special custom handling for these already.
  *  1.0.3    2026-03-02    Dan Ogorchock    Added Import URL
  *  1.0.4    2026-03-02    Dan Ogorchock    Additional code cleanup
  *  1.0.5    2026-03-06    Dan Ogorchock    Improved efficiency

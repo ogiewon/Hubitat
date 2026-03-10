@@ -5,10 +5,12 @@
     "category": "Control",
     "minimumHEVersion": "2.4.4.133",
     "dateReleased": "2026-03-10",
+    "releaseNotes": "1.0.5 2026-03-10 Initial relase via HPM",
     "drivers": [
         {
             "name": "Aqara FP300 Presence Multi-Sensor",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/aqara-fp300.src/aqara-fp300.groovy",
+            "namespace": "ogiewon",
             "required": true
         }
     ],

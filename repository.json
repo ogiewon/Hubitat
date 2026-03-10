@@ -1,4 +1,6 @@
 {
-  "author": "Dan Ogorchock",
-  "gitHubUrl": "https://github.com/ogiewon/Hubitat"
+    "author": "Dan Ogorchock",
+    "gitHubUrl": "https://github.com/ogiewon/Hubitat",
+    "payPalUrl": "",
+    "packages": []
 }

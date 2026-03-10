@@ -7,7 +7,7 @@
             "name": "Aqara FP300 Presence Multi-Sensor",
             "category": "Control",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/aqara-fp300.src/aqara-fp300.json",
-            "description": "Dedicated Aqara FP300 Zigbee Driver"
+            "description": "Dedicated Aqara FP300 Presence Milti-Sensor Hubitat Zigbee Driver"
         }
     ]
 }

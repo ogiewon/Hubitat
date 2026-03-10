@@ -1,11 +1,11 @@
 {
-    "packageName": "Aqara FP300",
+    "packageName": "Aqara FP300 Presence Multi-Sensor",
     "author": "Dan Ogorchock",
     "version": "1.0.5",
     "category": "Utility",
     "drivers": [
         {
-            "name": "Aqara FP300",
+            "name": "Aqara FP300 Presence Multi-Sensor",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/aqara-fp300.src/aqara-fp300.groovy",
             "required": true
         }

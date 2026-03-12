@@ -17,11 +17,13 @@
  *  1.0.5    2026-03-06    Dan Ogorchock    Improved efficiency
  *  1.0.6    2026-03-12    Dan Ogorchock    Simplified User Preferences logic & improved User Preferences titles and descriptions
  *  1.0.7    2026-03-12    Dan Ogorchock    Automatically remove state.params variable (thanks @hubitrep!)
+ *  1.0.8    2026-03-12    Dan Ogorchock    Only send Presence Detection Mode setting to the FP300 if the value has changed.  If it is changed, Spatial Learning must be run to calibrate the mmWave sensor.
+ *                                          Removed aiInterferenceIdentification & aiSensitivityAdaptive user preferences, as setting these also messes up the mmWave calibration.  Will revisit if they are actually useful.
  *
  */
 
-static String version()   { "1.0.7" }
-static String timeStamp() { "2026/03/12 12:45" }
+static String version()   { "1.0.8" }
+static String timeStamp() { "2026/03/12 17:00" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
@@ -49,7 +51,8 @@ metadata {
         capability "Health Check"
         capability "Refresh"
         capability "Initialize"
-
+        capability "Configuration"
+        
         attribute "_status_",                "string"
         attribute "healthStatus",            "enum", ["unknown", "offline", "online"]
         attribute "roomState",               "enum", ["unoccupied", "occupied"]       // Presence / room state - mmWave sensor status
@@ -71,7 +74,7 @@ metadata {
         input name: "logEnable",  type: "bool",   title: "<b>Debug logging</b>", description: "Provides detailed log data to help debug the driver code.<br>Will automatically disable itself after 30 minutes.",              defaultValue: true
 
         // ── Basic parameters ──────────────────────────────────────────────────
-        input name: "presenceDetectionMode", type: "enum", title: "<b>Presence Detection Mode</b>", description: "Choosing 'Both mmWave+PIR'is highly recommended.<br>Choosing 'PIR only' reveals PIR Detection Interval preference and hides mmWave prefereces.<br>Choosing 'Both mmWave+PIR' or 'mmWave only' reveals mmWave specific preferences and hides unsued PIR Detection Interval preference.", options: ["both": "Both mmWave+PIR", "mmwave": "mmWave only", "pir": "PIR only"], defaultValue: "both"
+        input name: "presenceDetectionMode", type: "enum", title: "<b>Presence Detection Mode</b>", description: "<b>Must re-run Spatial Learning if this setting is changed!</b><br> * 'Both mmWave+PIR' is the recommended setting.<br> * 'PIR only' reveals PIR Detection Interval preference and hides mmWave prefereces.<br> * 'Both mmWave+PIR' or 'mmWave only' reveals mmWave specific preferences and hides unsued PIR Detection Interval preference.", options: ["both": "Both mmWave+PIR", "mmwave": "mmWave only", "pir": "PIR only"], defaultValue: "both"
         if (presenceDetectionMode == "pir") {
             input name: "pirDetectionInterval", type: "number", title: "<b>PIR Detection Interval (2-300s)</b>", description: "The interval duration in seconds for triggering infrared detection.", range: 2..300,  defaultValue: 10
         } else {
@@ -79,8 +82,8 @@ metadata {
             input name: "absenceDelayTimer", type: "number", title: "<b>Absence Confirmation Period (10-300s)</b>", description: "Used for accurate determination of 'no person' status, avoiding false alarms caused by personnel temporarily leaving or slight movements.", range: 10..300, defaultValue: 10
             input name: "detectionRangeZones", type: "string", title: "<b>Detection Range Zones</b>", description: "Comma-separated ranges in 0.25 m steps, e.g. '0.5-2.0' or '0.25-1.5,3.0-5.0'. Leave blank for all zones (0-6 m)."
         } 
-        input name: "aiInterferenceIdentification", type: "bool", title: "<b>AI Interference Identification</b>", description: "Designed to enhance detection accuracy by distinguishing between human presence and moving, non-human objects. It enables the sensor to learn the environment and ignore false triggers caused by common household items, thereby reducing ghosting and false alarms.", defaultValue: false
-        input name: "aiSensitivityAdaptive", type: "bool",   title: "<b>AI Adaptive Sensitivity</b>", description: "Uses machine learning to automatically adjust motion detection sensitivity based on the environment.", defaultValue: false
+//        input name: "aiInterferenceIdentification", type: "bool", title: "<b>AI Interference Identification</b>", description: "Designed to enhance detection accuracy by distinguishing between human presence and moving, non-human objects. It enables the sensor to learn the environment and ignore false triggers caused by common household items, thereby reducing ghosting and false alarms.", defaultValue: false
+//        input name: "aiSensitivityAdaptive", type: "bool",   title: "<b>AI Adaptive Sensitivity</b>", description: "Uses machine learning to automatically adjust motion detection sensitivity based on the environment.", defaultValue: false
 
         // Temperature & Humidity sampling
         input name: "tempHumiditySamplingFrequency", type: "enum", title: "<b>Temperature and Humidity Sampling Frequency</b>", description: "Sampling time frequency, increasing lowers battery life.<br>Setting to 'Custom' allows specifying period, interval & threshold via additional preferences.", options: ["0": "Off", "1": "Low", "2": "Medium", "3": "High", "4": "Custom"], defaultValue: "1"
@@ -257,11 +260,11 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
             logDebug "PIR detection interval: ${value} seconds"
             break
         case "015D":    // AI adaptive sensitivity
-            device.updateSetting("aiSensitivityAdaptive", [value: value ? true : false, type: "bool"])
+//            device.updateSetting("aiSensitivityAdaptive", [value: value ? true : false, type: "bool"])
             logDebug "AI adaptive sensitivity: ${value ? 'on' : 'off'}"
             break
         case "015E":    // AI interference identification
-            device.updateSetting("aiInterferenceIdentification", [value: value ? true : false, type: "bool"])
+//            device.updateSetting("aiInterferenceIdentification", [value: value ? true : false, type: "bool"])
             logDebug "AI interference identification: ${value ? 'on' : 'off'}"
             break
         case "015F":    // Target distance (cm)
@@ -347,10 +350,11 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
                 logInfo "Target distance tracking disabled – attribute removed"
             }
             break
-        case "0199":    // Presence detection mode
+        case "0199":    // Presence Detection Mode
             def modes = ["both", "mmwave", "pir"]
             def modeName = modes[value] ?: "both"
             device.updateSetting("presenceDetectionMode", [value: modeName, type: "enum"])
+            state.presenceDetectionModeCache = modeName
             logDebug "FP300 presence detection mode: ${modes[value] ?: 'both'}"
             break
         case "019A":    // Detection range zones (bitmap)
@@ -467,22 +471,32 @@ void decodeAqaraStruct(String description) {
 
 void updateMotionState(String source = null) {
     
-    boolean mmwave = mmwaveState[device.idAsLong] == 1
-    boolean pir    = pirState[device.idAsLong] == 1
+    boolean mmwave = mmwaveState[device.idAsLong] == 1 ? true : false
+    boolean pir    = pirState[device.idAsLong] == 1 ? true : false
+    String newState
     
     String mode = settings?.presenceDetectionMode ?: "both"
-
-    boolean active =
-        (mode == "mmwave") ? mmwave :             //if mode is "mmwave" then 'active' = current value of mmwave detector 
-        (mode == "pir")    ? pir :                //else, if mode is "pir" then 'active' = current value of pir detector
-                             (mmwave || pir)      //else, mode must be "both", so if either mmwave OR pir is true then 'active' = true, otherwise false
-
-    String newState = active ? "active" : "inactive"
+    
+    switch (mode) {
+        case "both":
+            newState = mmwave || pir ? "active" : "inactive"
+            break
+        case "pir":
+            newState = pir ? "active" : "inactive"
+            break
+        case "mmwave":
+            newState = mmwave ? "active" : "inactive"
+            break
+        default:
+            log.warn "Unknown Presence Detection Mode = ${mode}"
+    }   
 
     if (device.currentValue("motion") != newState) {
         sendEvent(name: "motion", value: newState, descriptionText: "Motion ${newState} (source: ${source})")
         logInfo "motion has changed to ${newState} (source: ${source})"
     }
+    
+    logDebug "updateMotionState() - source = ${source}, mmwave = ${mmwave}, pir = ${pir}, mode = ${mode}, newState = ${newState}, current Motion = ${device.currentValue("motion")}"
 }
 
 def roomStateEvent(int value) {
@@ -624,7 +638,8 @@ void trackTargetDistance() {
 void refresh() {
     logInfo "Refreshing FP300 parameters..."
     List<String> cmds = []
-    cmds += zigbee.readAttribute(0xFCC0, [0x010C, 0x0142, 0x014D, 0x014F, 0x0197, 0x0199, 0x015D, 0x015E], [mfgCode: 0x115F], delay=200)
+//    cmds += zigbee.readAttribute(0xFCC0, [0x010C, 0x0142, 0x014D, 0x014F, 0x0197, 0x0199, 0x015D, 0x015E], [mfgCode: 0x115F], delay=200)  // removing aiInterferenceIdentification & aiSensitivityAdaptive
+    cmds += zigbee.readAttribute(0xFCC0, [0x010C, 0x0142, 0x014D, 0x014F, 0x0197, 0x0199], [mfgCode: 0x115F], delay=200)
     cmds += zigbee.readAttribute(0xFCC0, [0x0162, 0x0170, 0x0192, 0x0193], [mfgCode: 0x115F], delay=200)
     cmds += zigbee.readAttribute(0xFCC0, [0x0163, 0x0164, 0x0165], [mfgCode: 0x115F], delay=200)
     cmds += zigbee.readAttribute(0xFCC0, [0x016A, 0x016B, 0x016C], [mfgCode: 0x115F], delay=200)
@@ -655,9 +670,17 @@ void updated() {
     List<String> cmds = []
     int val = 0
     
-    val = ["both": 0, "mmwave": 1, "pir": 2][settings.presenceDetectionMode] ?: 0
-    cmds += zigbee.writeAttribute(0xFCC0, 0x0199, 0x20, val, [mfgCode: 0x115F], delay=1000)
-
+    // Only update Presence Detection Mode on the FP300 sensor if the value has changed.  Otherwise, the mmWave sensor calibration will get messed up!
+    logDebug "updated() - presenceDetectionModeCache = ${state.presenceDetectionModeCache}, settings.presenceDetectionMode = ${settings.presenceDetectionMode}"
+    if (state.presenceDetectionModeCache != settings.presenceDetectionMode) {
+        val = ["both": 0, "mmwave": 1, "pir": 2][settings.presenceDetectionMode] ?: 0
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0199, 0x20, val, [mfgCode: 0x115F], delay=1000)
+        state.presenceDetectionModeCache = settings.presenceDetectionMode
+        log.warn "updated() - presenceDetectionMode setting changed, ${val} sent to FP300 sensor.  <b>Please run Spatial Learning with the room empty!</b>"
+    } else {
+        logDebug "updated() - presenceDetectionMode setting unchanged, not sent to FP300 sensor"
+    }
+    
     if (presenceDetectionMode == "pir") {
         val = safeToInt(settings.pirDetectionInterval)
         cmds += zigbee.writeAttribute(0xFCC0, 0x014F, 0x21, val, [mfgCode: 0x115F], delay=1000)
@@ -674,15 +697,16 @@ void updated() {
         }
     }
     
-    cmds += zigbee.writeAttribute(0xFCC0, 0x015E, 0x20, settings.aiInterferenceIdentification ? 1 : 0, [mfgCode: 0x115F], delay=1000)
-    cmds += zigbee.writeAttribute(0xFCC0, 0x015D, 0x20, settings.aiSensitivityAdaptive ? 1 : 0, [mfgCode: 0x115F], delay=1000)
+//    cmds += zigbee.writeAttribute(0xFCC0, 0x015E, 0x20, settings.aiInterferenceIdentification ? 1 : 0, [mfgCode: 0x115F], delay=1000)
+//    cmds += zigbee.writeAttribute(0xFCC0, 0x015D, 0x20, settings.aiSensitivityAdaptive ? 1 : 0, [mfgCode: 0x115F], delay=1000)
 
     // Temperature and Humidity
     if (tempHumiditySamplingFrequency != "4") {    // If Low, Med, or High
-        val = 3                                    // set TempHumidSamplingFrequency to "Threshold and Interval" to ensure data is transmitted from the sensor
+        val = 3                                    // set Temperature and Humiity Sampling modes to "Threshold and Interval" to ensure data is transmitted from the sensor
         cmds += zigbee.writeAttribute(0xFCC0, 0x0165, 0x20, val, [mfgCode: 0x115F], delay=1000)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x016C, 0x20, val, [mfgCode: 0x115F], delay=1000)
     } 
-    else if (tempHumiditySamplingFrequency == "4") {
+    else {
         // Custom Temperature and Humidity sampling & reporting
         val = safeToInt(settings.tempHumiditySamplingPeriod)
         cmds += zigbee.writeAttribute(0xFCC0, 0x0162, 0x23, val * 1000, [mfgCode: 0x115F], delay=1000)
@@ -706,7 +730,7 @@ void updated() {
             val = 3                          // set LightSamplingFrequency to "Threshold and Interval" to ensure data is transmitted from the sensor
             cmds += zigbee.writeAttribute(0xFCC0, 0x0196, 0x20, val, [mfgCode: 0x115F], delay=1000)
     }
-    else if (lightSamplingFrequency == "4") {
+    else {
         // Custom Illuminance sampling & reporting
         val = safeToInt(settings.lightSamplingPeriod)
         cmds += zigbee.writeAttribute(0xFCC0, 0x0193, 0x23, val * 1000, [mfgCode: 0x115F], delay=1000)
@@ -777,8 +801,8 @@ void initializeVars(boolean fullInit = false) {
     if (settings?.presenceDetectionMode == null)         device.updateSetting("presenceDetectionMode", [value: "both", type: "enum"])
     if (settings?.absenceDelayTimer == null)             device.updateSetting("absenceDelayTimer", [value: 10, type: "number"])
     if (settings?.pirDetectionInterval == null)          device.updateSetting("pirDetectionInterval", [value: 10, type: "number"])
-    if (settings?.aiInterferenceIdentification == null)  device.updateSetting("aiInterferenceIdentification", false)
-    if (settings?.aiSensitivityAdaptive == null)         device.updateSetting("aiSensitivityAdaptive", false)
+//    if (settings?.aiInterferenceIdentification == null)  device.updateSetting("aiInterferenceIdentification", false)
+//    if (settings?.aiSensitivityAdaptive == null)         device.updateSetting("aiSensitivityAdaptive", false)
     if (settings?.tempOffset == null)                    device.updateSetting("tempOffset", [value: 0.0, type: "decimal"])
     if (settings?.humidityOffset == null)                device.updateSetting("humidityOffset", [value: 0.0, type: "decimal"])
     if (settings?.motionSensitivity == null)             device.updateSetting("motionSensitivity", [value: "2", type: "enum"])

@@ -16,11 +16,12 @@
  *  1.0.4    2026-03-02    Dan Ogorchock    Additional code cleanup
  *  1.0.5    2026-03-06    Dan Ogorchock    Improved efficiency
  *  1.0.6    2026-03-12    Dan Ogorchock    Simplified User Preferences logic & improved User Preferences titles and descriptions
+ *  1.0.7    2026-03-12    Dan Ogorchock    Automatically remove state.params variable (thanks @hubitrep!)
  *
  */
 
-static String version()   { "1.0.6" }
-static String timeStamp() { "2026/03/12 09:48" }
+static String version()   { "1.0.7" }
+static String timeStamp() { "2026/03/12 12:45" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
@@ -643,7 +644,9 @@ void refresh() {
 void updated() {
     log.info "${device.displayName} updated() called."
     checkDriverVersion()
-    
+	
+    if (state.params != null)state.remove("params")  //remove legacy state.params variable
+	
     if (logEnable) runIn(1800, "logsOff", [overwrite: true, misfire: "ignore"])  //Enable the debug logging for 30 minutes (i.e. 1800 seconds)
     else           unschedule("logsOff")
 
@@ -761,6 +764,9 @@ void initialize() {
 
 void initializeVars(boolean fullInit = false) {
     if (fullInit) state.clear()
+	
+    if (state.params != null)state.remove("params")  //remove legacy state.params variable
+	
     if (state.rxCounter == null)         state.rxCounter         = 0
     if (state.txCounter == null)         state.txCounter         = 0
     if (state.notPresentCounter == null) state.notPresentCounter = 0

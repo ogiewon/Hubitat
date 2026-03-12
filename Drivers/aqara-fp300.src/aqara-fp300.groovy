@@ -15,11 +15,12 @@
  *  1.0.3    2026-03-02    Dan Ogorchock    Added Import URL
  *  1.0.4    2026-03-02    Dan Ogorchock    Additional code cleanup
  *  1.0.5    2026-03-06    Dan Ogorchock    Improved efficiency
+ *  1.0.6    2026-03-12    Dan Ogorchock    Simplified User Preferences logic & improved User Preferences titles and descriptions
  *
  */
 
-static String version()   { "1.0.5" }
-static String timeStamp() { "2026/03/06 12:00" }
+static String version()   { "1.0.6" }
+static String timeStamp() { "2026/03/12 09:48" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
@@ -65,54 +66,54 @@ metadata {
     }
 
     preferences {
-        input name: "txtEnable",  type: "bool",   title: "<b>Description text logging</b>",  defaultValue: true
-        input name: "logEnable",  type: "bool",   title: "<b>Debug logging</b>",              defaultValue: true
+        input name: "txtEnable",  type: "bool",   title: "<b>Description text logging</b>", description: "Provides informative log data during communications with the FP300 sensor.",  defaultValue: true
+        input name: "logEnable",  type: "bool",   title: "<b>Debug logging</b>", description: "Provides detailed log data to help debug the driver code.<br>Will automatically disable itself after 30 minutes.",              defaultValue: true
 
         // ── Basic parameters ──────────────────────────────────────────────────
-        input name: "presenceDetectionMode", type: "enum", title: "<b>Presence Detection Mode</b>", description: "Both - recommended", options: ["both": "Both mmWave+PIR", "mmwave": "mmWave only", "pir": "PIR only"], defaultValue: "both"
+        input name: "presenceDetectionMode", type: "enum", title: "<b>Presence Detection Mode</b>", description: "Choosing 'Both mmWave+PIR'is highly recommended.<br>Choosing 'PIR only' reveals PIR Detection Interval preference and hides mmWave prefereces.<br>Choosing 'Both mmWave+PIR' or 'mmWave only' reveals mmWave specific preferences and hides unsued PIR Detection Interval preference.", options: ["both": "Both mmWave+PIR", "mmwave": "mmWave only", "pir": "PIR only"], defaultValue: "both"
         if (presenceDetectionMode == "pir") {
-            input name: "pirDetectionInterval", type: "number", title: "<b>PIR Detection Interval (2-300 s)</b>", description: "The interval duration in seconds for triggering infrared detection.", range: 2..300,  defaultValue: 10
+            input name: "pirDetectionInterval", type: "number", title: "<b>PIR Detection Interval (2-300s)</b>", description: "The interval duration in seconds for triggering infrared detection.", range: 2..300,  defaultValue: 10
         } else {
             input name: "motionSensitivity", type: "enum", title: "<b>Presence Detection Sensitivity</b>", description: "High - Suitable for bedrooms, small offices, studies, etc..<br>Medium - Sutiable for rooms like bathrooms, small conference rooms, etc..<br>Low - Suitable for complicated rooms with large area, which have plants and curtains.", options: ["1": "low", "2": "medium", "3": "high"], defaultValue: "2"
-            input name: "absenceDelayTimer", type: "number", title: "<b>Absence Confirmation Period (10-300 s)</b>", description: "Used for accurate determination of 'no person' status, avoiding false alarms caused by personnel temporarily leaving or slight movements.", range: 10..300, defaultValue: 10
+            input name: "absenceDelayTimer", type: "number", title: "<b>Absence Confirmation Period (10-300s)</b>", description: "Used for accurate determination of 'no person' status, avoiding false alarms caused by personnel temporarily leaving or slight movements.", range: 10..300, defaultValue: 10
             input name: "detectionRangeZones", type: "string", title: "<b>Detection Range Zones</b>", description: "Comma-separated ranges in 0.25 m steps, e.g. '0.5-2.0' or '0.25-1.5,3.0-5.0'. Leave blank for all zones (0-6 m)."
         } 
-        input name: "aiInterferenceIdentification", type: "bool", title: "<b>AI Interference Identification</b>", defaultValue: false
-        input name: "aiSensitivityAdaptive", type: "bool",   title: "<b>AI Adaptive Sensitivity</b>", defaultValue: false
+        input name: "aiInterferenceIdentification", type: "bool", title: "<b>AI Interference Identification</b>", description: "Designed to enhance detection accuracy by distinguishing between human presence and moving, non-human objects. It enables the sensor to learn the environment and ignore false triggers caused by common household items, thereby reducing ghosting and false alarms.", defaultValue: false
+        input name: "aiSensitivityAdaptive", type: "bool",   title: "<b>AI Adaptive Sensitivity</b>", description: "Uses machine learning to automatically adjust motion detection sensitivity based on the environment.", defaultValue: false
 
         // Temperature & Humidity sampling
-        input name: "tempHumiditySamplingFrequency", type: "enum", title: "<b>Temperature and Humidity Detection</b>", description: "Sampling time frequency, increasing affects battery life. Setting to custom allows specifying period, interval & threshold.", options: ["0": "Off", "1": "Low", "2": "Medium", "3": "High", "4": "Custom"], defaultValue: "1"
+        input name: "tempHumiditySamplingFrequency", type: "enum", title: "<b>Temperature and Humidity Sampling Frequency</b>", description: "Sampling time frequency, increasing lowers battery life.<br>Setting to 'Custom' allows specifying period, interval & threshold via additional preferences.", options: ["0": "Off", "1": "Low", "2": "Medium", "3": "High", "4": "Custom"], defaultValue: "1"
 
         if (tempHumiditySamplingFrequency == "4") {
             // Custom Temperature & Humidity Sampling on device
-            input name: "tempHumiditySamplingPeriod", type: "number", title: "<b>How often (seconds) temp & humidity readings are taken on the device when in custom mode.</b>", range: 1..3600, defaultValue: 30
+            input name: "tempHumiditySamplingPeriod", type: "number", title: "<b>Temperature and Humidity Sampling Period (s)</b>", description: "How often in seconds temp & humidity readings are taken on the device when in custom mode.", range: 1..3600, defaultValue: 30
 
             // Custom Temperature reporting
-            input name: "temperatureReportingMode", type: "enum", title: "<b>Temperature reporting type when in custom mode.</b>", options: ["1": "Threshold only", "2": "Interval only", "3": "Threshold and Interval"], defaultValue: "1"
-            input name: "temperatureReportingInterval", type: "number", title: "<b>Custom time interval for temperature data reporting. (s)</b>", range: 600..3600, defaultValue: 600
-            input name: "temperatureReportingThreshold", type: "decimal", title: "<b>Reporting will trigger as temperature change reaches this value when in custom mode.(°C)</b>", range: 0.2..3.0, defaultValue: 1.0
+            input name: "temperatureReportingMode", type: "enum", title: "<b>Temperature Reporting Mode</b>", description: "Temperature reporting type when in custom mode.", options: ["1": "Threshold only", "2": "Interval only", "3": "Threshold and Interval"], defaultValue: "1"
+            input name: "temperatureReportingInterval", type: "number", title: "<b>Temperature Reporting Interval (s)</b>", description: "Custom time interval for temperature data reporting.", range: 600..3600, defaultValue: 600
+            input name: "temperatureReportingThreshold", type: "decimal", title: "<b>Temperature Reporting Threshold (°C)</b>", description: "Reporting will trigger as temperature change reaches this value when in custom mode.", range: 0.2..3.0, defaultValue: 1.0
 
             // Custom  Humidity reporting
-            input name: "humidityReportingMode", type: "enum", title: "<b>Humidity reporting type when in custom mode.</b>", options: ["1": "Threshold only", "2": "Interval only", "3": "Threshold and Interval"], defaultValue: "1"
-            input name: "humidityReportingInterval", type: "number", title: "<b>Custom time interval for humidity data reporting.(s)</b>", range: 600..3600, defaultValue: 600
-            input name: "humidityReportingThreshold", type: "decimal", title: "<b>Reporting will trigger as humidity change reaches this value when in custom mode.(%)</b>", range: 2..10, defaultValue: 5.0
+            input name: "humidityReportingMode", type: "enum", title: "<b>Humidity Reporting Mode</b>", description: "Humidity reporting type when in custom mode.", options: ["1": "Threshold only", "2": "Interval only", "3": "Threshold and Interval"], defaultValue: "1"
+            input name: "humidityReportingInterval", type: "number", title: "<b>Humidity Reporting Interval (s)</b>", description: "Custom time interval for humidity data reporting.", range: 600..3600, defaultValue: 600
+            input name: "humidityReportingThreshold", type: "decimal", title: "<b>Humidity Reporting Threshold (%)</b>", description: "Reporting will trigger as humidity change reaches this value when in custom mode.", range: 2..10, defaultValue: 5.0
         }
         if (tempHumiditySamplingFrequency != "0") {
-            input name: "tempOffset", type: "decimal", title: "<b>Temperature Offset (°)</b>", range: "-100..100", defaultValue: 0.0
-            input name: "humidityOffset", type: "decimal", title: "<b>Humidity Offset (%)</b>", range: "-100..100", defaultValue: 0.0
+            input name: "tempOffset", type: "decimal", title: "<b>Temperature Offset (°)</b>", description: "Change reflected on next temperature data update from the sensor.", range: "-100..100", defaultValue: 0.0
+            input name: "humidityOffset", type: "decimal", title: "<b>Humidity Offset (%)</b>", description: "Change reflected on next humidity data update from the sensor.", range: "-100..100", defaultValue: 0.0
         }
         // Illuminance sampling
-        input name: "lightSamplingFrequency", type: "enum", title: "<b>Illuminance Sampling Detection</b>", description: "Sampling time frequency, increasing affects battery life. Setting to custom allows specifying period, interval & threshold.", options: ["0": "Off", "1": "Low", "2": "Medium", "3": "High", "4": "Custom"], defaultValue: "1"
+        input name: "lightSamplingFrequency", type: "enum", title: "<b>Illuminance Sampling Frequency</b>", description: "Sampling time frequency, increasing lowers battery life.<br>Setting to 'Custom' allows specifying period, interval & threshold via additional preferences.", options: ["0": "Off", "1": "Low", "2": "Medium", "3": "High", "4": "Custom"], defaultValue: "1"
 
         // Custom  Illuminance reporting
         if (lightSamplingFrequency == "4") {        
-            input name: "lightSamplingPeriod", type: "number", title: "<b>How often Illuminance readings are taken on the device when in custom mode. (s)</b>", range: 0.5..3600, defaultValue: 30
-            input name: "lightReportingMode", type: "enum", title: "<b>Illuminance reporting type when in custom mode.</b>", options: ["0": "No reporting", "1": "Threshold only", "2": "Interval only", "3": "Threshold and Interval"], defaultValue: "1"
-            input name: "lightReportingInterval", type: "number", title: "<b>Custom interval for Illuminance data reporting. (s)</b>", range: 20..3600, defaultValue: 600
-            input name: "lightReportingThreshold", type: "decimal", title: "<b>Reporting will trigger as Illuminance percentage change reaches this value when in custom mode. (%)</b>", range: 3..20, defaultValue: 20
+            input name: "lightSamplingPeriod", type: "number", title: "<b>Illuminance Sampling Period</b>", description: "How often Illuminance readings are taken on the device when in custom mode. (s)", range: 0.5..3600, defaultValue: 30
+            input name: "lightReportingMode", type: "enum", title: "<b>Illuminance Reporting Mode</b>", description: "Illuminance reporting type when in custom mode.", options: ["1": "Threshold only", "2": "Interval only", "3": "Threshold and Interval"], defaultValue: "1"
+            input name: "lightReportingInterval", type: "number", title: "<b>Illuminance Reporting Interval (s)</b>", description: "Custom interval for Illuminance data reporting.", range: 20..3600, defaultValue: 600
+            input name: "lightReportingThreshold", type: "decimal", title: "<b>Illuminance Reporting Threshold (%)</b>", description: "Reporting will trigger as Illuminance percentage change reaches this value when in custom mode.", range: 3..20, defaultValue: 20
         }
         // LED night settings
-        input name: "ledDisabledNight", type: "bool", title: "<b>LED Disabled at Night</b>", description: "Enabling allows specifiying custom schedule", defaultValue: false
+        input name: "ledDisabledNight", type: "bool", title: "<b>LED Disabled at Night</b>", description: "Enabling allows specifiying custom schedule by revelaling an additional preference.", defaultValue: false
         if (ledDisabledNight) {
             input name: "ledNightTimeSchedule", type: "string", title: "<b>LED Night Time Schedule (HH:MM-HH:MM)</b>", description: "e.g. '21:00-09:00'. Only active when LED Disabled at Night is enabled."
         }
@@ -235,10 +236,9 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
             break
         case "010C":    // Motion sensitivity
             device.updateSetting("motionSensitivity", [value: value.toString(), type: "enum"])
-            storeParamValue("motionSensitivity", value.toString(), "enum", false)
             logDebug "Motion sensitivity: ${value}"
             break    
-        case "0142":    // Room state / presence
+        case "0142":    // mmWave detection state (i.e. Room state / presence)
             mmwaveState[device.idAsLong] = value
             updateMotionState("mmwave")
             roomStateEvent(value)
@@ -253,17 +253,14 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
         case "014F":    // PIR detection interval
             value = Integer.parseInt(it.value, 16)
             device.updateSetting("pirDetectionInterval", [value: value.toString(), type: "number"])
-            storeParamValue("pirDetectionInterval", value, "number", false)
             logDebug "PIR detection interval: ${value} seconds"
             break
         case "015D":    // AI adaptive sensitivity
             device.updateSetting("aiSensitivityAdaptive", [value: value ? true : false, type: "bool"])
-            storeParamValue("aiSensitivityAdaptive", value ? true : false, "bool", false)
             logDebug "AI adaptive sensitivity: ${value ? 'on' : 'off'}"
             break
         case "015E":    // AI interference identification
             device.updateSetting("aiInterferenceIdentification", [value: value ? true : false, type: "bool"])
-            storeParamValue("aiInterferenceIdentification", value ? true : false, "bool", false)
             logDebug "AI interference identification: ${value ? 'on' : 'off'}"
             break
         case "015F":    // Target distance (cm)
@@ -272,66 +269,73 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
             logDebug "(0x015F) received FP300 target_distance report: ${value} (cluster=0x${it.cluster} attrId=0x${it.attrId} value=0x${it.value})"
             break
         case "0162":    // Temp/humidity sampling period (ms)
-            storeParamValue("tempHumiditySamplingPeriod", (Integer.parseInt(it.value, 16) / 1000) as Integer, "number", false)
-            logDebug "FP300 temp/humidity sampling period: ${(Integer.parseInt(it.value, 16) / 1000) as Integer} seconds"
+            value = Integer.parseInt(it.value, 16) / 1000
+            device.updateSetting("tempHumiditySamplingPeriod", [value: value.toString(), type: "number"])
+            logDebug "FP300 temp/humidity sampling period: ${value} seconds"
             break
         case "0163":    // Temperature reporting interval (ms)
-            storeParamValue("temperatureReportingInterval", (Integer.parseInt(it.value, 16) / 1000) as int, "number", false)
-            logDebug "FP300 temperature reporting interval: ${(Integer.parseInt(it.value, 16) / 1000) as int} seconds"
+            value = Integer.parseInt(it.value, 16) / 1000
+            device.updateSetting("temperatureReportingInterval", [value: value.toString(), type: "number"])
+            logDebug "FP300 temperature reporting interval: ${value} seconds"
             break
-        case "0164":    // Temperature reporting threshold (centidegrees)
-            storeParamValue("temperatureReportingThreshold", Integer.parseInt(it.value, 16) / 100.0, "decimal", false)
-            logDebug "FP300 temperature reporting threshold: ${String.format('%.1f', Integer.parseInt(it.value, 16) / 100.0)}°C"
+        case "0164":    // Temperature reporting threshold (degrees Celsius)
+            float f_value = Integer.parseInt(it.value, 16) / 100.0
+            device.updateSetting("temperatureReportingThreshold", [value: f_value.toString(), type: "decimal"])
+            logDebug "FP300 temperature reporting threshold: ${f_value}°C"
             break
         case "0165":    // Temperature reporting mode
-            storeParamValue("temperatureReportingMode", Integer.parseInt(it.value, 16).toString(), "enum", false)
+            device.updateSetting("temperatureReportingMode", [value: value.toString(), type: "enum"])
             def modes = ["unknown", "threshold", "reporting interval", "threshold and interval"]
             logDebug "FP300 temperature reporting mode: ${modes[value] ?: 'unknown'} (${value})"
             break
         case "016A":    // Humidity reporting interval (ms)
-            storeParamValue("humidityReportingInterval", (Integer.parseInt(it.value, 16) / 1000) as int, "number", false)
-            logDebug "FP300 humidity reporting interval: ${(Integer.parseInt(it.value, 16) / 1000)} seconds"
+            value = Integer.parseInt(it.value, 16) / 1000
+            device.updateSetting("humidityReportingInterval", [value: value.toString(), type: "number"])
+            logDebug "FP300 humidity reporting interval: ${value} seconds"
             break
         case "016B":    // Humidity reporting threshold (%*100)
-            storeParamValue("humidityReportingThreshold", Integer.parseInt(it.value, 16) / 100.0, "decimal", false)
-            logDebug "FP300 humidity reporting threshold: ${String.format('%.1f', Integer.parseInt(it.value, 16) / 100.0)}%"
+            float f_value = Integer.parseInt(it.value, 16) / 100.0
+            device.updateSetting("humidityReportingThreshold", [value: f_value.toString(), type: "decimal"])
+            logDebug "FP300 humidity reporting threshold: ${f_value}%"
             break
         case "016C":    // Humidity reporting mode
-            storeParamValue("humidityReportingMode", Integer.parseInt(it.value, 16).toString(), "enum", false)
+            device.updateSetting("humidityReportingMode", [value: value.toString(), type: "enum"])
             def modes = ["unknown", "threshold", "reporting interval", "threshold and interval"]
             logDebug "FP300 humidity reporting mode: ${modes[value] ?: 'unknown'} (${value})"
             break
         case "0170":    // Temp/humidity sampling frequency
-            storeParamValue("tempHumiditySamplingFrequency", Integer.parseInt(it.value, 16).toString(), "enum", false)
+            device.updateSetting("tempHumiditySamplingFrequency", [value: value.toString(), type: "enum"])
             def frequencies = ["off", "low", "medium", "high", "custom"]
             logDebug "FP300 temp/humidity sampling frequency: ${frequencies[Integer.parseInt(it.value, 16)] ?: 'unknown'} (${value})"
             break
         case "0192":    // Light sampling frequency
-            storeParamValue("lightSamplingFrequency", Integer.parseInt(it.value, 16).toString(), "enum", false)
+            device.updateSetting("lightSamplingFrequency", [value: value.toString(), type: "enum"])
             def frequencies = ["off", "low", "medium", "high", "custom"]
             logDebug "FP300 light sampling frequency: ${frequencies[Integer.parseInt(it.value, 16)] ?: 'unknown'} (${value})"
             break
         case "0193":    // Light sampling period (ms)
-            storeParamValue("lightSamplingPeriod", (Integer.parseInt(it.value, 16) / 1000) as Integer, "number", false)
-            logDebug "FP300 light sampling period: ${(Integer.parseInt(it.value, 16) / 1000) as Integer} seconds"
+            value = Integer.parseInt(it.value, 16) / 1000
+            device.updateSetting("lightSamplingPeriod", [value: value.toString(), type: "number"])
+            logDebug "FP300 light sampling period: ${value} seconds"
             break
         case "0194":    // Light reporting interval (ms)
-            storeParamValue("lightReportingInterval", (Integer.parseInt(it.value, 16) / 1000) as int, "number", false)
-            logDebug "FP300 light reporting interval: ${(Integer.parseInt(it.value, 16) / 1000)} seconds"
+            value = Integer.parseInt(it.value, 16) / 1000
+            device.updateSetting("lightReportingInterval", [value: value.toString(), type: "number"])
+            logDebug "FP300 light reporting interval: ${value} seconds"
             break
         case "0195":    // Light reporting threshold (%*100)
-            storeParamValue("lightReportingThreshold", Integer.parseInt(it.value, 16) / 100.0, "decimal", false)
-            logDebug "FP300 light reporting threshold: ${String.format('%.1f', Integer.parseInt(it.value, 16) / 100.0)}%"
+            float f_value = Integer.parseInt(it.value, 16) / 100.0
+            device.updateSetting("lightReportingThreshold", [value: f_value.toString(), type: "decimal"])
+            logDebug "FP300 light reporting threshold: ${f_value}%"
             break
         case "0196":    // Light reporting mode
-            storeParamValue("lightReportingMode", Integer.parseInt(it.value, 16).toString(), "enum", false)
+            device.updateSetting("lightReportingMode", [value: value.toString(), type: "enum"])
             def modes = ["No reporting", "Threshold only", "Interval only", "Threshold and Interval"]
             logDebug "FP300 light reporting mode: ${modes[Integer.parseInt(it.value, 16)] ?: 'unknown'} (${value})"
             break
         case "0197":    // Absence delay timer
             value = Integer.parseInt(it.value, 16)
             device.updateSetting("absenceDelayTimer", [value: value.toString(), type: "number"])
-            storeParamValue("absenceDelayTimer", value, "number", false)
             logDebug "FP300 absence delay timer: ${value} seconds"
             break
         case "0198":    // Track target distance status
@@ -346,16 +350,15 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
             def modes = ["both", "mmwave", "pir"]
             def modeName = modes[value] ?: "both"
             device.updateSetting("presenceDetectionMode", [value: modeName, type: "enum"])
-            storeParamValue("presenceDetectionMode", modeName, "enum", false)
             logDebug "FP300 presence detection mode: ${modes[value] ?: 'both'}"
             break
         case "019A":    // Detection range zones (bitmap)
             parseDetectionRangeZonesReport(it.value)
+            logDebug "FP300 DetectionRangeZones value = ${value})"
             break
         case "0203":    // LED disabled at night
             def ledState = value ? "on" : "off"
             device.updateSetting("ledDisabledNight", [value: value ? true : false, type: "bool"])
-            storeParamValue("ledDisabledNight", value ? true : false, "bool", false)
             logDebug "FP300 LED disabled at night: ${ledState} (value=${value})"
             break
         case "023E":    // LED night time schedule (UINT32)
@@ -363,7 +366,6 @@ private void parseAqaraClusterFCC0(String description, Map descMap, Map it) {
             def schedStr = String.format("%02d:%02d-%02d:%02d",
                 sched & 0xFF, (sched >> 8) & 0xFF, (sched >> 16) & 0xFF, (sched >> 24) & 0xFF)
             device.updateSetting("ledNightTimeSchedule", [value: schedStr, type: "string"])
-            storeParamValue("ledNightTimeSchedule", schedStr, "string", false)
             logDebug "FP300 LED night time schedule: ${schedStr} (raw: 0x${it.value})"
             break
         default:
@@ -387,8 +389,6 @@ private void parseDetectionRangeZonesReport(String rawHex) {
     } else if (bitmapHex.length() >= 2) {
         rangeValue = Integer.parseInt(bitmapHex[0..1], 16)
     }
-
-    storeParamValue("detectionRangeZones", String.format("%06X", rangeValue), "string", false)
 
 }
 
@@ -650,127 +650,85 @@ void updated() {
     runIn(DEFAULT_POLLING_INTERVAL, "deviceHealthCheck", [overwrite: true, misfire: "ignore"])
 
     List<String> cmds = []
-
-    if (hasParamChanged("presenceDetectionMode", settings?.presenceDetectionMode)) {
-        int val = ["both": 0, "mmwave": 1, "pir": 2][settings.presenceDetectionMode] ?: 0
-        cmds += zigbee.writeAttribute(0xFCC0, 0x0199, 0x20, val, [mfgCode: 0x115F], delay=200)
-    }
+    int val = 0
     
+    val = ["both": 0, "mmwave": 1, "pir": 2][settings.presenceDetectionMode] ?: 0
+    cmds += zigbee.writeAttribute(0xFCC0, 0x0199, 0x20, val, [mfgCode: 0x115F], delay=1000)
+
     if (presenceDetectionMode == "pir") {
-        if (hasParamChanged("pirDetectionInterval", settings?.pirDetectionInterval)) {
-            int val = safeToInt(settings.pirDetectionInterval)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x014F, 0x21, val, [mfgCode: 0x115F], delay=200)
-        }
+        val = safeToInt(settings.pirDetectionInterval)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x014F, 0x21, val, [mfgCode: 0x115F], delay=1000)
     } else {
-        if (hasParamChanged("motionSensitivity", settings?.motionSensitivity)) {
-            int val = safeToInt(settings.motionSensitivity)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x010C, 0x20, val, [mfgCode: 0x115F], delay=200)
-            cmds += zigbee.readAttribute(0xFCC0, 0x010C, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("absenceDelayTimer", settings?.absenceDelayTimer)) {
-            int val = safeToInt(settings.absenceDelayTimer)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0197, 0x23, val, [mfgCode: 0x115F], delay=200)
-        }
-        // Detection range zones
+        val = safeToInt(settings.motionSensitivity)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x010C, 0x20, val, [mfgCode: 0x115F], delay=1000)
+        val = safeToInt(settings.absenceDelayTimer)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0197, 0x23, val, [mfgCode: 0x115F], delay=1000)
         def parseResult = parseDetectionRangeInput(settings?.detectionRangeZones ?: "")
         def newBitmapHex = parseResult.success ? String.format("%06X", parseResult.bitmap) : null
-        if (newBitmapHex && hasParamChanged("detectionRangeZones", newBitmapHex)) {
+        if (newBitmapHex) {
             parseResult.errors.each { logWarn "Detection range: ${it}" }
-            cmds += zigbee.writeAttribute(0xFCC0, 0x019A, 0x41, detectionRangeBitmapToPayload(parseResult.bitmap), [mfgCode: 0x115F], delay=200)
-            cmds += zigbee.readAttribute(0xFCC0, 0x019A, [mfgCode: 0x115F], delay=200)
+            cmds += zigbee.writeAttribute(0xFCC0, 0x019A, 0x41, detectionRangeBitmapToPayload(parseResult.bitmap), [mfgCode: 0x115F], delay=1000)
         }
     }
     
-    if (hasParamChanged("aiInterferenceIdentification", settings?.aiInterferenceIdentification)) {
-        cmds += zigbee.writeAttribute(0xFCC0, 0x015E, 0x20, settings.aiInterferenceIdentification ? 1 : 0, [mfgCode: 0x115F], delay=200)
-    }
-    if (hasParamChanged("aiSensitivityAdaptive", settings?.aiSensitivityAdaptive)) {
-        cmds += zigbee.writeAttribute(0xFCC0, 0x015D, 0x20, settings.aiSensitivityAdaptive ? 1 : 0, [mfgCode: 0x115F], delay=200)
-    }
-
-    // Virtual/offset params – store locally only
-    if (hasParamChanged("tempOffset",     settings?.tempOffset))     storeParamValue("tempOffset",     settings.tempOffset,     "decimal", true)
-    if (hasParamChanged("humidityOffset", settings?.humidityOffset)) storeParamValue("humidityOffset", settings.humidityOffset, "decimal", true)
+    cmds += zigbee.writeAttribute(0xFCC0, 0x015E, 0x20, settings.aiInterferenceIdentification ? 1 : 0, [mfgCode: 0x115F], delay=1000)
+    cmds += zigbee.writeAttribute(0xFCC0, 0x015D, 0x20, settings.aiSensitivityAdaptive ? 1 : 0, [mfgCode: 0x115F], delay=1000)
 
     // Temperature and Humidity
-    if (hasParamChanged("tempHumiditySamplingFrequency", settings?.tempHumiditySamplingFrequency) && settings?.tempHumiditySamplingFrequency != null) {
-        int val = safeToInt(settings.tempHumiditySamplingFrequency)
-        cmds += zigbee.writeAttribute(0xFCC0, 0x0170, 0x20, val, [mfgCode: 0x115F], delay=200)
-    }
-        
-    if (tempHumiditySamplingFrequency == "4") {
+    if (tempHumiditySamplingFrequency != "4") {    // If Low, Med, or High
+        val = 3                                    // set TempHumidSamplingFrequency to "Threshold and Interval" to ensure data is transmitted from the sensor
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0165, 0x20, val, [mfgCode: 0x115F], delay=1000)
+    } 
+    else if (tempHumiditySamplingFrequency == "4") {
         // Custom Temperature and Humidity sampling & reporting
-        if (hasParamChanged("tempHumiditySamplingPeriod", settings?.tempHumiditySamplingPeriod) && settings?.tempHumiditySamplingPeriod) {
-            int val = safeToInt(settings.tempHumiditySamplingPeriod)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0162, 0x23, val * 1000, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("temperatureReportingThreshold", settings?.temperatureReportingThreshold)) {
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0164, 0x21, ((settings.temperatureReportingThreshold as BigDecimal) * 100) as Integer, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("temperatureReportingInterval", settings?.temperatureReportingInterval)) {
-            int val = safeToInt(settings.temperatureReportingInterval)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0163, 0x23, val * 1000, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("temperatureReportingMode", settings?.temperatureReportingMode)) {
-            int val = safeToInt(settings.temperatureReportingMode)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0165, 0x20, val, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("humidityReportingThreshold", settings?.humidityReportingThreshold)) {
-            cmds += zigbee.writeAttribute(0xFCC0, 0x016B, 0x21, ((settings.humidityReportingThreshold as BigDecimal) * 100) as Integer, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("humidityReportingInterval", settings?.humidityReportingInterval)) {
-            int val = safeToInt(settings.humidityReportingInterval)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x016A, 0x23, val * 1000, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("humidityReportingMode", settings?.humidityReportingMode)) {
-            int val = safeToInt(settings.humidityReportingMode)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x016C, 0x20, val, [mfgCode: 0x115F], delay=200)
-        }
+        val = safeToInt(settings.tempHumiditySamplingPeriod)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0162, 0x23, val * 1000, [mfgCode: 0x115F], delay=1000)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0164, 0x21, ((settings.temperatureReportingThreshold as BigDecimal) * 100) as Integer, [mfgCode: 0x115F], delay=1000)
+        val = safeToInt(settings.temperatureReportingInterval)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0163, 0x23, val * 1000, [mfgCode: 0x115F], delay=1000)
+        val = safeToInt(settings.temperatureReportingMode)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0165, 0x20, val, [mfgCode: 0x115F], delay=1000)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x016B, 0x21, ((settings.humidityReportingThreshold as BigDecimal) * 100) as Integer, [mfgCode: 0x115F], delay=1000)
+        val = safeToInt(settings.humidityReportingInterval)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x016A, 0x23, val * 1000, [mfgCode: 0x115F], delay=1000)
+        val = safeToInt(settings.humidityReportingMode)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x016C, 0x20, val, [mfgCode: 0x115F], delay=1000)
     }
-
+    
+    val = safeToInt(settings.tempHumiditySamplingFrequency)
+    cmds += zigbee.writeAttribute(0xFCC0, 0x0170, 0x20, val, [mfgCode: 0x115F], delay=1000)
+    
     // Illuminance
-    if (hasParamChanged("lightSamplingFrequency", settings?.lightSamplingFrequency) && settings?.lightSamplingFrequency != null) {
-        int val = safeToInt(settings.lightSamplingFrequency)
-        cmds += zigbee.writeAttribute(0xFCC0, 0x0192, 0x20, val, [mfgCode: 0x115F], delay=200)
+    if (lightSamplingFrequency != "4") {     // If Low, Med, or High
+            val = 3                          // set LightSamplingFrequency to "Threshold and Interval" to ensure data is transmitted from the sensor
+            cmds += zigbee.writeAttribute(0xFCC0, 0x0196, 0x20, val, [mfgCode: 0x115F], delay=1000)
     }
-    
-    if (lightSamplingFrequency == "4") {
+    else if (lightSamplingFrequency == "4") {
         // Custom Illuminance sampling & reporting
-        if (hasParamChanged("lightSamplingPeriod", settings?.lightSamplingPeriod) && settings?.lightSamplingPeriod) {
-            int val = safeToInt(settings.lightSamplingPeriod)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0193, 0x23, val * 1000, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("lightReportingInterval", settings?.lightReportingInterval)) {
-            int val = safeToInt(settings.lightReportingInterval)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0194, 0x23, val * 1000, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("lightReportingThreshold", settings?.lightReportingThreshold)) {
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0195, 0x21, ((settings.lightReportingThreshold as BigDecimal) * 100) as Integer, [mfgCode: 0x115F], delay=200)
-        }
-        if (hasParamChanged("lightReportingMode", settings?.lightReportingMode)) {
-            int val = safeToInt(settings.lightReportingMode)
-            cmds += zigbee.writeAttribute(0xFCC0, 0x0196, 0x20, val, [mfgCode: 0x115F], delay=200)
-        }
+        val = safeToInt(settings.lightSamplingPeriod)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0193, 0x23, val * 1000, [mfgCode: 0x115F], delay=1000)
+        val = safeToInt(settings.lightReportingInterval)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0194, 0x23, val * 1000, [mfgCode: 0x115F], delay=1000)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0195, 0x21, ((settings.lightReportingThreshold as BigDecimal) * 100) as Integer, [mfgCode: 0x115F], delay=1000)
+        val = safeToInt(settings.lightReportingMode)
+        cmds += zigbee.writeAttribute(0xFCC0, 0x0196, 0x20, val, [mfgCode: 0x115F], delay=1000)
     }
-
-
-    // LED night disable
-    if (hasParamChanged("ledDisabledNight", settings?.ledDisabledNight)) {
-        cmds += zigbee.writeAttribute(0xFCC0, 0x0203, 0x10, settings.ledDisabledNight ? 1 : 0, [mfgCode: 0x115F], delay=200)
-    }
-    if (ledDisabledNight) {
-        def schedStr = settings?.ledNightTimeSchedule ?: "21:00-09:00"
-        if (hasParamChanged("ledNightTimeSchedule", schedStr) ||
-            (settings?.ledDisabledNight == true && hasParamChanged("ledDisabledNight", settings?.ledDisabledNight))) {
-            def payload = ledNightTimeToPayload(schedStr)
-            if (payload != null) cmds += zigbee.writeAttribute(0xFCC0, 0x023E, 0x23, payload.intValue(), [mfgCode: 0x115F], delay=200)
-        }
-    }
-
-    if (cmds) sendZigbeeCommands(cmds)
-    else logInfo "No parameter changes requiring device commands."
     
-    runIn(5, "refresh")
+    val = safeToInt(settings.lightSamplingFrequency)
+    cmds += zigbee.writeAttribute(0xFCC0, 0x0192, 0x20, val, [mfgCode: 0x115F], delay=1000)
+    
+
+    // LED Disable at Night
+    cmds += zigbee.writeAttribute(0xFCC0, 0x0203, 0x10, settings.ledDisabledNight ? 1 : 0, [mfgCode: 0x115F], delay=1000)
+
+    if (ledDisabledNight && ledNightTimeSchedule != null) {
+        def schedStr = settings?.ledNightTimeSchedule ?: "21:00-09:00"
+        def payload = ledNightTimeToPayload(schedStr)
+        if (payload != null) cmds += zigbee.writeAttribute(0xFCC0, 0x023E, 0x23, payload.intValue(), [mfgCode: 0x115F], delay=1000)
+    }
+   
+    sendZigbeeCommands(cmds)
+    runIn(30, "refresh")
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -792,7 +750,7 @@ void configure() {
     runIn(DEFAULT_POLLING_INTERVAL, "deviceHealthCheck", [overwrite: true, misfire: "ignore"])
     runIn(5, "fp300BlackMagic")
     runIn(15, "updated")
-    logWarn "If no further logs appear, re-pair the device to Hubitat."
+    logWarn "configure() - If no further logs appear, make sure you have woken the FP300 by pressing the button on it."
 }
 
 void initialize() {
@@ -803,23 +761,36 @@ void initialize() {
 
 void initializeVars(boolean fullInit = false) {
     if (fullInit) state.clear()
-    if (state.params == null)          state.params          = []
-    if (state.rxCounter == null)       state.rxCounter       = 0
-    if (state.txCounter == null)       state.txCounter       = 0
+    if (state.rxCounter == null)         state.rxCounter         = 0
+    if (state.txCounter == null)         state.txCounter         = 0
     if (state.notPresentCounter == null) state.notPresentCounter = 0
 
-    if (fullInit || settings?.logEnable  == null) device.updateSetting("logEnable",  true)
-    if (fullInit || settings?.txtEnable  == null) device.updateSetting("txtEnable",  true)
+    if (settings?.logEnable  == null) device.updateSetting("logEnable",  true)
+    if (settings?.txtEnable  == null) device.updateSetting("txtEnable",  true)
 
-    if (fullInit || settings?.presenceDetectionMode == null)    device.updateSetting("presenceDetectionMode", "both")
-    if (fullInit || settings?.absenceDelayTimer == null)        device.updateSetting("absenceDelayTimer", [value: 10, type: "number"])
-    if (fullInit || settings?.pirDetectionInterval == null)     device.updateSetting("pirDetectionInterval", [value: 10, type: "number"])
-    if (fullInit || settings?.aiInterferenceIdentification == null) device.updateSetting("aiInterferenceIdentification", false)
-    if (fullInit || settings?.aiSensitivityAdaptive == null)    device.updateSetting("aiSensitivityAdaptive", false)
-    if (fullInit || settings?.tempOffset == null)               device.updateSetting("tempOffset", 0)
-    if (fullInit || settings?.humidityOffset == null)           device.updateSetting("humidityOffset", 0)
-
-    //ToDo: Add other user preferences to the above list as necessary
+    if (settings?.presenceDetectionMode == null)         device.updateSetting("presenceDetectionMode", [value: "both", type: "enum"])
+    if (settings?.absenceDelayTimer == null)             device.updateSetting("absenceDelayTimer", [value: 10, type: "number"])
+    if (settings?.pirDetectionInterval == null)          device.updateSetting("pirDetectionInterval", [value: 10, type: "number"])
+    if (settings?.aiInterferenceIdentification == null)  device.updateSetting("aiInterferenceIdentification", false)
+    if (settings?.aiSensitivityAdaptive == null)         device.updateSetting("aiSensitivityAdaptive", false)
+    if (settings?.tempOffset == null)                    device.updateSetting("tempOffset", [value: 0.0, type: "decimal"])
+    if (settings?.humidityOffset == null)                device.updateSetting("humidityOffset", [value: 0.0, type: "decimal"])
+    if (settings?.motionSensitivity == null)             device.updateSetting("motionSensitivity", [value: "2", type: "enum"])
+    if (settings?.tempHumiditySamplingFrequency == null) device.updateSetting("tempHumiditySamplingFrequency", [value: "1", type: "enum"])
+    if (settings?.lightSamplingFrequency == null)        device.updateSetting("lightSamplingFrequency", [value: "1", type: "enum"])
+    if (settings?.ledDisabledNight == null)              device.updateSetting("ledDisabledNight", false)
+    if (settings?.tempHumiditySamplingPeriod == null)    device.updateSetting("tempHumiditySamplingPeriod", [value: 600, type: "number"])
+    if (settings?.lightSamplingPeriod == null)           device.updateSetting("lightSamplingPeriod", [value: 30, type: "number"])
+    if (settings?.temperatureReportingInterval == null)  device.updateSetting("temperatureReportingInterval", [value: 600, type: "number"])
+    if (settings?.temperatureReportingThreshold == null) device.updateSetting("temperatureReportingThreshold", [value: 1.0, type: "decimal"])
+    if (settings?.temperatureReportingMode == null)      device.updateSetting("temperatureReportingMode", [value: "1", type: "enum"])
+    if (settings?.humidityReportingInterval == null)     device.updateSetting("humidityReportingInterval", [value: 600, type: "number"])
+    if (settings?.humidityReportingThreshold == null)    device.updateSetting("humidityReportingThreshold", [value: 5.0, type: "decimal"])
+    if (settings?.humidityReportingMode == null)         device.updateSetting("humidityReportingMode", [value: "1", type: "enum"])
+    if (settings?.lightReportingInterval == null)        device.updateSetting("lightReportingInterval", [value: 600, type: "number"])
+    if (settings?.lightReportingThreshold == null)       device.updateSetting("lightReportingThreshold", [value: 20.0, type: "decimal"])    
+    if (settings?.lightReportingMode == null)            device.updateSetting("lightReportingMode", [value: "1", type: "enum"])
+//    if (settings?.ledNightTimeSchedule == null)          device.updateSetting("ledNightTimeSchedule", [value: "21:00-09:00", type: "string"])
     
     state.driverVersion = driverVersionAndTimeStamp()
 }
@@ -881,38 +852,6 @@ void fp300BlackMagic() {
     
     // Call routine to send the Zigbee commands
     sendZigbeeCommands(cmds)
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// PARAMETER CHANGE DETECTION
-// ════════════════════════════════════════════════════════════════════════════
-
-void storeParamValue(String name, Object value, String type, Boolean isLocal = false) {
-    if (state.params == null) state.params = []
-    def existing = state.params.find { it.n == name }
-    if (existing?.v == value && existing?.t == type) return   // no change
-    state.params.removeAll { it.n == name }
-    state.params << [n: name, t: type, v: value, l: isLocal]
-}
-
-Object getStoredParamValue(String name) {
-    return state.params?.find { it.n == name }?.v
-}
-
-Boolean hasParamChanged(String name, Object newValue) {
-    def stored = getStoredParamValue(name)
-    if (stored == null) return newValue != null
-    if (newValue == null) return false
-    return normalizeParam(newValue) != normalizeParam(stored)
-}
-
-private Object normalizeParam(Object v) {
-    if (v instanceof String) {
-        if (v.isInteger())                     return v.toInteger()
-        if (v.isDouble())                      return v.toDouble()
-        if (v.toLowerCase() in ["true","false"]) return v.toLowerCase() == "true"
-    }
-    return v
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -987,7 +926,6 @@ void checkDriverVersion() {
     if (state.driverVersion != driverVersionAndTimeStamp()) {
         logInfo "Updating driver version from ${state.driverVersion} to ${driverVersionAndTimeStamp()}"
         state.driverVersion = driverVersionAndTimeStamp()
-        if (state.params == null) state.params = []
     }
 }
 

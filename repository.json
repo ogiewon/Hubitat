@@ -13,6 +13,15 @@
               "Multi Sensors",
               "Motion Control"
             ]
+        },
+       {
+            "name": "Pushover",
+            "category": "Notifications",
+            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/pushover-notifications.src/pushover-notifications.json",
+            "description": "Pushover Notifications Community Driver with addtional features",
+            "tags": [
+              "Notifications"
+            ]
         }
     ]
 }

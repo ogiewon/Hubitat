@@ -1,0 +1,18 @@
+{
+    "packageName": "Pushover",
+    "author": "Dan Ogorchock",
+    "version": "1.0.20260304",
+    "category": "Notifications",
+    "minimumHEVersion": "2.4.4.133",
+    "dateReleased": "2026-03-04",
+    "releaseNotes": "1.0.20260304 2026-03-04 Added to HPM",
+    "communityLink": "https://community.hubitat.com/t/pushover-notifications-driver-slightly-enhanced/1067?u=ogiewon",
+    "drivers": [
+        {
+            "name": "Pushover",
+            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy",
+            "namespace": "ogiewon",
+            "required": true
+        }
+    ]
+}

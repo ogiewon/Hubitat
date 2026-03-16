@@ -1,0 +1,18 @@
+{
+    "packageName": "Logitech Harmony Hub Parent",
+    "author": "Dan Ogorchock",
+    "version": "0.2.20230311",
+    "category": "Control",
+    "minimumHEVersion": "2.4.4.133",
+    "dateReleased": "2023-03-11",
+    "releaseNotes": "0.2.20230311 2023-03-11 Adding to HPM",
+    "communityLink": "https://community.hubitat.com/t/release-logitech-harmony-hub-driver/7618?u=ogiewon",
+    "drivers": [
+        {
+            "name": "Logitech Harmony Hub Parent",
+            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/logitech-harmony-hub-parent.src/logitech-harmony-hub-parent.groovy",
+            "namespace": "ogiewon",
+            "required": true
+        }
+    ]
+}

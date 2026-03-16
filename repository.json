@@ -22,7 +22,19 @@
             "tags": [
               "Notifications"
             ]
+        },
+       {
+            "name": "Logitech Harmony Hub Parent",
+            "category": "Control",
+            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/logitech-harmony-hub-parent.src/logitech-harmony-hub-parent.json",
+            "description": "Logitech Harmony Hub Parent driver, all local LAN communications.",
+            "tags": [
+              "IR & RF",
+			  "Multimedia",
+			  "LAN"
+            ]
         }
+
     ]
 }
 

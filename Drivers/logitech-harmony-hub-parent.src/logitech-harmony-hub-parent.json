@@ -6,6 +6,7 @@
     "minimumHEVersion": "2.4.4.133",
     "dateReleased": "2023-03-11",
     "releaseNotes": "0.2.20230311 2023-03-11 Adding to HPM",
+    "documentationLink": "https://github.com/ogiewon/Hubitat/blob/master/Drivers/logitech-harmony-hub-parent.src/README.md",
     "communityLink": "https://community.hubitat.com/t/release-logitech-harmony-hub-driver/7618?u=ogiewon",
     "drivers": [
         {

@@ -33,8 +33,18 @@
 			  "Multimedia",
 			  "LAN"
             ]
+        },
+       {
+            "name": "IoTaWatt Parent",
+            "category": "Integrations",
+            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/iotawatt-parent.src/iotawatt-parent.json",
+            "description": "IoTaWatt whole home energy monitoring system driver.",
+            "tags": [
+              "Energy Monitoring",
+			  "Monitoring",
+			  "LAN"
+            ]
         }
-
     ]
 }
 

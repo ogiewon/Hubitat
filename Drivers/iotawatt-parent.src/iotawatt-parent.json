@@ -1,0 +1,19 @@
+{
+    "packageName": "IoTaWatt Parent",
+    "author": "Dan Ogorchock",
+    "version": "1.0.20230723",
+    "category": "Integrations",
+    "minimumHEVersion": "2.4.4.133",
+    "dateReleased": "2023-07-23",
+    "releaseNotes": "1.0.20230723 2023-07-23 Adding to HPM",
+    "documentationLink": "https://github.com/ogiewon/Hubitat/blob/master/Drivers/iotawatt-parent.src/README.md",
+    "communityLink": "https://community.hubitat.com/t/release-iotawatt-power-monitor-driver/7488?u=ogiewon",
+    "drivers": [
+        {
+            "name": "IoTaWatt Parent",
+            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy",
+            "namespace": "ogiewon",
+            "required": true
+        }
+    ]
+}

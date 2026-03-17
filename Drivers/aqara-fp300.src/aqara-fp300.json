@@ -1,11 +1,11 @@
 {
     "packageName": "Aqara FP300 Presence Multi-Sensor",
     "author": "Dan Ogorchock",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "category": "Control",
     "minimumHEVersion": "2.4.4.133",
-    "dateReleased": "2026-03-13",
-    "releaseNotes": "1.0.9 2026-03-13 Replace @Field variables with traditional state variables. Add Advanced/Experimental Preferences Section.",
+    "dateReleased": "2026-03-17",
+    "releaseNotes": "1.0.10 2026-03-17 Added Firmware Version info thanks to @hubitrep",
     "communityLink": "https://community.hubitat.com/t/release-dedicated-aqara-fp300-presence-multi-sensor-zigbee-driver/162353?u=ogiewon",
     "drivers": [
         {

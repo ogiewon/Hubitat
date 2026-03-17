@@ -21,11 +21,12 @@
  *                                          Removed aiInterferenceIdentification & aiSensitivityAdaptive user preferences, as setting these also messes up the mmWave calibration.  Will revisit if they are actually useful.
  *  1.0.9    2026-03-12    Dan Ogorchock    Replace @Field variables with traditional state variables.  @Field variables are reset each time the driver source code is saved, which can lead to unexpected behaviors.
  *                                          Added aiInterferenceIdentification & aiSensitivityAdaptive back as Advanced/Experimental user preferences. Only send these 2 setting to the FP300 if the value has changed. 
+ *  1.0.10   2026-03-17    Dan Ogorchock    Added Firmware Version info thanks to @hubitrep!
  *
  */
 
-static String version()   { "1.0.9" }
-static String timeStamp() { "2026/03/13 09:44" }
+static String version()   { "1.0.10" }
+static String timeStamp() { "2026/03/17 10:40" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
@@ -195,7 +196,12 @@ private void parseAttribute(String description, Map descMap, Map it) {
             break
         case "0000":
             if (it.attrId == "0001") sendRttEvent()
-            else if (it.attrId == "0005") sendInfoEvent("Button was pressed – device awake for 15 min")
+            else if (it.attrId == "0004") { device.updateDataValue("manufacturer", it.value ?: ""); logDebug "Manufacturer: ${it.value}" }
+            else if (it.attrId == "0005") {
+                device.updateDataValue("model", it.value ?: ""); logDebug "Model: ${it.value}"
+                if (descMap.command == "0A") sendInfoEvent("Button was pressed – device awake for 15 min")
+            }
+            else if (it.attrId == "0006") { device.updateDataValue("dateCode", it.value ?: ""); logDebug "Date code: ${it.value}" }
             else if (it.attrId == "FF01") parseAqaraAttributeFF01(description)
             break
         case "FCC0":
@@ -460,7 +466,32 @@ void decodeAqaraStruct(String description) {
                     default:   logDebug "decodeAqaraStruct 2B unhandled tag=0x${valueHex[(i+0)..(i+1)]} val=${rawValue}"
                 }
                 i += 8; break
+            case 0x42:  // String type – Aqara often encodes firmware version here
+                int strLen = Integer.parseInt(valueHex[(i+4)..(i+5)], 16)
+                if (i + 6 + strLen * 2 <= MsgLength) {
+                    String strVal = new String(valueHex[(i+6)..(i+5+strLen*2)].decodeHex())
+                    switch (tag) {
+                        case 0x03: device.updateDataValue("aqaraFirmware", strVal); logDebug "Aqara firmware (tag 0x03): ${strVal}"; break
+                        case 0x05: device.updateDataValue("aqaraModel", strVal); logDebug "Aqara model (tag 0x05): ${strVal}"; break
+                        default:   logDebug "decodeAqaraStruct string tag=0x${valueHex[(i+0)..(i+1)]} val='${strVal}'"
+                    }
+                }
+                i += 6 + strLen * 2; break
             case 0x0B: case 0x1B: case 0x23: case 0x2B:
+                if (dataType == 0x23) {
+                    rawValue = Integer.parseInt(valueHex[(i+10)..(i+11)] + valueHex[(i+8)..(i+9)] + valueHex[(i+6)..(i+7)] + valueHex[(i+4)..(i+5)], 16)
+                    if (tag == 0x0D) {
+                        // matches fw version format reported in some reddit posts
+                        String fwVer = "${(rawValue >> 24) & 0xFF}.${(rawValue >> 16) & 0xFF}.0_${String.format("%02d%02d", (rawValue >> 8) & 0xFF, rawValue & 0xFF)}"
+                        device.updateDataValue("aqaraVersion", fwVer)
+                        // same decoding as kkossev's driver
+                        String fwVerInt = "${(rawValue >> 24) & 0xFF}.${(rawValue >> 16) & 0xFF}.${rawValue & 0xFFFF}"
+                        device.updateDataValue("aqaraVersionInt", fwVerInt)
+                        logDebug "Aqara firmware version (tag 0x0D): ${fwVer} (${fwVerInt})"
+                    } else {
+                        logDebug "decodeAqaraStruct 4B tag=0x${valueHex[(i+0)..(i+1)]} val=${rawValue}"
+                    }
+                }
                 i += 12; break
             case 0x24:
                 i += 14; break
@@ -655,6 +686,11 @@ void refresh() {
     cmds += zigbee.readAttribute(0x0402, 0x0000, [:], delay=200)
     cmds += zigbee.readAttribute(0x0405, 0x0000, [:], delay=200)
     cmds += zigbee.readAttribute(0x0400, 0x0000, [:], delay=200)
+    // Read device details from Basic cluster
+    cmds += zigbee.readAttribute(zigbee.BASIC_CLUSTER, [0x0004, 0x0005, 0x0006], [:], delay=200)
+    // Read Aqara proprietary struct (contains firmware version, etc.)
+    cmds += zigbee.readAttribute(0xFCC0, 0x00F7, [mfgCode: 0x115F], delay=200)
+
     sendZigbeeCommands(cmds)
 }
 
@@ -807,6 +843,7 @@ void configure() {
 
 void initialize() {
     log.info "${device.displayName} initialize() called"
+    runIn(5, "refresh")
     state.pirState    = device.currentValue("pirDetection") == "active"  ? 1 : 0
     state.mmwaveState = device.currentValue("roomState")   == "occupied" ? 1 : 0
 }

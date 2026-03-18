@@ -838,6 +838,8 @@ void configure() {
     runIn(DEFAULT_POLLING_INTERVAL, "deviceHealthCheck", [overwrite: true, misfire: "ignore"])
     runIn(5, "fp300BlackMagic")
     runIn(15, "updated")
+    // Read device details from Basic cluster while device is awake
+    sendZigbeeCommands(zigbee.readAttribute(zigbee.BASIC_CLUSTER, [0x0004, 0x0005, 0x0006], [:], delay=200))
     logWarn "configure() - If no further logs appear, make sure you have woken the FP300 by pressing the button on it."
 }
 
@@ -941,7 +943,10 @@ void fp300BlackMagic() {
     
     // Bind manufacturer cluster and read initial values
     cmds += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0xFCC0 {${device.zigbeeId}} {}"]
-    
+
+    // Read Aqara proprietary struct (contains firmware version, etc.)
+    cmds += zigbee.readAttribute(0xFCC0, 0x00F7, [mfgCode: 0x115F], delay=200)
+
     // Call routine to send the Zigbee commands
     sendZigbeeCommands(cmds)
 }

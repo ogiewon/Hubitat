@@ -5,7 +5,7 @@
  *
  *	ABC Child Creator for Advanced Button Controller
  *
- *	Author: SmartThings, modified by Bruce Ravenel, Dale Coffing, Stephan Hackett, Dan Ogorchock
+ *	Authors: SmartThings, modified by Bruce Ravenel, Dale Coffing, Stephan Hackett (@stephack), Dan Ogorchock (@ogiewon)
  *
  *	04/09/26 - Per agreement with Stephan Hackett, ABC is now being maintained by Dan Ogorchock 
  *

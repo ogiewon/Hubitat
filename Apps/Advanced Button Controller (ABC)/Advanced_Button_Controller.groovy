@@ -4,7 +4,7 @@
  *
  *	Advanced Button Controller (Parent/Child Version)
  *
- *	Original Author: Stephan Hackett
+ *	Authora: Stephan Hackett (@stephack), Dan Ogorchock (@ogiewon)
  * 
  *	04/09/26 - Per agreement with Stephan Hackett, ABC is now being maintained by Dan Ogorchock 
  * 
@@ -55,7 +55,7 @@ def mainPage() {
 				paragraph "<div style='text-align:center'>${appHead}</div>"
 			}
         	section("Create a new button device mapping.") {
-            	app(name: "childApps", appName: "ABC Button Mapping", namespace: "stephack", title: "<img src=https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/resources/images/New.png height=50 width=50>      New Button Device Mapping", multiple: true)
+            	app(name: "childApps", appName: "ABC Button Mapping", namespace: "ogiewon", title: "<img src=https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/resources/images/New.png height=50 width=50>      New Button Device Mapping", multiple: true)
         	}
 			section("") {
 				href (name: "aboutPage", title: "User's Guide", 

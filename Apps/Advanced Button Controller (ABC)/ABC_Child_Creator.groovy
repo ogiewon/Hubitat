@@ -7,31 +7,31 @@
  *
  *	Author: SmartThings, modified by Bruce Ravenel, Dale Coffing, Stephan Hackett, Dan Ogorchock
  *
- *  04/09/26 - Per agreement with Stephan Hackett, ABC is now being maintained by Dan Ogorchock 
+ *	04/09/26 - Per agreement with Stephan Hackett, ABC is now being maintained by Dan Ogorchock 
  *
- *  04/03/26 - added new 'menu: "Automations"' to the app metadata to properly display this app as an Automation in HE 2.5.x menu
+ *	04/03/26 - added new 'menu: "Automations"' to the app metadata to properly display this app as an Automation in HE 2.5.x menu
  *
- *  01/09/22 - added support for RMv5 rules. Older versions are considered "legacy". Requires Hub v2.2.9 f/w or higher.
+ *	01/09/22 - added support for RMv5 rules. Older versions are considered "legacy". Requires Hub v2.2.9 f/w or higher.
  *           - Thanks to @bertabcd1234 for guidance with the undocumented RMUtils v5 api.
  *
- *  09/03/21 - added new garageDoorControl capability with distinct open/close actions
+ *	09/03/21 - added new garageDoorControl capability with distinct open/close actions
  *           - original Garage Door section is now Legacy Garage Door
  *
- *  08/12/21 - added optional input to disable log.info statements to reduce Hubitat Log traffic (Dan Ogorchock)
+ *	08/12/21 - added optional input to disable log.info statements to reduce Hubitat Log traffic (Dan Ogorchock)
  *
- *  06/17/21 - added support for stopPositionChange() and startPositionChange(direction) to comply with windowShade capability
+ *	06/17/21 - added support for stopPositionChange() and startPositionChange(direction) to comply with windowShade capability
  *
- *  10/02/20 - split Ramp section in 2. Original is now called Ramp(Auto Stop on Release) and there is also a new option called Ramp (Manual Stop)
+ *	10/02/20 - split Ramp section in 2. Original is now called Ramp(Auto Stop on Release) and there is also a new option called Ramp (Manual Stop)
  *           - added the ability to unlock locks since this was added as an option in built-in apps.
  *
- *  03/01/20 - added ability to control windowShade devices under "Shades" menu option)
+ *	03/01/20 - added ability to control windowShade devices under "Shades" menu option)
  *           - original shade control (doorControl) moved to "Garage Doors/Legacy Shades" menu option
  *
- *  02/26/20 - Forced initialization on hub restart to avoid delays on "first activation". Thank you @ogiewon for the suggestion.
+ *	02/26/20 - Forced initialization on hub restart to avoid delays on "first activation". Thank you @ogiewon for the suggestion.
  *
- *  11/05/19 - Added previousTrack support for speakers
+ *	11/05/19 - Added previousTrack support for speakers
  *
- *  10/06/19 - Added Auto as option under Set Fan Speed
+ *	10/06/19 - Added Auto as option under Set Fan Speed
  *
  *	08/14/19 - Send Http Requests (POST or GET - simple form encoded)
  *
@@ -49,7 +49,7 @@
  *
  *	02/10/19 - setColor Level is no longer required (can be left blank)
  *
- *  02/07/19 - fixed Set Color bug (missing level option)
+ *	02/07/19 - fixed Set Color bug (missing level option)
  *
  *	01/14/19 - updated logging output to appropriate type (info vs debug)
  *			 - added input to enable/disable debug logging
@@ -70,15 +70,15 @@
  *		removed section shallHide for sub inputs .... (section will be visible if primary input has a value...sub value no longer checked)
  *
  *
- * 7/03/18 - code cleanup
+ *	7/03/18 - code cleanup
  *		Added pictures enhancements and reordered options for better flow
  *		Corrected default child app label (previously defaulted to "ABC Button Mapping" on first save)
  *
  *
- * 7/01/18 - added Released actions for all control sections
+ *	7/01/18 - added Released actions for all control sections
  *		Pushed/Held/DoubleTapped/Released hidden from Dimmer Ramp section based on devices capabilities
  *
- * 6/30/18 - adapted fan cycle to be compliant with fanControl capability (removed cycle support for custom driver)
+ *	6/30/18 - adapted fan cycle to be compliant with fanControl capability (removed cycle support for custom driver)
  *		added ability to set specific fan speed
  *		added support for ramping (graceful dimming) - switch/bulb needs changeLevel capability and button device needs releaseableButton capability
  *		
@@ -92,25 +92,25 @@
  *	3/28/18 - added option to set color and temp
  *		test code for custom commands (not yet working)
  *
- *  2/06/18 - converted code to hubitat format
+ *	2/06/18 - converted code to hubitat format
  * 		removed ability to hide "held options"
  *		removed hwspecifics section as is no longer applicable
  *		adjusted device list to look for "capability.pushableButton"
  *		adjusted buttonDevice subscription (pushed, held, doubleTapped)
  *		adjusted buttonEvent() to swap "name" and "value" as per new rules
- * 2/08/18 - change formatting for Button Config Preview (Blue/Complete color)
+ *	2/08/18 - change formatting for Button Config Preview (Blue/Complete color)
  *		Added Double Tap inputs and edited shallHide() getDescription()
  *		added code for showDouble() to only display when controller support DT
  *		removed enableSpec and other Virtual Container Code as this is not supported in Hubitat
- *2/12/18
+ *	2/12/18
  * 		Updated to new detailsMap and modified Button Config/Preview pages
  *		hides secondary values if primary not set. When dispayed they are now "required". 
  *
- *2/12/18
+ *	2/12/18
  *		Switched to parent/child config	
  *		removed button pics and descriptive text (not utilized by hubitat)
  *
- *10/24/18
+ *	10/24/18
  *		added the ability to cycle through Scenes (done using push() command and cycles in alphabetical order only)
  *		minor GUI updates
  */

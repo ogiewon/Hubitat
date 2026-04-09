@@ -4,7 +4,7 @@
  *
  *	Advanced Button Controller (Parent/Child Version)
  *
- *	Authora: Stephan Hackett (@stephack), Dan Ogorchock (@ogiewon)
+ *	Authors: Stephan Hackett (@stephack), Dan Ogorchock (@ogiewon)
  * 
  *	04/09/26 - Per agreement with Stephan Hackett, ABC is now being maintained by Dan Ogorchock 
  * 

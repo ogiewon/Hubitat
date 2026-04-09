@@ -5,7 +5,9 @@
  *
  *	ABC Child Creator for Advanced Button Controller
  *
- *	Author: SmartThings, modified by Bruce Ravenel, Dale Coffing, Stephan Hackett
+ *	Author: SmartThings, modified by Bruce Ravenel, Dale Coffing, Stephan Hackett, Dan Ogorchock
+ *
+ *  04/09/26 - Per agreement with Stephan Hackett, ABC is now being maintained by Dan Ogorchock 
  *
  *  04/03/26 - added new 'menu: "Automations"' to the app metadata to properly display this app as an Automation in HE 2.5.x menu
  *

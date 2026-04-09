@@ -1,0 +1,15 @@
+{
+  "currVersion": "v0.2.260409",
+  
+  "rawCode":
+  "<small><a href='https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/ABC_Child_Creator.groovy' target='_blank'>  [Raw Code]</a></small>",
+  
+  "noUpdateImg":
+  "<img src='https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/resources/images/noUpdate.png' title='No Update Needed.'><small><span style='color:green'> Up To Date</span></small>",
+  
+   "updateImg":
+  "<img src='https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/resources/images/update.png' title='Please Update Driver.'></a><small><span style='color:red'> Update Available: ",
+  
+  "changeLog":
+  "<a href='https://community.hubitat.com/t/advanced-button-controller-abc/' target='_blank'>[Update Notes]</a></span></small>"
+}

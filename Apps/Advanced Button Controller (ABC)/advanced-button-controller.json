@@ -10,7 +10,7 @@
     "communityLink": "https://community.hubitat.com/t/advanced-button-controller-abc/",
     "apps": [
         {
-            "name": "ABC Child Creator",
+            "name": "ABC Button Mapping",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/ABC_Child_Creator.groovy",
             "namespace": "ogiewon",
             "required": true

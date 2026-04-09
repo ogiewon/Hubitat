@@ -19,7 +19,8 @@
             "name": "Advanced Button Controller",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/Advanced_Button_Controller.groovy",
             "namespace": "ogiewon",
-            "required": true
+            "required": true,
+			"primary": true
         }
     ]
 }

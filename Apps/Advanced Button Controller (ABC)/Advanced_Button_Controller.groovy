@@ -6,9 +6,9 @@
  *
  *	Original Author: Stephan Hackett
  * 
- *  04/09/26 - Per agreement with Stephan Hackett, ABC is now being maintained by Dan Ogorchock 
+ *	04/09/26 - Per agreement with Stephan Hackett, ABC is now being maintained by Dan Ogorchock 
  * 
- *  04/03/26 - added new 'menu: "Automations"' to the app metadata to properly display this app as an Automation in HE 2.5.x menu
+ *	04/03/26 - added new 'menu: "Automations"' to the app metadata to properly display this app as an Automation in HE 2.5.x menu
  *	
  *	01/14/19 - added url to Raw code at the top of the parent/child apps
  *			 - adjusted logging

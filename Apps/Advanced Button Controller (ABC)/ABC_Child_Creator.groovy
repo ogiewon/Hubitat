@@ -121,11 +121,11 @@ def version(){"v0.2.260409"}
 
 definition(
     name: "ABC Button Mapping",
-    namespace: "stephack",
-    author: "Stephan Hackett",
+    namespace: "ogiewon",
+    author: "Dan Ogorchock",
     description: "Assign tasks to your Button Controller Devices",
     category: "My Apps",
-    parent: "stephack:Advanced Button Controller",
+    parent: "ogiewon:Advanced Button Controller",
     iconUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/resources/images/abc2.png",
     iconX2Url: "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/resources/images/abc2.png",
     iconX3Url: "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/resources/images/abc2.png", 

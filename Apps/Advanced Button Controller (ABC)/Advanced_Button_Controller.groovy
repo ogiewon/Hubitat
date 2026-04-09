@@ -21,9 +21,9 @@ def version(){"v0.2.260409"}
 
 definition(
     name: "Advanced Button Controller",
-    namespace: "stephack",
+    namespace: "ogiewon",
     singleInstance: true,
-    author: "Stephan Hackett",
+    author: "Dan Ogorchock",
     description: "Configure devices with buttons like the Aeon Labs Minimote and Lutron Pico Remotes.",
     category: "My Apps",
     iconUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/resources/images/abc2.png",

@@ -30,8 +30,8 @@
             "description": "Logitech Harmony Hub Parent driver, all local LAN communications.",
             "tags": [
               "IR & RF",
-			  "Multimedia",
-			  "LAN"
+              "Multimedia",
+              "LAN"
             ]
         },
        {
@@ -41,8 +41,8 @@
             "description": "IoTaWatt whole home energy monitoring system driver.",
             "tags": [
               "Energy Monitoring",
-			  "Monitoring",
-			  "LAN"
+              "Monitoring",
+              "LAN"
             ]
         },
        {
@@ -56,4 +56,3 @@
         }
     ]
 }
-

@@ -10,6 +10,7 @@
   "communityLink": "https://community.hubitat.com/t/advanced-button-controller-abc/",
   "apps": [
     {
+       "id": "42804ef7-1a34-4967-a309-9d1509360d1d",		
        "name": "Advanced Button Controller",
        "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/Advanced_Button_Controller.groovy",
        "namespace": "ogiewon",
@@ -18,6 +19,7 @@
        "primary": true
     },
     {
+       "id": "b0472999-7d8b-4b04-ad3e-ff39ed9a64be",		
        "name": "ABC Button Mapping",
        "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/ABC_Child_Creator.groovy",
        "namespace": "ogiewon",

@@ -8,17 +8,10 @@
     "releaseNotes": "0.2.260409 2026-04-09 Changed maintainer to Dan Ogorchock and Adding to HPM",
     "documentationLink": "https://github.com/ogiewon/Hubitat/blob/master/Apps/Advanced%20Button%20Controller%20(ABC)/README.md",
     "communityLink": "https://community.hubitat.com/t/advanced-button-controller-abc/",
-    "apps": [
+    "bundles": [
          {
             "name": "Advanced Button Controller",
-            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/Advanced_Button_Controller.groovy",
-            "namespace": "ogiewon",
-            "required": true,
-			"primary": true
-        },
-       {
-            "name": "ABC Button Mapping",
-            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/ABC_Child_Creator.groovy",
+            "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Apps/Advanced%20Button%20Controller%20(ABC)/AdvancedButtonController.zip",
             "namespace": "ogiewon",
             "required": true
         }

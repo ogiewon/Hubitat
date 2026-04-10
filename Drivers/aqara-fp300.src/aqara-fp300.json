@@ -9,6 +9,7 @@
     "communityLink": "https://community.hubitat.com/t/release-dedicated-aqara-fp300-presence-multi-sensor-zigbee-driver/162353?u=ogiewon",
     "drivers": [
         {
+            "id": "b36ba4d6-091f-4483-b1a2-2bfc4592c31e",
             "name": "Aqara FP300 Presence Multi-Sensor",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/aqara-fp300.src/aqara-fp300.groovy",
             "namespace": "ogiewon",

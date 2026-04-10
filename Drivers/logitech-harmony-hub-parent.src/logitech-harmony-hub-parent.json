@@ -10,6 +10,7 @@
     "communityLink": "https://community.hubitat.com/t/release-logitech-harmony-hub-driver/7618?u=ogiewon",
     "drivers": [
         {
+            "id": "0dd5ba2d-6242-45a2-a8a8-789d8024d0c5",
             "name": "Logitech Harmony Hub Parent",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/logitech-harmony-hub-parent.src/logitech-harmony-hub-parent.groovy",
             "namespace": "ogiewon",

@@ -10,6 +10,7 @@
     "communityLink": "https://community.hubitat.com/t/release-iotawatt-power-monitor-driver/7488?u=ogiewon",
     "drivers": [
         {
+            "id": "3860ba64-2dd6-4546-8844-9211773581fc",
             "name": "IoTaWatt Parent",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/refs/heads/master/Drivers/iotawatt-parent.src/iotawatt-parent.groovy",
             "namespace": "ogiewon",

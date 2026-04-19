@@ -53,6 +53,7 @@ metadata {
         capability "Refresh"
         capability "Initialize"
         capability "Configuration"
+        capability "Presence Sensor"
         
         attribute "_status_",                "string"
         attribute "healthStatus",            "enum", ["unknown", "offline", "online"]
@@ -548,8 +549,10 @@ void updateMotionState(String source = null) {
 
 def roomStateEvent(int value) {
     String status = value ? "occupied" : "unoccupied"
+    String presence = value ? "present" : "not present"
     sendEvent(name: "roomState", "value": status)
-    logInfo "roomState (mmWave 'presence') is ${status}"
+    sendEvent(name: "presence", "value": presence)
+    logInfo "roomState (mmWave 'presence') is ${status} | presence: ${presence}"
 }
                                               
 def pirDetectionEvent(int value) {

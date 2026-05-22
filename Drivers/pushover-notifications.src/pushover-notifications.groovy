@@ -31,6 +31,8 @@
 *       2026-02-03 @hubitrep             Various minor code fixes
 *       2026-02-07 Dan Ogorchock         Code optimized: Pre-compiled regex patterns for faster message processing, StringBuilder for HTTP body construction, Optimized string operations, Reduced redundant method calls
 *       2026-03-04 @hubitrep             Added Emergency acknowledgement receipt polling and callback URL features
+*       2026-05-22 @hubitrep             Always supply retry/expire for Emergency (priority=2) messages, falling back to defaults (60/900) when unset, to avoid Pushover HTTP 400 "expire must be supplied with priority=2"
+*       2026-05-22 @hubitrep             Guard null/blank custom HTML open/close chars in [HTML] processing to prevent NullPointerException (and message corruption) when those preferences were never persisted
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -78,7 +80,7 @@ import java.text.SimpleDateFormat
 import groovyx.net.http.HttpResponseException
 import groovy.transform.Field
 
-def version() {return "v1.0.20260304"}
+def version() {return "v1.0.20260522"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {
@@ -399,11 +401,15 @@ def deviceNotification(message) {
     // HTML processing - OPTIMIZATION: Chained replace operations
     if(message.contains("[HTML]")){
         html = "1"
+        // Guard against null/blank custom HTML chars (e.g. preference never persisted) —
+        // String.replace(null,..) throws NPE, and replace("",..) corrupts the message.
+        String openChar = htmlOpen ?: "≤"
+        String closeChar = htmlClose ?: "≥"
         message = message.minus("[HTML]")
                          .replace("[OPEN]", "<")
                          .replace("[CLOSE]", ">")
-                         .replace(htmlOpen, "<")
-                         .replace(htmlClose, ">")
+                         .replace(openChar, "<")
+                         .replace(closeChar, ">")
         if (logEnable) log.debug "Pushover processed HTML: ${message}"
     }
 
@@ -583,12 +589,18 @@ def deviceNotification(message) {
     }
     // Emergency-only parameters: retry, expire, callback
     if (priority == "2") {
-        if (retry) {
-            postBodyBuilder.append("""Content-Disposition: form-data; name="retry"\r\n\r\n${retry}\r\n----d29vZHNieQ==\r\n""")
-        }
-        if (expire) {
-            postBodyBuilder.append("""Content-Disposition: form-data; name="expire"\r\n\r\n${expire}\r\n----d29vZHNieQ==\r\n""")
-        }
+        // Pushover REQUIRES both retry and expire for priority=2.  Fall back to the
+        // documented defaults if the value is blank/unset (e.g. the preference was never
+        // persisted), otherwise the request is rejected with HTTP 400 "expire must be
+        // supplied with priority=2".  Values are clamped to Pushover's accepted range.
+        int emRetry = (retry ?: 60) as int
+        if (emRetry < MIN_RETRY_SECONDS) emRetry = MIN_RETRY_SECONDS
+        postBodyBuilder.append("""Content-Disposition: form-data; name="retry"\r\n\r\n${emRetry}\r\n----d29vZHNieQ==\r\n""")
+
+        int emExpire = (expire ?: 900) as int
+        if (emExpire < MIN_RETRY_SECONDS) emExpire = MIN_RETRY_SECONDS
+        if (emExpire > MAX_EXPIRE_SECONDS) emExpire = MAX_EXPIRE_SECONDS
+        postBodyBuilder.append("""Content-Disposition: form-data; name="expire"\r\n\r\n${emExpire}\r\n----d29vZHNieQ==\r\n""")
         if (emCallbackUrl) {
             postBodyBuilder.append("""Content-Disposition: form-data; name="callback"\r\n\r\n${emCallbackUrl}\r\n----d29vZHNieQ==\r\n""")
         }
@@ -659,7 +671,7 @@ def deviceNotification(message) {
                     // For Emergency messages, always capture receipt; optionally start polling
                     if (priority == "2" && response.data.receipt) {
                         if (state.emergencyReceipt) {
-                            log.warn "New Emergency message sent while still tracking receipt ${state.emergencyReceipt} — replacing"
+                            if (logEnable) log.debug "New Emergency message sent while still tracking receipt ${state.emergencyReceipt} — replacing"
                             unschedule("checkEmergencyReceipt")
                         }
                         state.emergencyReceipt = response.data.receipt

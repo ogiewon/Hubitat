@@ -1,11 +1,11 @@
 {
     "packageName": "Pushover",
     "author": "Dan Ogorchock",
-    "version": "1.0.20260304",
+    "version": "1.0.20260522",
     "category": "Notifications",
     "minimumHEVersion": "2.4.4.133",
-    "dateReleased": "2026-03-04",
-    "releaseNotes": "1.0.20260304 2026-03-04 Added to HPM",
+    "dateReleased": "2026-05-22",
+    "releaseNotes": "1.0.20260522 2026-05-22 Added additional error handling and improved logic for Emergency messages.",
     "communityLink": "https://community.hubitat.com/t/pushover-notifications-driver-slightly-enhanced/1067?u=ogiewon",
     "drivers": [
         {

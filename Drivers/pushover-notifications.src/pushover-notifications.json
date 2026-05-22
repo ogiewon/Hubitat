@@ -9,6 +9,7 @@
     "communityLink": "https://community.hubitat.com/t/pushover-notifications-driver-slightly-enhanced/1067?u=ogiewon",
     "drivers": [
         {
+            "id": "4271e1a3-bd0e-4667-aa55-16e83867095d",
             "name": "Pushover",
             "location": "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy",
             "namespace": "ogiewon",

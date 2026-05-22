@@ -22,11 +22,13 @@
  *  1.0.9    2026-03-12    Dan Ogorchock    Replace @Field variables with traditional state variables.  @Field variables are reset each time the driver source code is saved, which can lead to unexpected behaviors.
  *                                          Added aiInterferenceIdentification & aiSensitivityAdaptive back as Advanced/Experimental user preferences. Only send these 2 setting to the FP300 if the value has changed. 
  *  1.0.10   2026-03-17    Dan Ogorchock    Added Firmware Version info thanks to @hubitrep!
+ *  1.0.11   2026-03-17    Dan Ogorchock    Minor changes to refresh() to reduce the chance of overwhelming the FP300 sensor, clean up firmware version number reporting, fix dateCode no being updated reliably
+ *  1.1.0    2026-04-23    Dan Ogorchock    Add new User Preference to alter the behavior of "BOTH" presence detection mode to mimic Aqara's implementation on their hubs when this setting is Enabled.
  *
  */
 
-static String version()   { "1.0.10" }
-static String timeStamp() { "2026/03/17 10:40" }
+static String version()   { "1.1.0" }
+static String timeStamp() { "2026/04/23 18:40" }
 
 import hubitat.device.Protocol
 import groovy.transform.Field
@@ -70,14 +72,15 @@ metadata {
     }
 
     preferences {
-        input name: "txtEnable",  type: "bool",   title: "<b>Description text logging</b>", description: "Provides informative log data during communications with the FP300 sensor.",  defaultValue: true
-        input name: "logEnable",  type: "bool",   title: "<b>Debug logging</b>", description: "Provides detailed log data to help debug the driver code.<br>Will automatically disable itself after 30 minutes.",              defaultValue: true
+        input name: "txtEnable",  type: "bool",   title: "<b>Enable descriptionText logging</b>", description: "Provides informative log data during communications with the FP300 sensor.",  defaultValue: true
+        input name: "logEnable",  type: "bool",   title: "<b>Enable debug logging</b>", description: "Provides detailed log data to help debug the driver code.<br>Will automatically disable itself after 30 minutes.", defaultValue: true
 
         // ── Basic parameters ──────────────────────────────────────────────────
-        input name: "presenceDetectionMode", type: "enum", title: "<b>Presence Detection Mode</b>", description: "<b>WARNING: Changing this setting will result in losing the mmWave sensor's current calibration.  You should re-run Spatial Learning if this setting is changed!</b><br> * 'Both mmWave+PIR' is the recommended setting.<br> * 'PIR only' reveals PIR Detection Interval preference and hides mmWave prefereces.<br> * 'Both mmWave+PIR' or 'mmWave only' reveals mmWave specific preferences and hides unsued PIR Detection Interval preference.", options: ["both": "Both mmWave+PIR", "mmwave": "mmWave only", "pir": "PIR only"], defaultValue: "both"
+        input name: "presenceDetectionMode", type: "enum", title: "<b>Presence Detection Mode</b>", description: "<b>WARNING: Changing this setting will result in losing the mmWave sensor's current calibration.  You should re-run Spatial Learning if this setting is changed!</b><br> * 'Both mmWave+PIR' is the recommended setting. (Best battery life)<br> * 'PIR only' reveals PIR Detection Interval preference and hides mmWave prefereces.<br> * 'Both mmWave+PIR' or 'mmWave only' reveals mmWave specific preferences and hides unsued PIR Detection Interval preference.", options: ["both": "Both mmWave+PIR", "mmwave": "mmWave only", "pir": "PIR only"], defaultValue: "both"
         if (presenceDetectionMode == "pir") {
             input name: "pirDetectionInterval", type: "number", title: "<b>PIR Detection Interval (2-300s)</b>", description: "The interval duration in seconds for triggering infrared detection.", range: 2..300,  defaultValue: 10
         } else {
+            input name: "useAqaraPresenceDetectionAlgorithm", type: "bool", title: "<b>Use Aqara Presence Detection Algorithm</b>", description: "When using 'Both mmWave+PIR' Presence Detection Mode:<br> * Enabled - PIR wakes up the sensor AND <b>mmWave must go active before 'motion' is set to 'active'.</b> Avoids False PIR Detections, but slower to react.<br> * Disabled - Either PIR <b>OR</b> mmWave will cause 'motion' to become active. Both must go inactive for 'motion' to go 'inactive'", defaultValue: false
             input name: "motionSensitivity", type: "enum", title: "<b>Presence Detection Sensitivity</b>", description: "High - Suitable for bedrooms, small offices, studies, etc..<br>Medium - Sutiable for rooms like bathrooms, small conference rooms, etc..<br>Low - Suitable for complicated rooms with large area, which have plants and curtains.", options: ["1": "low", "2": "medium", "3": "high"], defaultValue: "2"
             input name: "absenceDelayTimer", type: "number", title: "<b>Absence Confirmation Period (10-300s)</b>", description: "Used for accurate determination of 'no person' status, avoiding false alarms caused by personnel temporarily leaving or slight movements.", range: 10..300, defaultValue: 10
             input name: "detectionRangeZones", type: "string", title: "<b>Detection Range Zones</b>", description: "Comma-separated ranges in 0.25 m steps, e.g. '0.5-2.0' or '0.25-1.5,3.0-5.0'. Leave blank for all zones (0-6 m)."
@@ -195,14 +198,24 @@ private void parseAttribute(String description, Map descMap, Map it) {
             }
             break
         case "0000":
-            if (it.attrId == "0001") sendRttEvent()
-            else if (it.attrId == "0004") { device.updateDataValue("manufacturer", it.value ?: ""); logDebug "Manufacturer: ${it.value}" }
+            if (it.attrId == "0001") {
+                sendRttEvent()
+            }
+            else if (it.attrId == "0004") { 
+                device.updateDataValue("manufacturer", it.value ?: "")
+                logDebug "Manufacturer: ${it.value}" 
+            }
             else if (it.attrId == "0005") {
                 device.updateDataValue("model", it.value ?: ""); logDebug "Model: ${it.value}"
                 if (descMap.command == "0A") sendInfoEvent("Button was pressed – device awake for 15 min")
             }
-            else if (it.attrId == "0006") { device.updateDataValue("dateCode", it.value ?: ""); logDebug "Date code: ${it.value}" }
-            else if (it.attrId == "FF01") parseAqaraAttributeFF01(description)
+            else if (it.attrId == "0006") { 
+                device.updateDataValue("dateCode", it.value ?: "")
+                logDebug "Date code: ${it.value}" 
+            }
+            else if (it.attrId == "FF01") {
+                parseAqaraAttributeFF01(description)
+            }
             break
         case "FCC0":
             parseAqaraClusterFCC0(description, descMap, it)
@@ -481,13 +494,11 @@ void decodeAqaraStruct(String description) {
                 if (dataType == 0x23) {
                     rawValue = Integer.parseInt(valueHex[(i+10)..(i+11)] + valueHex[(i+8)..(i+9)] + valueHex[(i+6)..(i+7)] + valueHex[(i+4)..(i+5)], 16)
                     if (tag == 0x0D) {
-                        // matches fw version format reported in some reddit posts
+                        // Matches fw version format reported in some reddit posts.  Might need to be tweaked later as the ".0_" is hardcoded below per @hubitrep
                         String fwVer = "${(rawValue >> 24) & 0xFF}.${(rawValue >> 16) & 0xFF}.0_${String.format("%02d%02d", (rawValue >> 8) & 0xFF, rawValue & 0xFF)}"
                         device.updateDataValue("aqaraVersion", fwVer)
-                        // same decoding as kkossev's driver
-                        String fwVerInt = "${(rawValue >> 24) & 0xFF}.${(rawValue >> 16) & 0xFF}.${rawValue & 0xFFFF}"
-                        device.updateDataValue("aqaraVersionInt", fwVerInt)
-                        logDebug "Aqara firmware version (tag 0x0D): ${fwVer} (${fwVerInt})"
+                        logDebug "Aqara firmware version (tag 0x0D): ${fwVer}"
+                        if (device.getDataValue("aqaraVersionInt")) device.removeDataValue("aqaraVersionInt")  // ToDo: remove this line in a later version after users' hubs are cleaned up
                     } else {
                         logDebug "decodeAqaraStruct 4B tag=0x${valueHex[(i+0)..(i+1)]} val=${rawValue}"
                     }
@@ -517,7 +528,11 @@ void updateMotionState(String source = null) {
     
     switch (mode) {
         case "both":
-            newState = mmwave || pir ? "active" : "inactive"
+            if (useAqaraPresenceDetectionAlgorithm) {
+                newState = mmwave ? "active" : "inactive"
+            } else {
+                newState = mmwave || pir ? "active" : "inactive"
+            }
             break
         case "pir":
             newState = pir ? "active" : "inactive"
@@ -676,20 +691,16 @@ void trackTargetDistance() {
 void refresh() {
     logInfo "Refreshing FP300 parameters..."
     List<String> cmds = []
-    cmds += zigbee.readAttribute(0xFCC0, [0x010C, 0x0142, 0x014D, 0x014F, 0x0197, 0x0199, 0x015D, 0x015E], [mfgCode: 0x115F], delay=200)
-    cmds += zigbee.readAttribute(0xFCC0, [0x0162, 0x0170, 0x0192, 0x0193], [mfgCode: 0x115F], delay=200)
-    cmds += zigbee.readAttribute(0xFCC0, [0x0163, 0x0164, 0x0165], [mfgCode: 0x115F], delay=200)
-    cmds += zigbee.readAttribute(0xFCC0, [0x016A, 0x016B, 0x016C], [mfgCode: 0x115F], delay=200)
-    cmds += zigbee.readAttribute(0xFCC0, [0x0194, 0x0195, 0x0196], [mfgCode: 0x115F], delay=200)
-    cmds += zigbee.readAttribute(0xFCC0, 0x019A, [mfgCode: 0x115F], delay=200)
-    cmds += zigbee.readAttribute(0xFCC0, [0x0203, 0x023E], [mfgCode: 0x115F], delay=200)
-    cmds += zigbee.readAttribute(0x0402, 0x0000, [:], delay=200)
-    cmds += zigbee.readAttribute(0x0405, 0x0000, [:], delay=200)
-    cmds += zigbee.readAttribute(0x0400, 0x0000, [:], delay=200)
+    cmds += zigbee.readAttribute(0xFCC0, [0x010C, 0x0142, 0x014D, 0x014F, 0x0197], [mfgCode: 0x115F], delay=1000)
+    cmds += zigbee.readAttribute(0xFCC0, [0x0199, 0x015D, 0x015E, 0x0162, 0x0170], [mfgCode: 0x115F], delay=1000)
+    cmds += zigbee.readAttribute(0xFCC0, [0x0192, 0x0193, 0x0163, 0x0164, 0x0165], [mfgCode: 0x115F], delay=1000)
+    cmds += zigbee.readAttribute(0xFCC0, [0x016A, 0x016B, 0x016C, 0x0194, 0x0195], [mfgCode: 0x115F], delay=1000)
+    cmds += zigbee.readAttribute(0xFCC0, [0x0196, 0x019A, 0x0203, 0x023E, 0x00F7], [mfgCode: 0x115F], delay=1000)
+    cmds += zigbee.readAttribute(0x0402, 0x0000, [:], delay=1000)
+    cmds += zigbee.readAttribute(0x0405, 0x0000, [:], delay=1000)
+    cmds += zigbee.readAttribute(0x0400, 0x0000, [:], delay=1000)
     // Read device details from Basic cluster
-    cmds += zigbee.readAttribute(zigbee.BASIC_CLUSTER, [0x0004, 0x0005, 0x0006], [:], delay=200)
-    // Read Aqara proprietary struct (contains firmware version, etc.)
-    cmds += zigbee.readAttribute(0xFCC0, 0x00F7, [mfgCode: 0x115F], delay=200)
+    cmds += zigbee.readAttribute(zigbee.BASIC_CLUSTER, [0x0004, 0x0005, 0x0006], [:], delay=1000)
 
     sendZigbeeCommands(cmds)
 }
@@ -861,6 +872,7 @@ void initializeVars(boolean fullInit = false) {
     if (settings?.txtEnable  == null) device.updateSetting("txtEnable",  true)
 
     if (settings?.presenceDetectionMode == null)         device.updateSetting("presenceDetectionMode", [value: "both", type: "enum"])
+    if (settings?.useAqaraPresenceDetectionAlgorithm == null)  device.updateSetting("useAqaraPresenceDetectionAlgorithm", false)
     if (settings?.absenceDelayTimer == null)             device.updateSetting("absenceDelayTimer", [value: 10, type: "number"])
     if (settings?.pirDetectionInterval == null)          device.updateSetting("pirDetectionInterval", [value: 10, type: "number"])
     if (settings?.aiInterferenceIdentification == null)  device.updateSetting("aiInterferenceIdentification", false)

@@ -147,8 +147,8 @@ import java.util.regex.Pattern
 @Field static final Pattern IMAGE_PATTERN = ~/((\¨|\[IMAGE=)(.*?)(\¨|\]))/
 @Field static final Pattern RETRY_PATTERN = ~/((\©|\[EM\.RETRY=)(\d+)(\©|\]))/
 @Field static final Pattern EM_EXPIRE_PATTERN = ~/((\™|\[EM\.EXPIRE=)(\d+)(\™|\]))/
-@Field static final Pattern EM_POLL_PATTERN = ~/(\[EM.POLL=(\d+)\])/
-@Field static final Pattern EM_CALLBACK_PATTERN = ~/(\[EM.CALLBACK=(.*?)\])/
+@Field static final Pattern EM_POLL_PATTERN = ~/(\[EM\.POLL=(\d+)\])/
+@Field static final Pattern EM_CALLBACK_PATTERN = ~/(\[EM\.CALLBACK=(.*?)\])/
 @Field static final Pattern TTL_PATTERN = ~/(\[SELFDESTRUCT=(\d+)\])/
 
 // Constants

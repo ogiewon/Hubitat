@@ -33,6 +33,7 @@
 *       2026-03-04 @hubitrep             Added Emergency acknowledgement receipt polling and callback URL features
 *       2026-05-22 @hubitrep             Always supply retry/expire for Emergency (priority=2) messages, falling back to defaults (60/900) when unset, to avoid Pushover HTTP 400 "expire must be supplied with priority=2"
 *       2026-05-22 @hubitrep             Guard null/blank custom HTML open/close chars in [HTML] processing to prevent NullPointerException (and message corruption) when those preferences were never persisted
+*       2026-05-24 @hubitrep             Emergency ack polling now survives transient errors: a 5xx/429/timeout retries (bounded by a consecutive-error cap) and keeps the receipt, instead of silently abandoning polling on the first blip. A 404 (receipt gone) is terminal
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -80,7 +81,7 @@ import java.text.SimpleDateFormat
 import groovyx.net.http.HttpResponseException
 import groovy.transform.Field
 
-def version() {return "v1.0.20260522"}
+def version() {return "v1.0.20260524"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {
@@ -146,14 +147,16 @@ import java.util.regex.Pattern
 @Field static final Pattern IMAGE_PATTERN = ~/((\¨|\[IMAGE=)(.*?)(\¨|\]))/
 @Field static final Pattern RETRY_PATTERN = ~/((\©|\[EM\.RETRY=)(\d+)(\©|\]))/
 @Field static final Pattern EM_EXPIRE_PATTERN = ~/((\™|\[EM\.EXPIRE=)(\d+)(\™|\]))/
-@Field static final Pattern EM_POLL_PATTERN = ~/(\[EM.POLL=(\d+)\])/
-@Field static final Pattern EM_CALLBACK_PATTERN = ~/(\[EM.CALLBACK=(.*?)\])/
+@Field static final Pattern EM_POLL_PATTERN = ~/(\[EM\.POLL=(\d+)\])/
+@Field static final Pattern EM_CALLBACK_PATTERN = ~/(\[EM\.CALLBACK=(.*?)\])/
 @Field static final Pattern TTL_PATTERN = ~/(\[SELFDESTRUCT=(\d+)\])/
 
 // Constants
 @Field static final int MIN_RETRY_SECONDS = 30
 @Field static final int MAX_EXPIRE_SECONDS = 10800
 @Field static final int DEFAULT_CACHE_TIMEOUT_MS = 30000
+// Consecutive emergency-ack poll errors tolerated before giving up (10 * >=30s floor ~= 5 min)
+@Field static final int MAX_EMERGENCY_POLL_ERRORS = 10
 
 def logsOff(){
     log.warn "debug logging disabled..."
@@ -675,6 +678,7 @@ def deviceNotification(message) {
                             unschedule("checkEmergencyReceipt")
                         }
                         state.emergencyReceipt = response.data.receipt
+                        state.emergencyPollErrors = 0
                         sendEvent(name:"emergencyAck", value: "pending", descriptionText:"Emergency message sent, awaiting acknowledgement", isStateChange: true)
                         if (logEnable) log.debug "Emergency receipt: ${response.data.receipt}"
 
@@ -738,6 +742,29 @@ def getMsgLimits() {
     }
 }
 
+// Decide what the emergency-ack poller should do next, given the poll outcome.
+// Pure (no side effects) so it can be unit-tested. Returns one of:
+//   "acknowledged" | "expired" | "retry" | "stop"
+// httpStatus is null for transport-level errors (timeout, connection refused).
+// A 404 means the receipt is gone/invalid -> terminal. Other errors (5xx, 429,
+// transport) are transient -> retry until errorCount reaches maxErrors.
+private String emergencyPollAction(Integer httpStatus, acknowledged, expired, int errorCount, int maxErrors) {
+    if (httpStatus == 200) {
+        if (acknowledged == 1) return "acknowledged"
+        if (expired == 1) return "expired"
+        return "retry"
+    }
+    if (httpStatus == 404) return "stop"
+    return errorCount >= maxErrors ? "stop" : "retry"
+}
+
+private void clearEmergencyTracking() {
+    state.emergencyReceipt = null
+    state.emergencyPollInterval = null
+    state.emergencyPollErrors = 0
+    unschedule("checkEmergencyReceipt")
+}
+
 def checkEmergencyReceipt() {
     def receipt = state.emergencyReceipt
     if (!receipt) {
@@ -747,47 +774,65 @@ def checkEmergencyReceipt() {
 
     def uri = "https://api.pushover.net/1/receipts/${receipt}.json?token=${apiKey}"
 
+    Integer httpStatus = null
+    def acknowledged = null
+    def expired = null
+    def ackBy = "unknown device"
+    int errorCount = (state.emergencyPollErrors ?: 0) as int
+
     try {
         httpGet(uri) { response ->
-            if (response.status != 200) {
-                log.error "checkEmergencyReceipt() - Received HTTP error ${response.status}"
-                return
-            }
-
+            httpStatus = response.status
             def data = response.data
-            if (logEnable) log.debug "checkEmergencyReceipt() - Response: acknowledged=${data.acknowledged}, expired=${data.expired}"
-
-            if (data.acknowledged == 1) {
-                def ackBy = data.acknowledged_by_device ?: "unknown device"
-                if (logEnable) log.debug "Emergency message acknowledged by ${ackBy}"
-                sendEvent(name:"emergencyAck", value: "acknowledged", descriptionText:"Emergency acknowledged by ${ackBy}", isStateChange: true)
-                state.emergencyReceipt = null
-                state.emergencyPollInterval = null
-                unschedule("checkEmergencyReceipt")
-                return
-            }
-
-            if (data.expired == 1) {
-                if (logEnable) log.debug "Emergency message expired without acknowledgement"
-                sendEvent(name:"emergencyAck", value: "expired", descriptionText:"Emergency expired without acknowledgement", isStateChange: true)
-                state.emergencyReceipt = null
-                state.emergencyPollInterval = null
-                unschedule("checkEmergencyReceipt")
-                return
-            }
-
-            // Still waiting — schedule next poll using stored interval
-            def pollInterval = state.emergencyPollInterval ?: 30
-            if (pollInterval < 30) pollInterval = 30
-            if (logEnable) log.debug "Emergency not yet acknowledged, polling again in ${pollInterval}s"
-            runIn(pollInterval, "checkEmergencyReceipt")
+            acknowledged = data?.acknowledged
+            expired = data?.expired
+            ackBy = data?.acknowledged_by_device ?: "unknown device"
+            if (logEnable) log.debug "checkEmergencyReceipt() - status=${httpStatus}, acknowledged=${acknowledged}, expired=${expired}"
         }
     } catch (HttpResponseException e) {
-        log.error "checkEmergencyReceipt() - PushOver Server Returned: ${e.message}"
-        log.error "checkEmergencyReceipt() - Response body: ${e.response?.data?.errors}"
-        state.emergencyReceipt = null
-        state.emergencyPollInterval = null
-        unschedule("checkEmergencyReceipt")
+        httpStatus = e.statusCode
+        errorCount++
+        log.warn "checkEmergencyReceipt() - HTTP error #${errorCount} (${httpStatus}): ${e.message}"
+    } catch (Exception e) {
+        // Transport-level failure (timeout, connection refused) — no HTTP status.
+        httpStatus = null
+        errorCount++
+        log.warn "checkEmergencyReceipt() - poll error #${errorCount}: ${e.message}"
+    }
+
+    String action = emergencyPollAction(httpStatus, acknowledged, expired, errorCount, MAX_EMERGENCY_POLL_ERRORS)
+
+    switch (action) {
+        case "acknowledged":
+            if (logEnable) log.debug "Emergency message acknowledged by ${ackBy}"
+            sendEvent(name:"emergencyAck", value: "acknowledged", descriptionText:"Emergency acknowledged by ${ackBy}", isStateChange: true)
+            clearEmergencyTracking()
+            break
+
+        case "expired":
+            if (logEnable) log.debug "Emergency message expired without acknowledgement"
+            sendEvent(name:"emergencyAck", value: "expired", descriptionText:"Emergency expired without acknowledgement", isStateChange: true)
+            clearEmergencyTracking()
+            break
+
+        case "stop":
+            // Receipt is gone (404) or we hit the consecutive-error cap. Stop polling,
+            // but keep state.emergencyReceipt so the user can still cancel/check manually.
+            log.warn "checkEmergencyReceipt() - giving up automatic polling (status=${httpStatus}, errors=${errorCount}); receipt ${receipt} retained for manual cancel"
+            sendEvent(name:"emergencyAck", value: "error", descriptionText:"Emergency ack polling failed (status=${httpStatus})", isStateChange: true)
+            state.emergencyPollErrors = 0
+            unschedule("checkEmergencyReceipt")
+            break
+
+        default: // "retry"
+            // A clean (200) poll resets the consecutive-error streak.
+            if (httpStatus == 200) errorCount = 0
+            state.emergencyPollErrors = errorCount
+            def pollInterval = state.emergencyPollInterval ?: 30
+            if (pollInterval < 30) pollInterval = 30
+            if (logEnable) log.debug "checkEmergencyReceipt() - not yet acknowledged, polling again in ${pollInterval}s (errors=${errorCount})"
+            runIn(pollInterval, "checkEmergencyReceipt")
+            break
     }
 }
 
@@ -820,9 +865,7 @@ def cancelEmergencyMessage() {
             }
             if (logEnable) log.debug "cancelEmergencyMessage() - Emergency message cancelled successfully (receipt: ${receipt})"
             sendEvent(name:"emergencyAck", value: "cancelled", descriptionText:"Emergency message cancelled by user", isStateChange: true)
-            state.emergencyReceipt = null
-            state.emergencyPollInterval = null
-            unschedule("checkEmergencyReceipt")
+            clearEmergencyTracking()
         }
     } catch (HttpResponseException e) {
         log.error "cancelEmergencyMessage() - PushOver Server Returned: ${e.message}"

@@ -33,7 +33,7 @@
 *       2026-03-04 @hubitrep             Added Emergency acknowledgement receipt polling and callback URL features
 *       2026-05-22 @hubitrep             Always supply retry/expire for Emergency (priority=2) messages, falling back to defaults (60/900) when unset, to avoid Pushover HTTP 400 "expire must be supplied with priority=2"
 *       2026-05-22 @hubitrep             Guard null/blank custom HTML open/close chars in [HTML] processing to prevent NullPointerException (and message corruption) when those preferences were never persisted
-*       2026-05-24 @hubitrep             Emergency ack polling now survives transient errors: a 5xx/429/timeout retries (bounded by a consecutive-error cap) and keeps the receipt, instead of silently abandoning polling on the first blip. A 404 (receipt gone) is terminal
+*       2026-10-06 @hubitrep             Emergency ack polling now survives transient errors: a 5xx/429/timeout retries (bounded by a consecutive-error cap) and keeps the receipt, instead of silently abandoning polling on the first blip. A 404 (receipt gone) is terminal
 *
 *   Inspired by original work for SmartThings by: Zachary Priddy, https://zpriddy.com, me@zpriddy.com
 *
@@ -81,7 +81,7 @@ import java.text.SimpleDateFormat
 import groovyx.net.http.HttpResponseException
 import groovy.transform.Field
 
-def version() {return "v1.0.20260524"}
+def version() {return "v1.0.20261006"}
 
 metadata {
     definition (name: "Pushover", namespace: "ogiewon", author: "Dan Ogorchock", importUrl: "https://raw.githubusercontent.com/ogiewon/Hubitat/master/Drivers/pushover-notifications.src/pushover-notifications.groovy", singleThreaded:true) {

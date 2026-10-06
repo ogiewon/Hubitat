@@ -1,3 +1,5 @@
+# NO LONGER SUPPORTED - OBSOLETE
+
 # Hubitat Amazon Alexa Text To Speech  v0.6.2
 (USA, Canada, UK, Italy, Australia, Brazil currently supported)
 

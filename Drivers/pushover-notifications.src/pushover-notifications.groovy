@@ -655,7 +655,7 @@ def deviceNotification(message) {
 
     def params = [
 	    requestContentType: "application/octet-stream",
-    	headers: ["content-type": "multipart/form-data; boundary=--d29vZHNieQ=="],
+    	headers: ["content-type": "multipart/form-data; boundary=\"--d29vZHNieQ==\""],
     	uri: "https://api.pushover.net/1/messages.json",
     	body: postBody
     ]

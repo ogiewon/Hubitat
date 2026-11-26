@@ -1,11 +1,11 @@
 {
     "packageName": "Pushover",
     "author": "Dan Ogorchock",
-    "version": "1.0.20261006",
+    "version": "1.0.20261126",
     "category": "Notifications",
     "minimumHEVersion": "2.4.4.133",
-    "dateReleased": "2026-10-06",
-    "releaseNotes": "1.0.20261006 2026-10-06 Emergency acknowledgement polling now survives transient errors (5xx, 429, timeouts) instead of stopping on the first one.",
+    "dateReleased": "2026-11-26",
+    "releaseNotes": "1.0.20261126 2026-11-26 Fix 400 error in deviceNotification() from unquoted multipart boundary due to recent Pushover API change.",
     "communityLink": "https://community.hubitat.com/t/pushover-notifications-driver-slightly-enhanced/1067?u=ogiewon",
     "drivers": [
         {
